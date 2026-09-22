@@ -4,6 +4,7 @@ $navTypes = Db::fetchAll("SELECT * FROM ky_type WHERE pid=0 AND status=1 ORDER B
 $curTypeId = ((($GLOBALS['ky_controller'] ?? '') === 'vod') && ($GLOBALS['ky_action'] ?? '') === 'type') ? (int)($_GET['id'] ?? 0) : 0;
 $curUser = Auth::user();
 $curController = $GLOBALS['ky_controller'] ?? '';
+$curAction = $GLOBALS['ky_action'] ?? '';
 $siteName = config('site_name', '坤影影视');
 ?>
 <!doctype html>
@@ -78,5 +79,15 @@ $siteName = config('site_name', '坤影影视');
   <a class="kd-i" href="/user/login">👤 登录</a>
   <?php if (config('register_enable', '1') == '1'): ?><a class="kd-i" href="/user/register">✍️ 注册账号</a><?php endif; ?>
   <?php endif; ?>
+</nav>
+
+<!-- 手机底部Tab栏 -->
+<nav class="ktabbar">
+  <a href="/" class="<?= ($curController ?? '') === 'index' ? 'on' : '' ?>"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.8L12 3l9 7.8"/><path d="M5.2 9.5V21h13.6V9.5"/></svg><span>首页</span></a>
+  <?php $ktFirst = $navTypes[0] ?? null; ?>
+  <a href="<?= $ktFirst ? '/index.php?s=/vod/type&id=' . (int)$ktFirst['id'] : '/' ?>" class="<?= ($curController ?? '') === 'vod' && $curTypeId === (int)($ktFirst['id'] ?? 0) ? 'on' : '' ?>"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.6"/><path d="M12 3.5v5.9M12 14.6v5.9M3.5 12h5.9M14.6 12h5.9"/></svg><span><?= $ktFirst ? e($ktFirst['name']) : '分类' ?></span></a>
+  <a href="/index.php?s=/vod/search" class="<?= ($curController ?? '') === 'vod' && ($curAction ?? '') === 'search' ? 'on' : '' ?>"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>搜索</span></a>
+  <a href="/pay" class="<?= ($curController ?? '') === 'pay' ? 'on' : '' ?>"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.3.9-4.5 4.3 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.5l6.3-.9z"/></svg><span>会员</span></a>
+  <a href="<?= $curUser ? '/user/center' : '/user/login' ?>" class="<?= in_array($curController ?? '', ['user', 'pay']) ? 'on' : '' ?>"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg><span><?= $curUser ? '我的' : '登录' ?></span></a>
 </nav>
 

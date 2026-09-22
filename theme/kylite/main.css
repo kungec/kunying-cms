@@ -1,0 +1,10 @@
+
+/* ===== 手机底部Tab栏 ===== */
+.ktabbar{display:none}
+@media (max-width:860px){
+  .ktabbar{position:fixed;left:0;right:0;bottom:0;z-index:120;display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .ktabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--sub);text-decoration:none;font-size:11px}
+  .ktabbar a.on{color:var(--red2)}
+  .ktabbar a svg{stroke-width:2}
+  body{padding-bottom:58px}
+}
