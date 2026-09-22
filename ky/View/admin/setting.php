@@ -205,6 +205,8 @@ foreach ((scandir(KY_PATH.'/theme') ?: []) as $d) {
       <div class="card" style="margin:0">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><span style="font-size:16px">🔍</span><b style="font-size:14px">搜索防护</b></div>
         <div class="fi"><label>搜索频率限制</label><select name="search_limit_enable"><option value="1" <?= $cs('search_limit_enable', '1') ? 'selected' : '' ?>>开启</option><option value="0" <?= $cs('search_limit_enable', '0') ? 'selected' : '' ?>>关闭</option></select></div>
+        <div class="fi"><label>百度推送-站点</label><input type="text" name="baidu_push_site" value="<?= $c('baidu_push_site') ?>" placeholder="如 ys.yujia.xyz(与百度站长平台绑定一致)"></div>
+        <div class="fi"><label>百度推送-token</label><input type="text" name="baidu_push_token" value="<?= $c('baidu_push_token') ?>" placeholder="ziyuan.baidu.com 链接提交处获取,选填"></div>
         <div class="row" style="margin-top:10px">
           <div class="fi"><label>窗口内最大次数(每IP)</label><input type="number" min="1" name="search_limit_times" value="<?= $c('search_limit_times', '30') ?>"></div>
           <div class="fi"><label>时间窗口(秒)</label><input type="number" min="5" name="search_limit_window" value="<?= $c('search_limit_window', '60') ?>"></div>

@@ -36,7 +36,18 @@ if ($freeMB < 3072) {
 
 echo '[' . date('Y-m-d H:i:s') . "] 定时采集开始\n";
 $ret = Collector::runDue(true);
+$added = 0;
 foreach ($ret as $r) {
+    $added += (int)($r['added'] ?? 0);
     echo isset($r['error']) ? "✗ {$r['api']}: {$r['error']}\n" : "✓ {$r['api']}: 新增{$r['added']} 更新{$r['updated']}\n";
+}
+// 百度推送:有新增影片时,把新片详情页推给百度加速收录
+if ($added > 0 && config('baidu_push_site', '') !== '' && config('baidu_push_token', '') !== '') {
+    $host = trim((string)config('baidu_push_site', ''));
+    $rw = config('rewrite_enable', '0') == '1';
+    $ids = Db::fetchAll("SELECT id FROM ky_vod WHERE status=1 AND addtime > " . (time() - 1800));
+    $urls = [];
+    foreach ($ids as $v) $urls[] = 'https://' . $host . ($rw ? '/detail-' . (int)$v['id'] . '.html' : '/index.php?s=/vod/detail&id=' . (int)$v['id']);
+    if ($urls && baidu_push($urls)) echo "百度推送: ", count($urls), "条\n";
 }
 echo "done\n";

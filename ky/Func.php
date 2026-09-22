@@ -494,6 +494,19 @@ function m3u8_proxy_url(string $url): string
 }
 
 /**
+ * 百度链接推送(ziyuan.baidu.com的api推送;需后台配置站点与token)
+ */
+function baidu_push(array $urls): bool {
+    $site = trim((string)config('baidu_push_site', ''));
+    $token = trim((string)config('baidu_push_token', ''));
+    if ($site === '' || $token === '' || !$urls) return false;
+    $body = implode("\n", $urls);
+    $res = Http::post('http://data.zz.baidu.com/urls?site=' . rawurlencode($site) . '&token=' . rawurlencode($token), $body, 10, ['Content-Type: text/plain']);
+    $j = $res ? json_decode($res, true) : null;
+    return is_array($j) && isset($j['success']);
+}
+
+/**
  * 广告位输出(后台可独立开关;代码为管理员填写的原始HTML/JS)
  */
 function ad_slot(string $key): string {

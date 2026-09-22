@@ -40,6 +40,7 @@ class AdminSystemController
             'alipay_appid', 'alipay_private_key', 'alipay_public_key',
             'admin_remark',
             'search_limit_enable', 'search_limit_times', 'search_limit_window',
+            'baidu_push_site', 'baidu_push_token',
             'http_verify_ssl',
             'ad_home_enable', 'ad_home_code',
             'ad_playtop_enable', 'ad_playtop_code',
