@@ -483,6 +483,29 @@ class AdminContentController
         json_ok(null, '已保存:' . $v);
     }
 
+    public function filmreqs()
+    {
+        $list = Db::fetchAll("SELECT r.*,u.name uname FROM ky_film_request r LEFT JOIN ky_user u ON u.id=r.user_id ORDER BY r.status ASC, r.id DESC LIMIT 200");
+        View::display('filmreqs', ['list' => $list]);
+    }
+
+    public function filmreqdone()
+    {
+        if (!Request::isPost()) json_error('非法请求');
+        $id = Request::post('id', 0, 'i');
+        Db::update('ky_film_request', ['status' => 1], 'id=?', [$id]);
+        Admin::log('求片标记完成');
+        json_ok();
+    }
+
+    public function filmreqdel()
+    {
+        if (!Request::isPost()) json_error('非法请求');
+        Db::delete('ky_film_request', 'id=?', [Request::post('id', 0, 'i')]);
+        Admin::log('删除求片');
+        json_ok();
+    }
+
     public function collectauto()
     {
         @set_time_limit(300);

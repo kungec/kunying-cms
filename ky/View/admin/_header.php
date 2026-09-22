@@ -92,6 +92,7 @@ textarea{min-height:80px;resize:vertical}
   <a class="mi" href="/admin.php?s=/content/link" data-m="content/link">▪ 友情链接</a>
   <div class="grp">采集中心</div>
   <a class="mi" href="/admin.php?s=/content/collect" data-m="content/collect">▪ 采集管理</a>
+  <a class="mi" href="/admin.php?s=/content/filmreqs" data-m="content/filmreqs">▪ 求片管理</a>
   <a class="mi" href="/admin.php?s=/content/player" data-m="content/player">▪ 播放器管理</a>
   <div class="grp">用户中心</div>
   <a class="mi" href="/admin.php?s=/user/user" data-m="user/user">▪ 会员列表</a>

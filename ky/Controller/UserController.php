@@ -135,6 +135,24 @@ class UserController
         redirect('/');
     }
 
+    /* ===================== 求片 ===================== */
+
+    public function filmreq()
+    {
+        $user = Auth::user();
+        if (!$user) json_error('请先登录');
+        if (!Request::isPost()) json_error('非法请求');
+        Security::csrfCheck();
+        $title = mb_substr(trim((string)Request::post('title')), 0, 60);
+        $note = mb_substr(trim((string)Request::post('note')), 0, 300);
+        if ($title === '') json_error('请填写影片名称');
+        // 限流:同用户10分钟1条
+        $last = Db::fetchOne("SELECT created FROM ky_film_request WHERE user_id=? ORDER BY id DESC LIMIT 1", [$user['id']]);
+        if ($last && time() - (int)$last < 600) json_error('提交太频繁,请10分钟后再试');
+        Db::insert('ky_film_request', ['user_id' => $user['id'], 'title' => $title, 'note' => $note, 'status' => 0, 'created' => time()]);
+        json_ok(null, '求片已提交,我们会尽快上架!');
+    }
+
     /* ===================== 账号设置(昵称/密码) ===================== */
 
     public function account()
