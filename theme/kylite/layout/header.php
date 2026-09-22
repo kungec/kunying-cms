@@ -11,7 +11,12 @@ $siteName = config('site_name', '坤影影视');
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1013">
+    <link rel="manifest" href="/static/site.webmanifest">
+    <link rel="apple-touch-icon" href="/static/img/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title><?= e($pageTitle ?? $siteName) ?> - <?= e($siteName) ?></title>
 <meta name="keywords" content="<?= e($pageKeywords ?? config('site_keywords', '')) ?>">
 <meta name="description" content="<?= e($pageDescription ?? config('site_description', '')) ?>">
