@@ -163,6 +163,17 @@ foreach ($sources as $src) {
   c.addEventListener('click', function(){ setActive('comment'); var el = document.getElementById('comments'); if (el) el.scrollIntoView({behavior: 'smooth'}); });
 })();
 </script>
+<?php /* JSON-LD视频结构化数据(搜索引擎富摘要) */ ?>
+<script type="application/ld+json"><?= json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'VideoObject',
+    'name' => $vod['name'],
+    'description' => mb_substr(strip_tags((string)$vod['content']), 0, 200) ?: $vod['name'],
+    'thumbnailUrl' => preg_match('#^https?://#i', $pu = pic_url((string)$vod['pic'])) ? $pu : ((is_https() ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? '') . $pu),
+    'uploadDate' => date('c', (int)$vod['updatetime']),
+    'genre' => (string)$vod['class'],
+    'inLanguage' => 'zh-CN',
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
 <script defer src="<?= theme_url('static/player/hls.js') ?>?v=<?= asset_v('/theme/kylite/static/player/hls.js') ?>"></script>
 <script defer src="<?= theme_url('static/player/kunplayer.js') ?>?v=<?= asset_v('/theme/kylite/static/player/kunplayer.js') ?>"></script>
 <script>
