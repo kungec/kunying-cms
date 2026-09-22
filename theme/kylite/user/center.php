@@ -74,6 +74,41 @@ $tabsMap = ['index' => '我的账户', 'fav' => '我的收藏', 'record' => '播
       <?php endforeach; ?>
       <?php if (empty($udata['orders'])): ?><tr><td colspan="6" style="color:var(--sub)">暂无订单</td></tr><?php endif; ?>
     </table></div>
+    <?php elseif ($tab === 'account'): ?>
+    <div style="max-width:460px">
+      <b>修改昵称</b>
+      <form id="nf" style="display:flex;gap:8px;margin:10px 0 22px">
+        <input class="ky-input" type="text" name="name" required minlength="2" maxlength="20" value="<?= e($udata['user']['name'] ?? '') ?>" placeholder="2-20个字符" style="flex:1">
+        <button class="btn-main" type="submit" style="width:auto;padding:0 18px">保存</button>
+      </form>
+      <b>修改密码</b>
+      <form id="pf" onsubmit="return doPwd(event)" style="margin-top:10px">
+        <div class="afield"><label>当前密码</label><input class="ky-input" type="password" name="oldpwd" required autocomplete="current-password"></div>
+        <div class="afield"><label>新密码</label><input class="ky-input" type="password" name="newpwd" required minlength="6" autocomplete="new-password"></div>
+        <div class="afield"><label>确认新密码</label><input class="ky-input" type="password" name="repwd" required minlength="6" autocomplete="new-password"></div>
+        <button class="btn-main" type="submit" id="pgo">修改密码</button>
+      </form>
+    </div>
+    <script>
+    document.getElementById('nf').addEventListener('submit', async function(ev){
+      ev.preventDefault();
+      var d = new FormData(this); d.append('act', 'nickname'); d.append('_csrf', '<?= e(Security::csrfToken()) ?>');
+      var j = await kyPost('/index.php?s=/user/account', d);
+      kyToast(j.msg, j.code === 1);
+    });
+    async function doPwd(ev){
+      ev.preventDefault();
+      var go = document.getElementById('pgo'); go.disabled = true; go.textContent = '提交中…';
+      var d = new FormData(ev.target); d.append('act', 'password'); d.append('_csrf', '<?= e(Security::csrfToken()) ?>');
+      try {
+        var j = await kyPost('/index.php?s=/user/account', d);
+        kyToast(j.msg, j.code === 1);
+        if (j.code === 1) setTimeout(function(){ location.href = '/user/login'; }, 900);
+        else go.disabled = false;
+      } catch(e) { kyToast('网络异常', false); go.disabled = false; }
+      return false;
+    }
+    </script>
     <?php endif; ?>
 </div>
 <script>

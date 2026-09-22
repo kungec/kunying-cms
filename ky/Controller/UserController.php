@@ -135,6 +135,35 @@ class UserController
         redirect('/');
     }
 
+    /* ===================== 账号设置(昵称/密码) ===================== */
+
+    public function account()
+    {
+        $user = Auth::user();
+        if (!$user) json_error('请先登录');
+        if (!Request::isPost()) json_error('非法请求');
+        Security::csrfCheck();
+        $act = (string)Request::post('act');
+        if ($act === 'nickname') {
+            $name = trim((string)Request::post('name'));
+            if (mb_strlen($name) < 2 || mb_strlen($name) > 20) json_error('昵称需2-20个字符');
+            if (preg_match('/[<>"\'\\\/]/u', $name)) json_error('昵称含非法字符');
+            Db::update('ky_user', ['name' => $name], 'id=?', [$user['id']]);
+            json_ok(null, '昵称已更新');
+        }
+        if ($act === 'password') {
+            $old = (string)Request::post('oldpwd');
+            $new = (string)Request::post('newpwd');
+            $re = (string)Request::post('repwd');
+            if (!password_verify($old, (string)$user['pwd'])) json_error('当前密码错误');
+            if (strlen($new) < 6) json_error('新密码至少6位');
+            if ($new !== $re) json_error('两次密码不一致');
+            Db::update('ky_user', ['pwd' => password_hash($new, PASSWORD_DEFAULT)], 'id=?', [$user['id']]);
+            json_ok(null, '密码已修改,下次登录请使用新密码');
+        }
+        json_error('未知操作');
+    }
+
     /* ===================== 忘记密码 ===================== */
 
     public function forgot()
