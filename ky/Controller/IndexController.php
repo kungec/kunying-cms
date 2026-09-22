@@ -81,4 +81,29 @@ class IndexController
         header('Content-Type: application/xml; charset=utf-8');
         echo $xml;
     }
+
+    /** RSS订阅源(最新50部) */
+    public function rss()
+    {
+        header('Content-Type: application/rss+xml; charset=utf-8');
+        $host = (is_https() ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? '');
+        $siteName = config('site_name', '坤影影视');
+        $rows = Db::fetchAll("SELECT id,name,content,pic,updatetime FROM ky_vod WHERE status=1 ORDER BY updatetime DESC LIMIT 50");
+        $nl = chr(10);
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . $nl . '<rss version="2.0"><channel>' . $nl;
+        $xml .= '<title>' . htmlspecialchars($siteName, ENT_QUOTES) . '</title>' . $nl;
+        $xml .= '<link>' . htmlspecialchars($host, ENT_QUOTES) . '</link>' . $nl;
+        $xml .= '<description>' . htmlspecialchars(config('site_description', '最新影视资源'), ENT_QUOTES) . '</description>' . $nl;
+        foreach ($rows as $r) {
+            $url = $host . (config('rewrite_enable', '0') == '1' ? '/detail-' . (int)$r['id'] . '.html' : '/index.php?s=/vod/detail&id=' . (int)$r['id']);
+            $xml .= '<item>' . $nl;
+            $xml .= '<title>' . htmlspecialchars($r['name'], ENT_QUOTES) . '</title>' . $nl;
+            $xml .= '<link>' . htmlspecialchars($url, ENT_QUOTES) . '</link>' . $nl;
+            $xml .= '<description>' . htmlspecialchars(mb_substr(strip_tags((string)$r['content']), 0, 200), ENT_QUOTES) . '</description>' . $nl;
+            $xml .= '<pubDate>' . date('r', (int)$r['updatetime']) . '</pubDate>' . $nl;
+            $xml .= '</item>' . $nl;
+        }
+        $xml .= '</channel></rss>';
+        echo $xml;
+    }
 }

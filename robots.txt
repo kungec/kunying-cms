@@ -7,3 +7,6 @@ Disallow: /index.php?s=/user
 Disallow: /index.php?s=/pay
 
 Sitemap: https://ys.yujia.xyz/index.php?s=/index/sitemap
+
+# RSS订阅
+# https://ys.yujia.xyz/index.php?s=/index/rss
