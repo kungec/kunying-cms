@@ -29,6 +29,20 @@
 - **页面缓存**：游客页面缓存+后台操作自动失效，详情页毫秒级打开
 - **安全**：全参数PDO预处理、CSRF Token、XSS过滤、SSRF防护、评论审核、搜索限频、后台登录锁定
 
+## 📸 界面预览
+
+**桌面端首页(全屏幻灯+电影海报墙)**
+![桌面首页](docs/screenshots/home.jpg)
+
+**播放页(多线路/选集/自动换线)**
+![播放页](docs/screenshots/play.jpg)
+
+**分类筛选页**
+![分类页](docs/screenshots/type.jpg)
+
+**移动端(底部Tab栏/自适应)**
+![手机首页](docs/screenshots/home-mobile.jpg) ![手机播放页](docs/screenshots/play-mobile.jpg)
+
 ## 📦 环境要求
 
 | 项目 | 要求 |
