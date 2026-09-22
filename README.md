@@ -99,6 +99,39 @@ docker-compose up -d
 **去重说明**：同名影片自动合并播放地址；封面已存在的影片不再重复下载；
 播放地址按集数URL增量去重，已有地址绝不重复写入。
 
+## 📂 目录结构
+
+```
+├── index.php              # 入口文件
+├── admin.php              # 后台入口
+├── install/               # 一键安装向导(装完可删)
+├── ky/
+│   ├── Controller/        # 控制器(前台/后台)
+│   ├── Lib/               # 类库(Db/Http/License/Collector…)
+│   ├── View/              # 后台视图
+│   ├── cron/              # 定时任务脚本
+│   ├── Func.php           # 全局函数(缓存/主题运行时/工具)
+│   └── Core.php           # 路由与内核
+├── theme/
+│   ├── kylite/            # 默认主题(开源) 浅色海报墙
+│   ├── kunpro/            # 付费主题(加密) 星辰影院风格
+│   └── iqiyi/             # 付费主题(加密) 爱奇艺风格
+├── static/                # 全局静态资源
+├── upload/vod/            # 采集图片本地化目录
+├── data/                  # 缓存/配置(自动生成)
+├── docker-compose.yml     # Docker编排
+└── Dockerfile
+```
+
+## ⏰ 定时采集(Cron)
+
+开启后台"定时采集"后,添加系统Cron(宝塔:计划任务-Shell脚本,选N分钟):
+```bash
+# 推荐每30分钟执行一次(与后台设置保持一致)
+/php/82/bin/php /www/wwwroot/你的域名/ky/cron/collect.php > /dev/null 2>&1
+```
+后台可设采集间隔与更新范围(近12小时),配合速度档位避免触发资源站限制。
+
 ## ❓ 常见问题
 
 **Q: 在线安装主题提示创建目录失败？**
@@ -119,6 +152,13 @@ docker-compose up -d
 ### [跨境VPS · www.kjvps.com](https://www.kjvps.com/)
 
 感谢「跨境VPS」对本项目开发的大力支持！
+
+## 📋 更新日志
+
+**v1.0.0 (2026-09)**
+- 首个开源版本发布
+- 3套主题(1开源+2付费加密)、采集中心、会员支付体系、页面缓存、OPcache深度优化
+- 全面安全加固:PDO预处理/CSRF/XSS/SSRF防护/评论审核/后台锁定
 
 ## 📄 授权说明
 
