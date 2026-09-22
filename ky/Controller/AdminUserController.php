@@ -7,6 +7,8 @@ class AdminUserController
     public function __construct()
     {
         Auth::requireAdmin();
+        // 后台所有POST统一CSRF校验(GET视图不受影响)
+        if (Request::isPost()) Security::csrfCheck();
     }
 
     /* ===================== 会员 ===================== */
