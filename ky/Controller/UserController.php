@@ -203,10 +203,12 @@ class UserController
     {
         $user = Auth::user();
         if (!$user) json_error('请先登录');
+        if (Request::isPost()) Security::csrfCheck();
         $day = (int)date('Ymd');
-        if ((int)$user['sign_day'] === $day) json_error('今天已签到');
         $points = max(1, (int)config('points_sign', '5'));
-        Db::update('ky_user', ['points' => $user['points'] + $points, 'sign_day' => $day], 'id=?', [$user['id']]);
+        // 原子签到:sign_day守卫防并发重复加积分,points走SQL自增避免旧值覆盖
+        $stmt = Db::query("UPDATE ky_user SET points=points+{$points}, sign_day={$day} WHERE id=" . (int)$user['id'] . " AND sign_day<>{$day}");
+        if ((int)$stmt->rowCount() !== 1) json_error('今天已签到');
         Db::insert('ky_sign', ['user_id' => $user['id'], 'day' => $day, 'points' => $points]);
         json_ok(['points' => $points], '签到成功,积分+' . $points);
     }
