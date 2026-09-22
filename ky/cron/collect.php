@@ -9,8 +9,14 @@ require dirname(__DIR__) . '/bootstrap.php';
 
 if (!is_file(KY_PATH . '/data/install.lock')) exit("not installed\n");
 echo '[' . date('Y-m-d H:i:s') . "] 定时采集开始\n";
-$ret = Collector::runDue(true);
-foreach ($ret as $r) {
-    echo isset($r['error']) ? "✗ {$r['api']}: {$r['error']}\n" : "✓ {$r['api']}: 新增{$r['added']} 更新{$r['updated']}\n";
+// 每日图片自动清理(后台开关控制,0-5点窗口内每天执行一次)
+if (config('img_auto_clean_enable', '0') == '1') {
+    $today = (int)date('Ymd');
+    if ((int)date('G') < 5 && (int)config('img_clean_last_day', '0') !== $today) {
+        $n = img_clean_orphans();
+        config_set('img_clean_last_result', date('Y-m-d H:i') . " 自动清理{$n}张");
+        config_set('img_clean_last_day', (string)$today);
+        echo "自动清理未引用图片: {$n}张\n";
+    }
 }
 echo "done\n";

@@ -406,8 +406,17 @@ function img_clean_orphans(): int {
     $dir = KY_PATH . '/upload/vod';
     if (!is_dir($dir)) return 0;
     $used = [];
-    foreach (Db::fetchAll("SELECT pic FROM ky_vod WHERE pic LIKE '%/upload/vod/%' LIMIT 5000") as $r) {
-        if (preg_match_all('#/upload/vod/([A-Za-z0-9_\-\.]+)#', (string)$r['pic'], $m)) {
+    // 分批全量扫描:保护线(原LIMIT 5000)曾致超量在用封面被误删
+    $usedRaw = [];
+    $off = 0;
+    while (true) {
+        $rows = Db::fetchAll("SELECT pic FROM ky_vod WHERE pic LIKE '%/upload/vod/%' ORDER BY id ASC LIMIT 2000 OFFSET {$off}");
+        if (!$rows) break;
+        foreach ($rows as $r) $usedRaw[] = $r['pic'];
+        $off += 2000;
+    }
+    foreach ($usedRaw as $pic) {
+        if (preg_match_all('#/upload/vod/([A-Za-z0-9_\-\.]+)#', (string)$pic, $m)) {
             foreach ($m[1] as $n) $used[strtolower($n)] = 1;
         }
     }
