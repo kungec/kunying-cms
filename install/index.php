@@ -155,9 +155,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 3) {
         $st = $pdo->prepare("INSERT INTO ky_collect_api (name,api_url,remark,status,collect_auto,collect_hours,addtime) VALUES (?,?,?,?,?,12,?)");
         $st->execute(['极速资源', 'https://jszyapi.com/api.php/provide/vod/at/json', '极速云/极速m3u8 官方:jisuzy.tv', 1, 1, time()]);
         $st->execute(['猫眼资源', 'https://api.maoyanapi.top/api.php/provide/vod/from/mym3u8/at/json', '猫眼m3u8线路 官方:maoyanzy.com', 1, 1, time()]);
-        $st->execute(['非凡资源', 'https://api.ffzyapi.com/api.php/provide/vod/from/ffm3u8/at/json', '非凡m3u8线路 官方:ffzy.tv', time()]);
-        $st->execute(['豆瓣资源', 'https://caiji.dbzy5.com/api.php/provide/vod/from/dbm3u8/at/json', '豆瓣m3u8线路 官方:dbzy.tv', time()]);
-        $st->execute(['百度资源', 'https://api.apibdzy.com/api.php/provide/vod/from/dbm3u8/at/json', '百度m3u8线路 官方:bdzy1.com(需官方加白名单)', time()]);
+        $st->execute(['非凡资源', 'https://api.ffzyapi.com/api.php/provide/vod/from/ffm3u8/at/json', '非凡m3u8线路 官方:ffzy.tv', 1, 1, time()]);
+        $st->execute(['豆瓣资源', 'https://caiji.dbzy5.com/api.php/provide/vod/from/dbm3u8/at/json', '豆瓣m3u8线路 官方:dbzy.tv', 1, 1, time()]);
+        $st->execute(['百度资源', 'https://api.apibdzy.com/api.php/provide/vod/from/dbm3u8/at/json', '百度m3u8线路 官方:bdzy1.com(需官方加白名单)', 1, 1, time()]);
 
         // 内置播放器
         $players = [
