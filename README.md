@@ -1,5 +1,7 @@
 # 坤影CMS (KunYing CMS)
 
+![Version](https://img.shields.io/badge/版本-1.0.23-2f7df6) ![PHP](https://img.shields.io/badge/PHP-7.4%20~%208.3-8892BF) ![CI](https://github.com/kungec/kunying-cms/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/许可-个人免费-22a55e)
+
 <p align="center">
   <b>全新一代影视内容管理系统</b><br>
   傻瓜式一键安装 · 内置采集 · 电影海报墙 · 多主题切换 · 手机自适应

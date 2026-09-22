@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  syntax:
+    name: PHP语法检查 (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.0', '8.1', '8.2', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: 全量语法检查
+        run: |
+          ERR=0
+          while IFS= read -r f; do
+            OUT=$(php -l "$f" 2>&1) || { echo "✗ $f"; echo "$OUT"; ERR=1; }
+          done < <(find . -name "*.php" -not -path "./data/cache/*")
+          exit $ERR
+
+  docker:
+    name: Docker配置校验
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker-compose配置校验
+        run: docker compose -f docker-compose.yml config -q
+
+  structure:
+    name: 关键文件存在性检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 校验入口与核心文件
+        run: |
+          for f in index.php admin.php robots.txt docker-compose.yml Dockerfile \
+                   install/index.php ky/bootstrap.php ky/Func.php ky/Core.php \
+                   ky/Lib/License.php theme/kylite/index.php \
+                   theme/kunpro/index.php theme/iqiyi/index.php; do
+            [ -f "$f" ] || { echo "缺失关键文件: $f"; exit 1; }
+          done
+          echo "核心文件完整 ✓"
