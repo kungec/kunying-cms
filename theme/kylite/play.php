@@ -163,8 +163,8 @@ foreach ($sources as $src) {
   c.addEventListener('click', function(){ setActive('comment'); var el = document.getElementById('comments'); if (el) el.scrollIntoView({behavior: 'smooth'}); });
 })();
 </script>
-<script src="<?= theme_url('static/player/hls.js') ?>?v=<?= asset_v('/theme/dsv1/static/player/hls.js') ?>"></script>
-<script src="<?= theme_url('static/player/kunplayer.js') ?>?v=<?= asset_v('/theme/dsv1/static/player/kunplayer.js') ?>"></script>
+<script defer src="<?= theme_url('static/player/hls.js') ?>?v=<?= asset_v('/theme/dsv1/static/player/hls.js') ?>"></script>
+<script defer src="<?= theme_url('static/player/kunplayer.js') ?>?v=<?= asset_v('/theme/dsv1/static/player/kunplayer.js') ?>"></script>
 <script>
 var kyVod = <?= json_encode([
     'id' => (int)$vod['id'],
@@ -232,7 +232,8 @@ renderEpGrid();
 </script>
 <?php if ($canPlay && $current && !$isIframe && $playerSrc !== ''): ?>
 <script>
-buildPlayer(kyAuto);
+/* 播放器脚本为defer加载,初始化延后到DOMContentLoaded */
+document.addEventListener('DOMContentLoaded', function(){ buildPlayer(kyAuto); });
 </script>
 <?php endif; ?>
 <script>
