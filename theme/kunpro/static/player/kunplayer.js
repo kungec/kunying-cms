@@ -21,6 +21,8 @@ KunPlayer.prototype._init=function(){
     if(o.start>5&&o.start<v.duration-30){try{v.currentTime=o.start}catch(e){}}
   });
   v.addEventListener('ended',function(){ if(o.onNext)o.onNext(); else if(o.nextUrl)location.href=o.nextUrl; });
+  // 流错误上报:直连mp4/原生HLS失败
+  v.addEventListener('error',function(){ if(o.onStreamError)o.onStreamError(); });
   // 进度上报
   var lastSend=0;
   v.addEventListener('timeupdate',function(){
@@ -65,6 +67,8 @@ KunPlayer.prototype._load=function(src,type){
   if(isM3u8 && window.Hls && Hls.isSupported() && !(isIOS && isSafari)){
     if(this.hls)this.hls.destroy();
     this.hls=new Hls({maxBufferLength:60,maxMaxBufferLength:180,maxBufferSize:120*1000*1000,fragLoadingTimeOut:40000,fragLoadingMaxRetry:8,manifestLoadingTimeOut:25000,startLevel:-1,abrEwmaDefaultEstimate:2000000});
+    var slf=this;this._errFired=false;
+    this.hls.on(Hls.Events.ERROR,function(e,data){ if(data&&data.fatal&&!slf._errFired){ slf._errFired=true; if(o.onStreamError)o.onStreamError(); } });
     this.hls.loadSource(src);
     this.hls.attachMedia(v);
   }else{

@@ -163,8 +163,8 @@ foreach ($sources as $src) {
   c.addEventListener('click', function(){ setActive('comment'); var el = document.getElementById('comments'); if (el) el.scrollIntoView({behavior: 'smooth'}); });
 })();
 </script>
-<script defer src="<?= theme_url('static/player/hls.js') ?>?v=<?= asset_v('/theme/dsv1/static/player/hls.js') ?>"></script>
-<script defer src="<?= theme_url('static/player/kunplayer.js') ?>?v=<?= asset_v('/theme/dsv1/static/player/kunplayer.js') ?>"></script>
+<script defer src="<?= theme_url('static/player/hls.js') ?>?v=<?= asset_v('/theme/kylite/static/player/hls.js') ?>"></script>
+<script defer src="<?= theme_url('static/player/kunplayer.js') ?>?v=<?= asset_v('/theme/kylite/static/player/kunplayer.js') ?>"></script>
 <script>
 var kyVod = <?= json_encode([
     'id' => (int)$vod['id'],
@@ -175,7 +175,7 @@ var kyVod = <?= json_encode([
     'csrf' => Security::csrfToken(),
     'sources' => $jsSources,
 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
-var curSid = <?= (int)$sid ?>, curEp = <?= (int)$ep ?>, player = null;
+var curSid = <?= (int)$sid ?>, curEp = <?= (int)$ep ?>, player = null, streamErrs = 0;
 var kyAuto = <?= config('player_autoplay', '1') == '1' ? 'true' : 'false' ?>;
 
 function renderEpGrid(){
@@ -213,8 +213,16 @@ function buildPlayer(autoplay){
         arr.unshift({ id: kyVod.id, name: kyVod.name, pic: kyVod.poster, remarks: (src.episodes[curEp-1] && curEp > 1) ? '第' + curEp + '集' : (kyVod.epRemarks || ''), ep: curEp, time: Date.now() });
         localStorage.setItem('ky_watch_hist', JSON.stringify(arr.slice(0, 50)));
       } catch(e) {}
+    },
+    onStreamError: function(){
+      streamErrs++;
+      if (streamErrs >= kyVod.sources.length) { kyToast('所有线路均无法播放,请稍后再试', false); return; }
+      var n = (curSid + 1) % kyVod.sources.length;
+      kyToast('当前线路无法播放,已自动切换到线路' + (n + 1), false);
+      switchSource(n);
     }
   });
+  player.video.addEventListener('playing', function(){ streamErrs = 0; });
   if (autoplay) { try { player.video.play(); } catch(e) {} }
 }
 function switchSource(i){
