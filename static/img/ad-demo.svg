@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="120" viewBox="0 0 1200 120">
+  <defs>
+    <linearGradient id="ag" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1c1428"/><stop offset="0.5" stop-color="#1a1520"/><stop offset="1" stop-color="#231316"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="120" fill="url(#ag)"/>
+  <rect x="4" y="4" width="1192" height="112" rx="10" fill="none" stroke="#3a3d49" stroke-width="2" stroke-dasharray="10 6"/>
+  <text x="60" y="70" font-family="sans-serif" font-size="30" font-weight="700" fill="#e9eaee" letter-spacing="4">广告位示例 · 1200×120</text>
+  <text x="760" y="70" font-family="sans-serif" font-size="18" fill="#8b8e99">后台可替换为图片链接或广告联盟代码</text>
+</svg>

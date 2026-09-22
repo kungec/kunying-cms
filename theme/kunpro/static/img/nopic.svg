@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400">
+  <rect width="300" height="400" fill="#1a1c23"/>
+  <rect x="8" y="8" width="284" height="384" fill="none" stroke="#262833" stroke-width="2" stroke-dasharray="8 6" rx="10"/>
+  <circle cx="150" cy="168" r="42" fill="none" stroke="#3a3d49" stroke-width="4"/>
+  <polygon points="138,150 170,168 138,186" fill="#3a3d49"/>
+  <text x="150" y="248" text-anchor="middle" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif" font-size="18" fill="#4a4d59">暂无封面</text>
+</svg>

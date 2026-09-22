@@ -1,0 +1,55 @@
+<?php
+/**
+ * 前台 - 首页
+ */
+class IndexController
+{
+    public function index()
+    {
+        $cacheable = !Auth::isLogin() && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET';
+        if ($cacheable) {
+            $hit = page_cache_get('home');
+            if ($hit !== null) { echo $hit; return; }
+        }
+        $slides = Db::fetchAll("SELECT * FROM ky_slide WHERE status=1 AND (pos='top' OR pos='') ORDER BY sort ASC, id DESC LIMIT 10");
+        $movieSlides = Db::fetchAll("SELECT * FROM ky_slide WHERE status=1 AND pos='movie' ORDER BY sort ASC, id DESC LIMIT 8");
+        $hot = VodService::list(['order' => 'total_hits DESC'], 10);
+        $new = VodService::list(['order' => 'addtime DESC'], 14);
+        if (config('kp_slide_source', 'new') === 'hot') {
+            $hotSlides = VodService::list(['order' => 'total_hits DESC'], (int)config('kp_slide_count', '6') ?: 6);
+        } else {
+            $hotSlides = $new;
+        }
+        $score = VodService::list(['order' => 'score DESC, total_hits DESC'], 10);
+        $types = Db::fetchAll("SELECT * FROM ky_type WHERE pid=0 AND status=1 ORDER BY sort ASC, id ASC");
+        $topicNew = Db::fetchAll("SELECT * FROM ky_topic WHERE status=1 ORDER BY id DESC LIMIT 4");
+        $links = Db::fetchAll("SELECT * FROM ky_link WHERE status=1 ORDER BY sort ASC, id ASC LIMIT 20");
+        $announcements = [];
+        if (config('show_api_notice', '0') == '1') {
+            $announcements = array_slice(License::notices(), 0, 3);
+        }
+        // 首页分类模块:后台勾选"首页显示"的顶级分类,含子分类影片
+        $homeBlocks = [];
+        $homeTypes = Db::fetchAll("SELECT * FROM ky_type WHERE pid=0 AND status=1 AND show_home=1 ORDER BY sort ASC, id ASC");
+        foreach ($homeTypes as $ht) {
+            $ids = [(int)$ht['id']];
+            foreach (Db::fetchAll("SELECT id FROM ky_type WHERE pid=?", [$ht['id']]) as $c) {
+                $ids[] = (int)$c['id'];
+            }
+            $in = implode(',', array_map('intval', $ids));
+            $list = Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 AND type_id IN ({$in}) ORDER BY id DESC LIMIT 12");
+            if ($list) $homeBlocks[] = ['type' => $ht, 'list' => $list];
+        }
+        $html = View::load('index', compact('slides', 'movieSlides', 'hot', 'new', 'hotSlides', 'score', 'types', 'topicNew', 'links', 'announcements', 'homeBlocks'));
+        if ($cacheable) page_cache_set('home', $html, 600);
+        echo $html;
+    }
+
+    public function article()
+    {
+        $id = Request::get('id', 0, 'i');
+        $article = Db::fetch("SELECT * FROM ky_article WHERE id=? AND status=1", [$id]);
+        $articles = Db::fetchAll("SELECT id,title,addtime FROM ky_article WHERE status=1 ORDER BY id DESC LIMIT 20");
+        View::display('article', ['article' => $article, 'articles' => $articles]);
+    }
+}

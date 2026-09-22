@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="640" viewBox="0 0 1920 640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0.6">
+      <stop offset="0" stop-color="#101116"/>
+      <stop offset="0.5" stop-color="#15161c"/>
+      <stop offset="1" stop-color="#231316"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.72" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#e5322d" stop-opacity="0.38"/>
+      <stop offset="0.55" stop-color="#e5322d" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#e5322d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f0c86a"/>
+      <stop offset="1" stop-color="#d8a947"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="640" fill="url(#bg)"/>
+  <rect width="1920" height="640" fill="url(#glow)"/>
+
+  <!-- 斜切光带 -->
+  <polygon points="1180,0 1490,0 990,640 810,640" fill="#ffffff" opacity="0.02"/>
+  <polygon points="1560,0 1800,0 1360,640 1220,640" fill="#e5322d" opacity="0.05"/>
+
+  <!-- 大播放键(右) -->
+  <g transform="translate(1500,320)">
+    <circle r="185" fill="none" stroke="#e5322d" stroke-opacity="0.22" stroke-width="2" stroke-dasharray="5 11"/>
+    <circle r="140" fill="none" stroke="#e5322d" stroke-opacity="0.35" stroke-width="2"/>
+    <circle r="104" fill="#e5322d" opacity="0.16"/>
+    <circle r="78" fill="#e5322d"/>
+    <polygon points="-20,-34 42,0 -20,34" fill="#ffffff"/>
+  </g>
+
+  <!-- 胶片带(右上) -->
+  <g transform="translate(1270,74) rotate(-22)">
+    <rect x="0" y="0" width="470" height="98" rx="12" fill="#1e2028" stroke="#2c2f3a" stroke-width="2"/>
+    <g fill="#2c2f3a">
+      <rect x="14" y="8" width="16" height="11" rx="3"/><rect x="14" y="79" width="16" height="11" rx="3"/>
+      <rect x="58" y="8" width="16" height="11" rx="3"/><rect x="58" y="79" width="16" height="11" rx="3"/>
+      <rect x="102" y="8" width="16" height="11" rx="3"/><rect x="102" y="79" width="16" height="11" rx="3"/>
+      <rect x="146" y="8" width="16" height="11" rx="3"/><rect x="146" y="79" width="16" height="11" rx="3"/>
+      <rect x="190" y="8" width="16" height="11" rx="3"/><rect x="190" y="79" width="16" height="11" rx="3"/>
+      <rect x="234" y="8" width="16" height="11" rx="3"/><rect x="234" y="79" width="16" height="11" rx="3"/>
+      <rect x="278" y="8" width="16" height="11" rx="3"/><rect x="278" y="79" width="16" height="11" rx="3"/>
+      <rect x="322" y="8" width="16" height="11" rx="3"/><rect x="322" y="79" width="16" height="11" rx="3"/>
+      <rect x="366" y="8" width="16" height="11" rx="3"/><rect x="366" y="79" width="16" height="11" rx="3"/>
+      <rect x="410" y="8" width="16" height="11" rx="3"/><rect x="410" y="79" width="16" height="11" rx="3"/>
+      <rect x="446" y="8" width="16" height="11" rx="3"/><rect x="446" y="79" width="16" height="11" rx="3"/>
+    </g>
+    <rect x="46" y="30" width="34" height="46" rx="5" fill="#e5322d" opacity="0.85"/>
+    <rect x="134" y="30" width="34" height="46" rx="5" fill="#2f6bff" opacity="0.75"/>
+    <rect x="222" y="30" width="34" height="46" rx="5" fill="#22a55e" opacity="0.75"/>
+    <rect x="310" y="30" width="34" height="46" rx="5" fill="#d8a947" opacity="0.8"/>
+    <rect x="398" y="30" width="34" height="46" rx="5" fill="#8f5bff" opacity="0.7"/>
+  </g>
+
+  <!-- 左上小品牌字 -->
+  <g transform="translate(120,104)">
+    <circle r="15" fill="#e5322d"/>
+    <polygon points="-5,-8 9,0 -5,8" fill="#ffffff"/>
+    <text x="26" y="7" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" font-weight="800" fill="#ffffff" opacity="0.55" letter-spacing="4">KUNYING</text>
+  </g>
+
+  <!-- 金色装饰线与音符点缀(左下留白给标题字幕) -->
+  <rect x="120" y="360" width="150" height="4" rx="2" fill="url(#gold)" opacity="0.85"/>
+  <rect x="120" y="374" width="60" height="4" rx="2" fill="#3a3d49"/>
+
+  <!-- 底部细节 -->
+  <rect x="120" y="584" width="1680" height="1" fill="#262833"/>
+  <circle cx="120" cy="584" r="4" fill="#e5322d"/>
+</svg>

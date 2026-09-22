@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="640" viewBox="0 0 1920 640">
+  <defs>
+    <linearGradient id="b4bg" x1="0" y1="0" x2="1" y2="0.6">
+      <stop offset="0" stop-color="#0c1315"/><stop offset="0.5" stop-color="#0f171a"/><stop offset="1" stop-color="#0d2020"/>
+    </linearGradient>
+    <radialGradient id="b4glow" cx="0.72" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#1fb8a6" stop-opacity="0.32"/><stop offset="0.55" stop-color="#1fb8a6" stop-opacity="0.10"/><stop offset="1" stop-color="#1fb8a6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="640" fill="url(#b4bg)"/>
+  <rect width="1920" height="640" fill="url(#b4glow)"/>
+  <polygon points="1180,0 1490,0 990,640 810,640" fill="#ffffff" opacity="0.02"/>
+  <g transform="translate(1500,300)">
+    <circle r="150" fill="none" stroke="#1fb8a6" stroke-opacity="0.3" stroke-width="2" stroke-dasharray="5 11"/>
+    <circle r="108" fill="#1fb8a6" opacity="0.10"/>
+    <text x="-72" y="-6" font-family="sans-serif" font-size="60" font-weight="800" fill="#5fd6c6" letter-spacing="2">4K</text>
+    <text x="-72" y="44" font-family="sans-serif" font-size="26" fill="#5fd6c6" letter-spacing="6">蓝光画质</text>
+  </g>
+  <g transform="translate(120,104)">
+    <circle r="15" fill="#1fb8a6"/>
+    <polygon points="-5,-8 9,0 -5,8" fill="#0c1315"/>
+    <text x="26" y="7" font-family="sans-serif" font-size="20" font-weight="800" fill="#ffffff" opacity="0.55" letter-spacing="4">KUNYING</text>
+  </g>
+  <rect x="120" y="360" width="150" height="4" rx="2" fill="#1fb8a6" opacity="0.9"/>
+  <rect x="120" y="584" width="1680" height="1" fill="#262833"/>
+  <circle cx="120" cy="584" r="4" fill="#1fb8a6"/>
+</svg>

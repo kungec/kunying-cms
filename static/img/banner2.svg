@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="640" viewBox="0 0 1920 640">
+  <defs>
+    <linearGradient id="b2bg" x1="0" y1="0" x2="1" y2="0.6">
+      <stop offset="0" stop-color="#0f1116"/><stop offset="0.5" stop-color="#12151d"/><stop offset="1" stop-color="#101a2b"/>
+    </linearGradient>
+    <radialGradient id="b2glow" cx="0.72" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#2f6bff" stop-opacity="0.38"/><stop offset="0.55" stop-color="#2f6bff" stop-opacity="0.12"/><stop offset="1" stop-color="#2f6bff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="640" fill="url(#b2bg)"/>
+  <rect width="1920" height="640" fill="url(#b2glow)"/>
+  <polygon points="1180,0 1490,0 990,640 810,640" fill="#ffffff" opacity="0.02"/>
+  <g transform="translate(1450,250)">
+    <rect x="-40" y="-30" width="230" height="150" rx="12" fill="#182338" stroke="#2c3d5c" stroke-width="2" transform="rotate(-8)"/>
+    <rect x="0" y="-10" width="230" height="150" rx="12" fill="#1c2a44" stroke="#33507e" stroke-width="2" transform="rotate(4)"/>
+    <rect x="40" y="10" width="230" height="150" rx="12" fill="#223454" stroke="#3f66a3" stroke-width="2" transform="rotate(14)"/>
+    <polygon points="120,60 190,105 120,150" fill="#4d8bff" opacity="0.9"/>
+  </g>
+  <g transform="translate(1580,300)">
+    <circle r="150" fill="none" stroke="#2f6bff" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="5 11"/>
+    <text x="-95" y="-115" font-family="sans-serif" font-size="30" font-weight="800" fill="#4d8bff" letter-spacing="6">NEW</text>
+  </g>
+  <g transform="translate(120,104)">
+    <circle r="15" fill="#2f6bff"/>
+    <polygon points="-5,-8 9,0 -5,8" fill="#ffffff"/>
+    <text x="26" y="7" font-family="sans-serif" font-size="20" font-weight="800" fill="#ffffff" opacity="0.55" letter-spacing="4">KUNYING</text>
+  </g>
+  <rect x="120" y="360" width="150" height="4" rx="2" fill="#4d8bff" opacity="0.9"/>
+  <rect x="120" y="584" width="1680" height="1" fill="#262833"/>
+  <circle cx="120" cy="584" r="4" fill="#2f6bff"/>
+</svg>

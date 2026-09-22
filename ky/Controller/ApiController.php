@@ -1,0 +1,146 @@
+<?php
+/**
+ * 前台 - AJAX接口:支付回调/评论/收藏/播放记录/验证码图片
+ */
+class ApiController
+{
+    /* ===================== 支付异步通知 ===================== */
+
+    public function notify()
+    {
+        $type = preg_replace('/[^a-z0-9]/', '', Request::get('type'));
+        $ono = preg_replace('/[^A-Za-z0-9]/', '', Request::get('ono'));
+        if ($type === '' || $ono === '') { echo 'fail'; exit; }
+
+        if ($type === 'usdt') {
+            $order = Db::fetch("SELECT * FROM ky_order WHERE order_no=? AND status=0", [$ono]);
+            if ($order) PayController::checkUsdt($order);
+            echo 'success'; exit;
+        }
+        $data = Pay::verifyNotify($type);
+        if (!$data || strcasecmp((string)$data['out_trade_no'], $ono) !== 0) { echo 'fail'; exit; }
+        PayController::complete((string)$data['out_trade_no'], (string)$data['trade_no']);
+        echo 'success'; exit;
+    }
+
+    /* ===================== 评论 ===================== */
+
+    public function comment()
+    {
+        $user = Auth::user();
+        if (!$user) json_error('请先登录');
+        if (config('comment_enable', '1') != '1') json_error('评论已关闭');
+        if (Request::isPost()) Security::csrfCheck();
+        $vid = Request::jsonPost('vod_id', 0, 'i');
+        $content = mb_substr(trim(Request::jsonPost('content')), 0, 300);
+        if ($content === '') json_error('评论内容不能为空');
+        if (!Db::fetchOne("SELECT id FROM ky_vod WHERE id=? AND status=1", [$vid])) json_error('影片不存在');
+        // 简单刷评限制:60秒内1条
+        $last = Db::fetchOne("SELECT created FROM ky_comment WHERE user_id=? ORDER BY id DESC LIMIT 1", [$user['id']]);
+        if ($last && time() - (int)$last < 60) json_error('评论太频繁,稍后再试');
+        // 评论审核开关:开启时新评论为待审状态,审核通过后前台可见
+        $audit = config('comment_audit', '0') == '1';
+        Db::insert('ky_comment', ['user_id' => $user['id'], 'vod_id' => $vid, 'content' => $content, 'status' => $audit ? 0 : 1, 'created' => time()]);
+        json_ok(null, $audit ? '评论已提交,审核通过后展示' : '评论成功');
+    }
+
+    /* ===================== 收藏 ===================== */
+
+    public function fav()
+    {
+        $user = Auth::user();
+        if (!$user) json_error('请先登录');
+        if (Request::isPost()) Security::csrfCheck();
+        $vid = Request::jsonPost('vod_id', 0, 'i');
+        if (!Db::fetchOne("SELECT id FROM ky_vod WHERE id=? AND status=1", [$vid])) json_error('影片不存在');
+        $exists = Db::fetchOne("SELECT id FROM ky_fav WHERE user_id=? AND vod_id=?", [$user['id'], $vid]);
+        if ($exists) {
+            Db::delete('ky_fav', 'user_id=? AND vod_id=?', [$user['id'], $vid]);
+            json_ok(['fav' => false], '已取消收藏');
+        }
+        Db::insert('ky_fav', ['user_id' => $user['id'], 'vod_id' => $vid, 'created' => time()]);
+        json_ok(['fav' => true], '收藏成功');
+    }
+
+    /* ===================== 播放进度上报 ===================== */
+
+    public function progress()
+    {
+        $user = Auth::user();
+        if (!$user) json_ok();
+        $vid = Request::jsonPost('vod_id', 0, 'i');
+        $ep = Request::jsonPost('episode', 1, 'i');
+        $pos = (int)Request::jsonPost('position', 0, 'i');
+        if ($vid <= 0) json_ok();
+        Db::query(
+            "INSERT INTO ky_play_record (user_id,vod_id,episode,position,updated) VALUES (?,?,?,?,?)
+             ON DUPLICATE KEY UPDATE episode=VALUES(episode),position=VALUES(position),updated=VALUES(updated)",
+            [$user['id'], $vid, max(1, $ep), max(0, $pos), time()]
+        );
+        json_ok();
+    }
+
+    /* ===================== 验证码图片 ===================== */
+
+    public function image()
+    {
+        $scene = preg_replace('/[^a-z_]/', '', Request::get('scene', 'default'));
+        Captcha::output($scene === '' ? 'default' : $scene);
+    }
+
+    /* ===================== 瀑布流分页 ===================== */
+
+    public function more()
+    {
+        $mode = Request::get('mode', 'home') === 'type' ? 'type' : 'home';
+        $page = max(1, Request::get('page', 2, 'i'));
+        $pageSize = 24;
+        $cond = 'status=1';
+        $params = [];
+        if ($mode === 'type') {
+            $typeId = Request::get('type_id', 0, 'i');
+            if ($typeId > 0) {
+                $childIds = Db::fetchAll("SELECT id FROM ky_type WHERE pid=?", [$typeId]);
+                $ids = array_merge([$typeId], array_column($childIds, 'id'));
+                $cond .= ' AND type_id IN (' . implode(',', array_map('intval', $ids)) . ')';
+            }
+            foreach (['class', 'year', 'area'] as $f) {
+                $v = trim(Request::get($f, ''));
+                if ($v !== '') { $cond .= " AND {$f} LIKE ?"; $params[] = '%' . $v . '%'; }
+            }
+        }
+        $orderMap = ['time' => 'updatetime DESC', 'hits' => 'total_hits DESC', 'score' => 'score DESC', 'new' => 'addtime DESC'];
+        $order = $orderMap[Request::get('order', 'time')] ?? 'updatetime DESC';
+        $total = (int)Db::fetchOne("SELECT COUNT(*) FROM ky_vod WHERE {$cond}", $params);
+        $offset = ($page - 1) * $pageSize;
+        $list = Db::fetchAll("SELECT * FROM ky_vod WHERE {$cond} ORDER BY {$order} LIMIT {$pageSize} OFFSET {$offset}", $params);
+        $items = [];
+        foreach ($list as $v) {
+            $items[] = [
+                'id' => (int)$v['id'],
+                'name' => $v['name'],
+                'pic' => pic_url($v['pic']),
+                'remarks' => $v['remarks'],
+                'score' => (float)$v['score'],
+                'vip' => (int)$v['vip'],
+                'year' => $v['year'],
+                'ds' => mb_substr($v['class'] ?: (trim($v['area'] . ' ' . $v['year'])), 0, 30),
+            ];
+        }
+        json_ok(['list' => $items, 'has_more' => $page * $pageSize < $total, 'next_page' => $page + 1]);
+    }
+
+    /* ===================== 搜索建议 ===================== */
+
+    public function suggest()
+    {
+        // 联想使用独立限流桶(宽松),不影响正式搜索配额;触发限流时静默返回空
+        [$ok] = Security::rateLimit('suggest', 90, 60);
+        if (!$ok) json_ok([]);
+        $wd = trim(Request::get('wd', ''));
+        if ($wd === '' || mb_strlen($wd) < 1) json_ok([]);
+        $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $wd) . '%';
+        $list = Db::fetchAll("SELECT id,name,pic,remarks,year,area FROM ky_vod WHERE status=1 AND name LIKE ? ORDER BY total_hits DESC LIMIT 8", [$like]);
+        json_ok($list);
+    }
+}
