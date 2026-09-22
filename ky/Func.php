@@ -52,6 +52,7 @@ class VodService
      */
     public static function probeAsync(array $sources): void
     {
+        if (function_exists('session_write_close')) @session_write_close();
         @set_time_limit(120);
         foreach ($sources as $src) {
             try { self::probeDo($src); } catch (Throwable $t) {}

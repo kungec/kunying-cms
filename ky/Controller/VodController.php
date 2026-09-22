@@ -136,6 +136,9 @@ class VodController
         echo $html;
         // 页面已送达:断开用户连接,在后台完成源探测(结果写缓存,下次访问生效)
         if (!$allKnown) {
+            // 先释放会话锁再断开连接:否则后台探测期间(可达数十秒),用户紧接着的
+            // 任何请求都会阻塞在session_start上,表现为"进播放页后回首页卡"
+            if (function_exists('session_write_close')) @session_write_close();
             if (function_exists('fastcgi_finish_request')) @fastcgi_finish_request();
             @set_time_limit(120);
             VodService::probeAsync($sources);
