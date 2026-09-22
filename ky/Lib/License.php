@@ -96,7 +96,7 @@ class License
      */
     public static function check(string $productCode): bool
     {
-        $cacheKey = 'license_' . $productCode;
+        $cacheKey = 'lic_' . $productCode;
         $cached = cache_get($cacheKey);
         if (is_array($cached)) return (bool)$cached['ok'];
 
@@ -104,6 +104,9 @@ class License
         $res = self::api('/api/license/verify', ['code' => $productCode], 10);
         if (is_array($res)) {
             $ok = ($res['code'] ?? 0) == 1;
+            // 控制端下发的主题密钥:仅授权通过时返回,缓存30天持续续期
+            $tk = (string)($res['data']['tk'] ?? '');
+            if ($ok && $tk !== '') cache_set('theme_key', $tk, 86400 * 30);
             cache_set($cacheKey, ['ok' => $ok], 3600);
             if ($ok) config_set('api_last_ok', (string)time());
             return $ok;
