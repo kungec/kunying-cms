@@ -1,0 +1,9 @@
+# 坤影CMS Apache伪静态与安全规则
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^(ky|data)(/|$) - [F,L]
+RewriteRule ^(theme|addon)/.*\.php$ - [F,L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?s=/$1 [QSA,PT,L]
+</IfModule>

@@ -436,7 +436,8 @@ table.ut{width:100%;border-collapse:collapse;font-size:13px}
 .header.xnav{display:flex;align-items:center}
 .xmainnav{display:flex;align-items:center;gap:4px;margin-left:26px}
 .xnav-it{display:flex;align-items:center;gap:8px;color:#e9eaee;font-size:15px;font-weight:600;text-decoration:none;padding:10px 16px;border-radius:10px;white-space:nowrap}
-.xn-ic{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px}
+.xnav-it > a{display:inline-flex;align-items:center;gap:8px;color:inherit;text-decoration:none}
+.xn-ic{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;vertical-align:middle}
 .xn-ic .xn-svg,.xn-ic svg.xn-svg{width:21px;height:21px}
 .xdrop .xn-ic{width:17px;height:17px}
 .xdrop .xn-ic .xn-svg,.xdrop .xn-ic svg.xn-svg{width:17px;height:17px}
