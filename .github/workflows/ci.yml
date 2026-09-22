@@ -109,3 +109,10 @@ jobs:
           CODE=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/admin.php)
           [ "$CODE" != "500" ] || { echo "❌ 后台500"; exit 1; }
           echo "✅ E2E验证全部通过"
+      - name: 定时任务冒烟(采集逻辑守卫)
+        run: |
+          grep -q "Collector::runDue" ky/cron/collect.php || { echo "❌ 采集逻辑丢失!"; exit 1; }
+          OUT=$(php ky/cron/collect.php)
+          echo "$OUT"
+          echo "$OUT" | grep -q "done" || { echo "❌ cron未正常完成"; exit 1; }
+          echo "✅ 定时任务冒烟通过"
