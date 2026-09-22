@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin.php
+Disallow: /user/
+Disallow: /pay
+Disallow: /index.php?s=/user
+Disallow: /index.php?s=/pay
+
+Sitemap: https://ys.yujia.xyz/index.php?s=/index/sitemap

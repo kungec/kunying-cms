@@ -52,4 +52,33 @@ class IndexController
         $articles = Db::fetchAll("SELECT id,title,addtime FROM ky_article WHERE status=1 ORDER BY id DESC LIMIT 20");
         View::display('article', ['article' => $article, 'articles' => $articles]);
     }
+
+    /** 站点地图(缓存1小时) */
+    public function sitemap()
+    {
+        $ck = 'sitemap_xml';
+        $xml = cache_get($ck);
+        if (!is_string($xml) || $xml === '') {
+            $host = (is_https() ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? '');
+            $rw = config('rewrite_enable', '0') == '1';
+            $u = function ($p) use ($host, $rw) { return $host . ($rw ? $p : '/index.php?s=' . ltrim($p, '/')); };
+            $urls = [$u('/'), $u('/index.php?s=/index/sitemap')];
+            foreach (Db::fetchAll("SELECT id FROM ky_type WHERE status=1 ORDER BY sort ASC, id ASC LIMIT 100") as $t) {
+                $urls[] = $u('/index.php?s=/vod/type&id=' . (int)$t['id']);
+            }
+            foreach (Db::fetchAll("SELECT id,updatetime FROM ky_vod WHERE status=1 ORDER BY updatetime DESC LIMIT 5000") as $v) {
+                $urls[] = $u('/index.php?s=/vod/detail&id=' . (int)$v['id']);
+            }
+            $xml = '<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+            foreach ($urls as $link) {
+                $xml .= '<url><loc>' . htmlspecialchars($link, ENT_QUOTES) . '</loc></url>
+';
+            }
+            $xml .= '</urlset>';
+            cache_set($ck, $xml, 3600);
+        }
+        header('Content-Type: application/xml; charset=utf-8');
+        echo $xml;
+    }
 }

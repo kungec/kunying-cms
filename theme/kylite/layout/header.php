@@ -15,6 +15,22 @@ $siteName = config('site_name', '坤影影视');
 <title><?= e($pageTitle ?? $siteName) ?> - <?= e($siteName) ?></title>
 <meta name="keywords" content="<?= e($pageKeywords ?? config('site_keywords', '')) ?>">
 <meta name="description" content="<?= e($pageDescription ?? config('site_description', '')) ?>">
+<?php
+/* SEO:OG分享卡片+规范链接 */
+$seoBase = (is_https() ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? '');
+$seoTitle = trim((string)($pageTitle ?? '')) !== '' ? e($pageTitle) . ' - ' . e($siteName) : e($siteName);
+$seoDesc = e($pageDescription ?? config('site_description', ''));
+$seoImg = '';
+if (isset($vod) && $vod) {
+    $u = pic_url((string)$vod['pic']);
+    $seoImg = preg_match('#^https?://#i', $u) ? $u : $seoBase . $u;
+}
+?>
+<meta property="og:site_name" content="<?= e($siteName) ?>">
+<meta property="og:title" content="<?= $seoTitle ?>">
+<meta property="og:description" content="<?= $seoDesc ?>">
+<?php if ($seoImg !== ''): ?><meta property="og:image" content="<?= e($seoImg) ?>"><meta name="twitter:card" content="summary_large_image"><?php endif; ?>
+<?php if (isset($vod) && $vod): ?><link rel="canonical" href="<?= $seoBase ?><?= config('rewrite_enable', '0') == '1' ? '/detail-' . (int)$vod['id'] . '.html' : '/index.php?s=/vod/detail&id=' . (int)$vod['id'] ?>"><?php endif; ?>
 <link rel="stylesheet" href="<?= theme_url('static/css/main.css') ?>?v=<?= asset_v('/theme/' . active_theme() . '/static/css/main.css') ?>">
 </head>
 <body>
