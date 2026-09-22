@@ -206,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 3) {
 
         echo json_encode(['code' => 1, 'msg' => '安装成功', 'perm_failed' => $permFailed, 'install_removed' => $installRemoved]);
     } catch (Throwable $t) {
-        echo json_encode(['code' => 0, 'msg' => '安装失败:' . $t->getMessage()]);
+        echo json_encode(['code' => 0, 'msg' => '安装失败:' . $t->getMessage() . ' @' . basename($t->getFile()) . ':' . $t->getLine()]);
     }
     exit;
 }
