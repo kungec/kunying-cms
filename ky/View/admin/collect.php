@@ -166,7 +166,7 @@ async function delApi(id){
   var j=await api('/admin.php?s=/content/collectdel',d);
   j.code===1?location.reload():toast(j.msg,false);
 }
-var rAdd=0,rUpd=0,rStop=false,running=false;
+var rAdd=0,rUpd=0,rStop=false,running=false,rRetry=0,rSkip=0;
 function startRun(id,name){
   runApiName.textContent=name||('接口 #'+id);
   runBox.dataset.api=id;
@@ -198,9 +198,10 @@ async function runPage(){
   d.append('page',r_page.value);
   d.append('type_id',0);
   d.append('hours',r_hours.value);
-  var j=await api('/admin.php?s=/content/collectrun',d);
+  var j;try{j=await api('/admin.php?s=/content/collectrun',d)}catch(e){j={code:0,msg:'网络异常或处理超时'}}
   if(j.code===1){
-    rAdd+=(+j.data.added||0);rUpd+=(+j.data.updated||0);
+    rRetry=0;rSkip=0;
+    rAdd+=(+j.data.added||0);rUpd+=(+j.data.updated||0);rUpd+=(+j.data.updated||0);
     var pc=Math.max(1,+j.data.pagecount||1);
     bcPage.textContent=page;bcCount.textContent=pc;
     var pct=Math.min(100,Math.round(page/pc*100));
@@ -238,7 +239,22 @@ async function runPage(){
       setTimeout(runPage,dly);return;
     }
   }else{
-    toast('✗ '+j.msg,false);
+    rRetry++;
+    if(rRetry<=3){
+      running=false;
+      toast('第'+page+'页失败,自动重试'+rRetry+'/3…',false);
+      setTimeout(runPage,3000*rRetry);return;
+    }
+    rSkip++;
+    if(rSkip>=10){
+      toast('连续10页失败,已停止采集,请检查资源站是否可访问',false);
+    }else{
+      rRetry=0;
+      toast('第'+page+'页连续失败,15秒后跳过继续',false);
+      r_page.value=page+1;
+      running=false;
+      setTimeout(runPage,15000);return;
+    }
   }
   r_go.disabled=false;r_go.textContent='▶ 开始采集';
   r_stop.textContent='⏹ 停止';

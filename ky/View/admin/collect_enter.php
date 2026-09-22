@@ -112,7 +112,7 @@ async function saveSpeed(v){
   if(j.code===1)toast('采集速度已保存',true);
 }
 
-var taskAdd = 0, taskUpd = 0, stopFlag = false;
+var taskAdd = 0, taskUpd = 0, stopFlag = false, eRetry = 0, eSkip = 0;
 running = false;
 document.getElementById('e_stop').onclick = function(){ stopFlag = true; this.textContent = '将在本页后停止…'; };
 
@@ -130,8 +130,9 @@ async function startCollect(){
   bcPage.textContent = page;
   var d0 = new FormData(); d0.append('id', apiId);
   var j0 = await api('/admin.php?s=/content/collectclasses', d0).catch(function(){return null});
-  var j = await api('/admin.php?s=/content/collectrun', d);
+  var j; try { j = await api('/admin.php?s=/content/collectrun', d); } catch (e) { j = { code: 0, msg: '网络异常或处理超时' }; }
   if (j.code === 1) {
+    eRetry = 0; eSkip = 0;
     taskAdd += (+j.data.added || 0); taskUpd += (+j.data.updated || 0);
     var pc = Math.max(1, +j.data.pagecount || 1);
     bcPage.textContent = page; bcCount.textContent = pc;
@@ -172,7 +173,22 @@ async function startCollect(){
       e_log.textContent = '★ 采集完成!累计新增 ' + taskAdd + ' 部,更新 ' + taskUpd + ' 部';
     }
   } else {
-    e_log.textContent = '✗ 失败:' + j.msg;
+    eRetry++;
+    if (eRetry <= 3) {
+      running = false;
+      e_log.textContent = '✗ 第' + page + '页失败,自动重试' + eRetry + '/3…(' + j.msg + ')';
+      setTimeout(startCollect, 3000 * eRetry); return;
+    }
+    eSkip++;
+    if (eSkip >= 10) {
+      e_log.textContent = '✗ 连续10页失败,已停止采集,请检查资源站是否可访问';
+    } else {
+      eRetry = 0;
+      e_log.textContent = '✗ 第' + page + '页连续失败,15秒后跳过继续';
+      e_page.value = page + 1;
+      running = false;
+      setTimeout(startCollect, 15000); return;
+    }
   }
   e_go.disabled = false; e_go.textContent = '▶ 开始采集入库';
   document.getElementById('e_stop').textContent = '⏹ 停止';

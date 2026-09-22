@@ -363,7 +363,7 @@ class AdminContentController
      */
     public function dupscan()
     {
-        @set_time_limit(120);
+        @set_time_limit(600);
         $all = Db::fetchAll("SELECT id, name, pic, year, remarks, play_from, type_id, status FROM ky_vod ORDER BY id ASC");
         $norms = []; $seasons = [];
         foreach ($all as $v) {
@@ -505,7 +505,7 @@ class AdminContentController
      */
     public function collectrun()
     {
-        @set_time_limit(120);
+        @set_time_limit(600);
         $apiId = Request::post('api_id', 0, 'i');
         $page = max(1, Request::post('page', 1, 'i'));
         $typeId = Request::post('type_id', 0, 'i');
