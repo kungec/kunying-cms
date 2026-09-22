@@ -135,6 +135,56 @@ class UserController
         redirect('/');
     }
 
+    /* ===================== 忘记密码 ===================== */
+
+    public function forgot()
+    {
+        if (config('member_enable', '1') != '1') halt_msg('会员系统已关闭');
+        if (Request::isPost()) {
+            Security::csrfCheck();
+            $step = (string)Request::post('step', 'send');
+            $email = strtolower(trim(Request::post('email', '')));
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) json_error('邮箱格式不正确');
+            $user = Db::fetch("SELECT * FROM ky_user WHERE email=?", [$email]);
+            if ($step === 'send') {
+                if (!$user) json_error('该邮箱未注册');
+                if ((int)Db::fetchOne("SELECT COUNT(*) FROM ky_email_code WHERE created>?", [time() - 60]) > 200) json_error('发送繁忙,请稍后再试');
+                $last = Db::fetchOne("SELECT created FROM ky_email_code WHERE email=? AND type='reset' ORDER BY id DESC LIMIT 1", [$email]);
+                if ($last && time() - (int)$last < 60) json_error('发送过于频繁,请1分钟后再试');
+                if ((int)Db::fetchOne("SELECT COUNT(*) FROM ky_email_code WHERE email=? AND type='reset' AND created>?", [$email, time() - 600]) >= 3) json_error('验证码发送次数已达上限');
+                if (config('smtp_host', '') === '') json_error('邮件服务未配置,请联系站长');
+                $code = rand_str(6, '0123456789');
+                Db::insert('ky_email_code', ['email' => $email, 'code' => $code, 'type' => 'reset', 'expire' => time() + 600, 'used' => 0, 'created' => time()]);
+                if (!Mailer::sendCode($email, $code)) json_error('邮件发送失败,请稍后再试');
+                json_ok(null, '重置码已发送,请查收邮箱');
+            }
+            // step=reset:验证并重置
+            $code = trim((string)Request::post('code'));
+            $pwd = (string)Request::post('password');
+            $re = (string)Request::post('repassword');
+            if (!$user) json_error('该邮箱未注册');
+            if (strlen($pwd) < 6) json_error('新密码至少6位');
+            if ($pwd !== $re) json_error('两次密码不一致');
+            // 重置尝试限流:同IP+邮箱 10次/10分钟
+            $fk = 'frs_' . substr(md5(client_ip() . '|' . $email), 0, 16);
+            $fails = cache_get($fk);
+            if (!is_array($fails)) $fails = ['n' => 0, 't' => time()];
+            if ((int)$fails['n'] >= 10 && time() - (int)$fails['t'] < 600) json_error('尝试次数过多,请10分钟后再试');
+            $row = Db::fetch("SELECT * FROM ky_email_code WHERE email=? AND code=? AND type='reset' AND used=0 AND expire>? ORDER BY id DESC LIMIT 1", [$email, $code, time()]);
+            if (!$row) {
+                $fails['n'] = (int)$fails['n'] + 1;
+                $fails['t'] = time();
+                cache_set($fk, $fails, 600);
+                json_error('重置码错误或已过期');
+            }
+            cache_del($fk);
+            Db::update('ky_email_code', ['used' => 1], 'id=?', [$row['id']]);
+            Db::update('ky_user', ['pwd' => password_hash($pwd, PASSWORD_DEFAULT)], 'id=?', [$user['id']]);
+            json_ok(['redirect' => '/user/login'], '密码已重置,请用新密码登录');
+        }
+        View::display('user/forgot', []);
+    }
+
     /* ===================== 用户中心 ===================== */
 
     /**

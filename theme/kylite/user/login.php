@@ -16,6 +16,7 @@ include theme_path('layout/header.php');
     <input type="hidden" name="_csrf" value="<?= e(Security::csrfToken()) ?>">
     <button class="abtn" type="submit" id="go">登 录</button>
     <?php if (config('register_enable', '1') == '1'): ?><a class="abtn ghost" href="/user/register">没有账号?立即注册</a><?php endif; ?>
+    <a class="abtn ghost" href="/user/forgot">忘记密码?</a>
     <p class="aalt">同一账号同IP连续失败5次将锁定1小时</p>
   </form>
 </div>
