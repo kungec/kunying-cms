@@ -186,6 +186,8 @@ async function saveSpeed(v){
   var j=await api('/admin.php?s=/content/speedsave',d);
   if(j.code===1)toast('采集速度已保存:'+(v==='gentle'?'温和':v==='slow'?'慢速':v==='fast'?'极速':'标准'),true);
 }
+/* 切换到按时间筛选(24/12/6小时)时,资源站总页数会变少,自动把起始页重置为1 */
+r_hours.addEventListener('change',function(){ if(r_hours.value!=='0') r_page.value=1; });
 async function runPage(){
   if(running)return; running=true;
   r_go.disabled=true;r_go.textContent='采集中…';
@@ -203,6 +205,17 @@ async function runPage(){
     rRetry=0;rSkip=0;
     rAdd+=(+j.data.added||0);rUpd+=(+j.data.updated||0);rUpd+=(+j.data.updated||0);
     var pc=Math.max(1,+j.data.pagecount||1);
+    if(page>pc){
+      bcPage.textContent=pc;bcCount.textContent=pc;
+      progBar.style.width='100%';
+      stProg.textContent=pc+' / '+pc+' 页 (100%)';
+      toast('当前筛选范围下资源站共'+pc+'页,起始页'+page+'已超出,起始页已重置为'+pc+',请调整采集范围或起始页',false);
+      r_page.value=pc;
+      r_go.disabled=false;r_go.textContent='▶ 开始采集';
+      r_stop.textContent='⏹ 停止';
+      running=false;
+      return;
+    }
     bcPage.textContent=page;bcCount.textContent=pc;
     var pct=Math.min(100,Math.round(page/pc*100));
     progBar.style.width=pct+'%';

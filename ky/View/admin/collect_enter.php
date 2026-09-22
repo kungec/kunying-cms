@@ -116,6 +116,8 @@ var taskAdd = 0, taskUpd = 0, stopFlag = false, eRetry = 0, eSkip = 0;
 running = false;
 document.getElementById('e_stop').onclick = function(){ stopFlag = true; this.textContent = '将在本页后停止…'; };
 
+/* 切换到按时间筛选时自动重置起始页为1 */
+document.getElementById('e_hours').addEventListener('change', function(){ if (this.value !== '0') document.getElementById('e_page').value = 1; });
 async function startCollect(){
   if (running) return; running = true; stopFlag = false;
   e_go.disabled = true; e_go.textContent = '采集中…';
@@ -135,6 +137,17 @@ async function startCollect(){
     eRetry = 0; eSkip = 0;
     taskAdd += (+j.data.added || 0); taskUpd += (+j.data.updated || 0);
     var pc = Math.max(1, +j.data.pagecount || 1);
+    if (page > pc) {
+      bcPage.textContent = pc; bcCount.textContent = pc;
+      progBar.style.width = '100%';
+      stProg.textContent = pc + ' / ' + pc + ' 页 (100%)';
+      e_log.textContent = '⚠ 当前筛选范围下资源站共' + pc + '页,起始页' + page + '已超出,起始页已重置为' + pc + ',请调整采集范围或起始页';
+      e_page.value = pc;
+      e_go.disabled = false; e_go.textContent = '▶ 开始采集入库';
+      document.getElementById('e_stop').textContent = '⏹ 停止';
+      running = false;
+      return;
+    }
     bcPage.textContent = page; bcCount.textContent = pc;
     var pct = Math.min(100, Math.round(page / pc * 100));
     progBar.style.width = pct + '%';
