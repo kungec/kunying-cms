@@ -41,6 +41,20 @@ function env_checks(string $root): array
     return $items;
 }
 
+/* ---------------- 递归删除目录(安装成功后自删install) ---------------- */
+function rrmdir(string $dir): bool
+{
+    if (!is_dir($dir)) return true;
+    $items = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($items as $f) {
+        $f->isDir() ? @rmdir($f->getPathname()) : @unlink($f->getPathname());
+    }
+    return @rmdir($dir);
+}
+
 /* ---------------- 工作目录755权限(安装时统一落位) ---------------- */
 function ensure_perms(string $root): array
 {
@@ -187,7 +201,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 3) {
 
         file_put_contents($lockFile, 'installed:' . date('Y-m-d H:i:s') . "\n", LOCK_EX);
 
-        echo json_encode(['code' => 1, 'msg' => '安装成功', 'perm_failed' => $permFailed]);
+        // 安装完成自动删除install目录(失败不阻塞,页面会提示手动删除)
+        $installRemoved = rrmdir($root . '/install');
+
+        echo json_encode(['code' => 1, 'msg' => '安装成功', 'perm_failed' => $permFailed, 'install_removed' => $installRemoved]);
     } catch (Throwable $t) {
         echo json_encode(['code' => 0, 'msg' => '安装失败:' . $t->getMessage()]);
     }
@@ -317,7 +334,7 @@ async function doInstall(ev){
     var j=await r.json();
     if(j.code===1){
       var permTip = (j.perm_failed && j.perm_failed.length) ? '<div class="tip" style="color:#e5322d">以下目录权限未就绪(影响在线装主题),请SSH执行: chmod -R 755 '+j.perm_failed.join(' ')+'</div>' : '';
-      document.querySelector('.box').innerHTML='<div class="logo"><div class="i"></div><h1>安装完成 🎉</h1></div><table><tr><td>后台地址</td><td style="color:#e5322d;font-weight:600">/admin.php</td></tr><tr><td>管理账号</td><td>'+f.admin_user.value.replace(/</g,'&lt;')+'</td></tr></table><a class="btn" style="display:block;text-align:center;text-decoration:none" href="/admin.php">进入后台</a><a class="btn plain" style="display:block;text-align:center;text-decoration:none" href="/">访问首页</a>'+permTip+'<div class="tip">出于安全考虑,建议删除 install 目录</div>';
+      document.querySelector('.box').innerHTML='<div class="logo"><div class="i"></div><h1>安装完成 🎉</h1></div><table><tr><td>后台地址</td><td style="color:#e5322d;font-weight:600">/admin.php</td></tr><tr><td>管理账号</td><td>'+f.admin_user.value.replace(/</g,'&lt;')+'</td></tr></table><a class="btn" style="display:block;text-align:center;text-decoration:none" href="/admin.php">进入后台</a><a class="btn plain" style="display:block;text-align:center;text-decoration:none" href="/">访问首页</a>'+permTip+(j.install_removed?'<div class="tip" style="color:#1a9c6b">✅ install 目录已自动删除</div>':'<div class="tip" style="color:#e5a03c">⚠ install 目录自动删除失败,请通过FTP/面板手动删除</div>');
     }else{
       var e=document.getElementById('err'); e.style.display='block'; e.textContent=j.msg;
       go.disabled=false; go.textContent='立即安装';
