@@ -57,6 +57,11 @@
 ### 3. 伪静态（可选但推荐）
 Nginx 参考（宝塔用户在网站设置-伪静态中添加）：
 ```nginx
+# ---- 安全防护(必须放在最前面) ----
+location ~* ^/(ky|data)/ { deny all; }
+location ~* ^/(theme|addon)/.*\.php$ { deny all; }
+location ~* ^/upload/.*\.(php|phtml|phar)$ { deny all; }
+# ---- 伪静态 ----
 location / { try_files $uri $uri/ /index.php?s=$uri&$query_string; }
 rewrite ^/detail-(\d+)\.html$ /index.php?s=/vod/detail&id=$1 last;
 rewrite ^/type-(\d+)\.html$ /index.php?s=/vod/type&id=$1 last;
