@@ -1,0 +1,10 @@
+# 禁止执行任何脚本
+<FilesMatch "\.(?i:php|phtml|phar|php3|php4|php5|php7|phps)$">
+Require all denied
+</FilesMatch>
+<IfModule !mod_authz_core.c>
+<FilesMatch "\.(?i:php|phtml|phar|php3|php4|php5|php7|phps)$">
+Order allow,deny
+Deny from all
+</FilesMatch>
+</IfModule>

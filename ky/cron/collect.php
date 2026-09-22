@@ -3,6 +3,7 @@
  * 定时采集CLI入口(可选,比访客触发更可靠)
  * crontab示例(每30分钟执行一次): echo 0,30 代替分位,即 0,30 * * * * php /站点目录/ky/cron/collect.php
  */
+if (PHP_SAPI !== 'cli') { http_response_code(403); exit('Forbidden'); }
 define('KY_SUB_DIR', '');
 require dirname(__DIR__) . '/bootstrap.php';
 

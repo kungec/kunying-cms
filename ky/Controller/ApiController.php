@@ -19,7 +19,7 @@ class ApiController
         }
         $data = Pay::verifyNotify($type);
         if (!$data || strcasecmp((string)$data['out_trade_no'], $ono) !== 0) { echo 'fail'; exit; }
-        PayController::complete((string)$data['out_trade_no'], (string)$data['trade_no']);
+        PayController::complete((string)$data['out_trade_no'], (string)$data['trade_no'], isset($data['money']) ? (float)$data['money'] : null);
         echo 'success'; exit;
     }
 

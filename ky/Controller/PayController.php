@@ -128,10 +128,12 @@ class PayController
     /**
      * 支付完成发货(积分/VIP)
      */
-    public static function complete(string $orderNo, string $tradeNo): bool
+    public static function complete(string $orderNo, string $tradeNo, ?float $money = null): bool
     {
         $order = Db::fetch("SELECT * FROM ky_order WHERE order_no=? AND status=0", [$orderNo]);
         if (!$order) return false;
+        // 回调金额与订单金额不符即拒绝入账(防可改金额渠道绕过)
+        if ($money !== null && abs($money - (float)$order['amount']) > 0.01) return false;
         Db::begin();
         try {
             $n = Db::update('ky_order', ['status' => 1, 'trade_no' => mb_substr($tradeNo, 0, 60), 'paid_time' => time()], 'order_no=? AND status=0', [$orderNo]);

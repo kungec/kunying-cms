@@ -1,0 +1,6 @@
+# 禁止Web直接访问(Nginx用户参考README的server防护配置)
+Require all denied
+<IfModule !mod_authz_core.c>
+Order allow,deny
+Deny from all
+</IfModule>

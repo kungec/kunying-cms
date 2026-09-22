@@ -166,7 +166,6 @@ class Pay
         $headers = [];
         $apiKey = trim((string)config('usdt_trongrid_key', ''));
         if ($apiKey !== '') $headers[] = 'TRON-PRO-API-KEY: ' . $apiKey;
-        $data = $headers ? null : null;
         $body = Http::request($url, 'GET', null, 15, $headers);
         $data = $body ? json_decode($body, true) : null;
         if (!is_array($data) || empty($data['data'])) return null;
