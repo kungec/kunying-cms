@@ -115,8 +115,8 @@ class ProxyController
         if (preg_match('#^https?://#i', $link)) return $link;
         $p = parse_url($baseUrl);
         $origin = ($p['scheme'] ?? 'https') . '://' . ($p['host'] ?? '') . (isset($p['port']) ? ':' . $p['port'] : '');
-        if (str_starts_with($link, '//')) return ($p['scheme'] ?? 'https') . ':' . $link;
-        if (str_starts_with($link, '/')) return $origin . $link;
+        if ((strpos($link, '//') === 0)) return ($p['scheme'] ?? 'https') . ':' . $link;
+        if ((strpos($link, '/') === 0)) return $origin . $link;
         // 相对路径:基于目录
         $dir = isset($p['path']) ? preg_replace('#/[^/]*$#', '/', $p['path']) : '/';
         return $origin . $dir . $link;

@@ -45,7 +45,7 @@ class Collector
                 'remarks' => mb_substr(trim((string)($item['vod_remarks'] ?? '')), 0, 20),
                 'status' => $r, // 1=新增 2=更新 0=跳过
                 'pic' => mb_substr($pic, 0, 300),
-                'pic_local' => str_starts_with($pic, '/upload/vod/'),
+                'pic_local' => (strpos($pic, '/upload/vod/') === 0),
             ];
         }
         return [

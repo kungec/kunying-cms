@@ -27,6 +27,9 @@ jobs:
             OUT=$(php -l "$f" 2>&1) || { echo "✗ $f"; echo "$OUT"; ERR=1; }
           done < <(find . -name "*.php" -not -path "./data/cache/*")
           exit $ERR
+      - name: PHP7.4兼容性函数扫描(禁用PHP8专属函数)
+        run: |
+          ! grep -rnE "str_contains\(|str_starts_with\(|str_ends_with\(" --include="*.php" ky install theme/kylite
 
   docker:
     name: Docker配置校验

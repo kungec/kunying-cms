@@ -28,7 +28,7 @@ class Addon
         // 安全检查:禁止压缩包内含路径穿越与php非法位置由目录规则限制
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $name = (string)$zip->getNameIndex($i);
-            if ($name === '' || str_contains($name, '..') || str_starts_with($name, '/') || preg_match('#^[a-zA-Z]:#', $name)) {
+            if ($name === '' || (strpos($name, '..') !== false) || (strpos($name, '/') === 0) || preg_match('#^[a-zA-Z]:#', $name)) {
                 $zip->close();
                 throw new RuntimeException('安装包含非法路径:' . $name);
             }

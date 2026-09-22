@@ -43,7 +43,7 @@ class Updater
         if ($zip->open($tmpZip) !== true) return [false, '更新包无法解压'];
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $name = (string)$zip->getNameIndex($i);
-            if (str_contains($name, '..') || str_starts_with($name, '/')) { $zip->close(); return [false, '更新包含非法路径']; }
+            if ((strpos($name, '..') !== false) || (strpos($name, '/') === 0)) { $zip->close(); return [false, '更新包含非法路径']; }
             // 不允许覆盖数据与安装目录
             if (preg_match('#^(data|install|config)/#', ltrim($name, './'))) { $zip->close(); return [false, '更新包含受保护目录']; }
         }

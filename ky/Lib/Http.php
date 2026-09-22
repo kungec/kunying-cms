@@ -109,7 +109,7 @@ class Http
                     $origin = ($pp['scheme'] ?? 'https') . '://' . ($pp['host'] ?? '') . (isset($pp['port']) ? ':' . $pp['port'] : '');
                     if (stripos($loc, 'http') !== 0) {
                         $path = $pp['path'] ?? '/';
-                        $loc = str_starts_with($loc, '/') ? $origin . $loc : $origin . rtrim($path, '/') . '/' . ltrim($loc, '/');
+                        $loc = (strpos($loc, '/') === 0) ? $origin . $loc : $origin . rtrim($path, '/') . '/' . ltrim($loc, '/');
                     }
                     $url = $loc;
                     continue;
