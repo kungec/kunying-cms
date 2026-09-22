@@ -50,3 +50,62 @@ jobs:
             [ -f "$f" ] || { echo "缺失关键文件: $f"; exit 1; }
           done
           echo "核心文件完整 ✓"
+
+  install-e2e:
+    name: 全新安装E2E验证
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ciroot
+          MYSQL_DATABASE: ky_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, gd, mbstring, zip, fileinfo, openssl, curl
+          coverage: none
+      - name: 等待MySQL就绪
+        run: |
+          for i in $(seq 1 30); do
+            mysql -h127.0.0.1 -uroot -pciroot -e "SELECT 1" >/dev/null 2>&1 && break
+            sleep 2
+          done
+          mysql -h127.0.0.1 -uroot -pciroot -e "SELECT 1" >/dev/null
+      - name: 启动内置服务器(router)
+        run: nohup php -S 127.0.0.1:8080 router.php > server.log 2>&1 &
+      - name: 执行一键安装
+        run: |
+          sleep 1
+          R=$(curl -s -X POST "http://127.0.0.1:8080/install/?step=3" \
+            --data-urlencode "db_host=127.0.0.1" \
+            --data-urlencode "db_port=3306" \
+            --data-urlencode "db_name=ky_ci" \
+            --data-urlencode "db_user=root" \
+            --data-urlencode "db_pass=ciroot" \
+            --data-urlencode "admin_user=ciadmin" \
+            --data-urlencode "admin_pass=CiAdmin12345" \
+            --data-urlencode "admin_repass=CiAdmin12345")
+          echo "$R"
+          echo "$R" | grep -q '"code":1' || { echo "❌ 安装失败"; exit 1; }
+          echo "$R" | grep -q '"install_removed":true' || { echo "❌ install目录未自动删除"; exit 1; }
+          [ ! -d install ] || { echo "❌ install目录仍存在"; exit 1; }
+          echo "✅ 安装成功且install已自动删除"
+      - name: 验证站点可用性
+        run: |
+          sleep 1
+          [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/)" = "200" ] || { echo "❌ 首页异常"; exit 1; }
+          curl -s http://127.0.0.1:8080/robots.txt | grep -q "Sitemap" || { echo "❌ robots缺sitemap"; exit 1; }
+          curl -s "http://127.0.0.1:8080/index.php?s=/index/sitemap" | grep -q "<urlset" || { echo "❌ sitemap异常"; exit 1; }
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/admin.php)
+          [ "$CODE" != "500" ] || { echo "❌ 后台500"; exit 1; }
+          echo "✅ E2E验证全部通过"
