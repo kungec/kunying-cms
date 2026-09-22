@@ -193,7 +193,9 @@ function buildPlayer(autoplay){
   if (!box) return;
   if (player) { try { player.destroy(); } catch(e) {} player = null; }
   box.innerHTML = '<div id="kunplayerInner" style="width:100%;height:100%"></div>';
-  var src = kyVod.sources[curSid], ep = src.episodes[curEp-1];
+  var src = kyVod.sources[curSid];
+  if (curEp > src.episodes.length) curEp = src.episodes.length;
+  var ep = src.episodes[curEp-1];
   if (!ep) return;
   var recordPos = (curSid === startSid && curEp === startEp) ? startPos : 0;
   player = new KunPlayer({
@@ -215,19 +217,23 @@ function buildPlayer(autoplay){
       } catch(e) {}
     },
     onStreamError: function(){
+      var v = player && player.video;
+      /* 已观看超过5秒的中途断流:不抢跳,提示处理;刚起播的失败才自动换线且保持集数 */
+      if (v && v.currentTime > 5) { kyToast('网络波动,播放中断,请刷新重试或手动切换线路', false); return; }
       streamErrs++;
       if (streamErrs >= kyVod.sources.length) { kyToast('所有线路均无法播放,请稍后再试', false); return; }
       var n = (curSid + 1) % kyVod.sources.length;
-      kyToast('当前线路无法播放,已自动切换到线路' + (n + 1), false);
-      switchSource(n);
+      kyToast('当前线路无法播放,已自动切换到线路' + (n + 1) + '第' + curEp + '集', false);
+      switchSource(n, true);
     }
   });
   player.video.addEventListener('playing', function(){ streamErrs = 0; });
   if (autoplay) { try { player.video.play(); } catch(e) {} }
 }
-function switchSource(i){
+function switchSource(i, keepEp){
   if (i === curSid) return;
-  curSid = i; curEp = 1;
+  curSid = i;
+  if (!keepEp) curEp = 1;
   renderEpGrid(); buildPlayer(true);
 }
 function playEpisode(n){
