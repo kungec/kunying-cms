@@ -1,0 +1,11 @@
+# 运行时数据(保留目录结构)
+data/cache/*
+data/upload/*
+data/license/*
+upload/vod/*
+!data/cache/.gitkeep
+!data/upload/.gitkeep
+!data/license/.gitkeep
+!upload/vod/.gitkeep
+.DS_Store
+*.log
