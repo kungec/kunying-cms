@@ -153,6 +153,10 @@ input::placeholder,textarea::placeholder{color:var(--sub2)}
 
 /* ─── 底部 ─── */
 .kfooter{background:var(--card);border-top:1px solid var(--line);padding:32px 24px;text-align:center;color:var(--sub);font-size:12px;line-height:2.2;margin-top:40px}
+.kflink{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 14px;max-width:960px;margin:0 auto 12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.kflink-t{font-weight:700;color:var(--tx)}
+.kflink a{color:var(--sub);text-decoration:none;padding:2px 8px;border-radius:8px;transition:all .2s}
+.kflink a:hover{color:var(--pri);background:rgba(99,102,241,.08)}
 
 /* ─── 兼容旧类 ─── */
 .sec{margin-bottom:28px}
