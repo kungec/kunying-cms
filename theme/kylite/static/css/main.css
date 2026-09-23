@@ -56,9 +56,14 @@ button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit
 .knav a.on{color:var(--pri);font-weight:600;background:var(--pri-soft)}
 
 /* 用户区域 */
-.kuser{position:absolute;right:24px;display:flex;gap:12px;align-items:center}
-.kuser a{color:var(--sub);font-size:13px;padding:6px 12px;border-radius:var(--radius-sm);transition:all var(--transition)}
+.kuser{position:absolute;right:24px;display:flex;gap:6px;align-items:center}
+.kuser a{color:var(--sub);font-size:13px;padding:7px 16px;border-radius:var(--radius-sm);transition:all .2s;font-weight:500}
 .kuser a:hover{color:var(--pri);background:var(--pri-soft)}
+.kuser a.kreg{background:var(--pri-grad);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(99,102,241,.25)}
+.kuser a.kreg:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,.35);color:#fff}
+.kuser .theme-toggle{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .25s;color:var(--sub);font-size:0;padding:0}
+.kuser .theme-toggle:hover{border-color:var(--pri);color:var(--pri);transform:rotate(30deg)}
+.kuser .theme-toggle svg{width:16px;height:16px}
 
 /* ─── 暗色模式切换按钮 ─── */
 .theme-toggle{position:absolute;right:120px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all var(--transition);border:none;box-shadow:var(--shadow-sm)}
@@ -401,3 +406,7 @@ td{padding:10px;border-bottom:1px solid var(--line)}
 body{animation:pageLoad .3s ease}
 @keyframes pageLoad{from{opacity:0}to{opacity:1}}
 /* 图片加载优化 */
+
+/* ─── 暗色模式悬浮球 ─── */
+#ky-theme-fab{position:fixed;right:20px;bottom:80px;z-index:900;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sub);transition:all .25s}
+#ky-theme-fab:hover{color:var(--red2);border-color:var(--red2);transform:scale(1.1)}

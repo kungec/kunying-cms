@@ -520,3 +520,7 @@ table.ut{width:100%;border-collapse:collapse;font-size:13px}
   body{padding-bottom:64px}
   .returntop,.xhero-dots{bottom:80px}
 }
+
+/* ─── 暗色模式悬浮球 ─── */
+#ky-theme-fab{position:fixed;right:20px;bottom:80px;z-index:900;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sub);transition:all .25s}
+#ky-theme-fab:hover{color:var(--pri);border-color:var(--pri);transform:scale(1.1)}

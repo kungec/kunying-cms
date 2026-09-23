@@ -49,6 +49,13 @@ if (isset($vod) && $vod) {
     document.documentElement.setAttribute('data-theme','dark');
   }
 })();
+function updateThemeIcon(){
+  var icon=document.getElementById('themeIcon');
+  if(icon)icon.innerHTML=document.documentElement.getAttribute('data-theme')==='dark'
+    ?'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>'
+    :'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
+}
+document.addEventListener('DOMContentLoaded',function(){updateThemeIcon()});
 function toggleTheme(){
   var html = document.documentElement;
   var isDark = html.getAttribute('data-theme') === 'dark';
@@ -89,15 +96,10 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
       <?php endforeach; ?>
     </nav>
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
     <div class="kuser">
-      <?php if ($curUser): ?>
-      <a href="/user/center"><?= e(mb_substr($curUser['name'], 0, 12)) ?></a>
-      <a href="/user/logout">退出</a>
-      <?php else: ?>
+      <button class="theme-toggle" id="themeBtn" title="切换暗色模式"><svg id="themeIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
       <a href="/user/login">登录</a>
-      <?php if (config('register_enable', '1') == '1'): ?><a href="/user/register">注册</a><?php endif; ?>
-      <?php endif; ?>
+      <?php if (config('register_enable', '1') == '1'): ?><a class="kreg" href="/user/register">注册</a><?php endif; ?>
     </div>
   </div>
 </header>
