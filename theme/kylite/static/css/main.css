@@ -65,14 +65,14 @@ button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit
 .theme-toggle:hover{transform:scale(1.1);box-shadow:var(--shadow)}
 
 /* ─── 搜索卡片 ─── */
-.ksearch-card{background:linear-gradient(135deg,var(--pri) 0%,#8b5cf6 100%);border-radius:var(--radius-lg);margin:24px auto;max-width:1440px;padding:52px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;position:relative;overflow:hidden}
-.ksearch-card::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='1.5' fill='white' opacity='.15'/%3E%3C/svg%3E");opacity:.5}
-.ksearch-card h2{color:#fff;font-size:24px;font-weight:800;text-align:center;position:relative;z-index:1;text-shadow:0 2px 8px rgba(0,0,0,.15)}
-.ksearch-bar{display:flex;align-items:center;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-radius:32px;box-shadow:0 8px 32px rgba(0,0,0,.15);padding:6px 6px 6px 28px;width:min(640px,92%);position:relative;z-index:1;transition:box-shadow .3s}
-.ksearch-bar:focus-within{box-shadow:0 8px 32px rgba(0,0,0,.25),0 0 0 3px rgba(255,255,255,.3)}
-.ksearch-bar input{flex:1;border:0;outline:none;font-size:16px;color:var(--txt);background:transparent;min-width:0}
+.ksearch-card{max-width:720px;margin:28px auto 24px;padding:0 16px}
+.ksearch-card h2{display:none}
+.ksearch-bar{display:flex;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:28px;padding:4px 4px 4px 24px;width:100%;transition:border-color .25s,box-shadow .25s;box-shadow:var(--shadow-sm)}
+.ksearch-bar:focus-within{border-color:var(--pri);box-shadow:0 4px 20px rgba(99,102,241,.12)}
+.ksearch-bar input{flex:1;border:0;outline:none;font-size:16px;color:var(--txt);background:transparent;min-width:0;font-weight:500}
 .ksearch-bar input::placeholder{color:var(--sub2)}
-.ksearch-bar button{width:48px;height:48px;border-radius:50%;border:0;background:var(--pri);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;transition:transform .2s,background .2s}
+.ksearch-bar button{width:44px;height:44px;border-radius:50%;border:0;background:var(--pri-grad);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;transition:transform .2s,box-shadow .2s;box-shadow:0 2px 8px rgba(99,102,241,.3)}
+.ksearch-bar button:hover{transform:scale(1.1);box-shadow:0 4px 16px rgba(99,102,241,.4)}
 .ksearch-bar button:hover{transform:scale(1.08);background:var(--pri2)}
 
 /* ─── 内容区块 ─── */
@@ -384,8 +384,7 @@ td{padding:10px;border-bottom:1px solid var(--line)}
 
 /* ─── v2 视觉打磨 ─── */
 /* 滚动渐入 */
-.kcard,.mcard{opacity:0;transform:translateY(16px)}
-.kcard.in-view,.mcard.in-view{opacity:1;transform:translateY(0);transition:opacity .4s ease,transform .4s cubic-bezier(.25,.46,.45,.94)}
+/* 卡片默认可见,滚动渐入需要配合JS */
 .kcard:hover,.mcard:hover{transform:translateY(-6px) scale(1.02)}
 /* 卡片悬停光晕 */
 .mcard:hover{box-shadow:0 8px 30px rgba(99,102,241,.15),0 2px 8px rgba(0,0,0,.08)}
@@ -402,5 +401,3 @@ td{padding:10px;border-bottom:1px solid var(--line)}
 body{animation:pageLoad .3s ease}
 @keyframes pageLoad{from{opacity:0}to{opacity:1}}
 /* 图片加载优化 */
-img[loading="lazy"]{opacity:0;transition:opacity .3s}
-img[loading="lazy"].loaded{opacity:1}
