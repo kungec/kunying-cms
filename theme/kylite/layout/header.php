@@ -43,6 +43,16 @@ if (isset($vod) && $vod) {
 <link rel="preconnect" href="https://api.geetest.com">
 </head>
 <script>
+function hdrSearchSubmit(ev){
+  ev.preventDefault();
+  var f = ev.target;
+  var wd = f.querySelector("input[name=wd]").value.trim();
+  if (!wd) return false;
+  location.href = "/index.php?s=/vod/search&wd=" + encodeURIComponent(wd);
+  return false;
+}
+</script>
+<script>
 (function(){
   var t = localStorage.getItem('ky_theme');
   if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -97,11 +107,14 @@ document.addEventListener('DOMContentLoaded', function(){
       <?php endforeach; ?>
     </nav>
     <div class="ksearch-hdr">
-      <input type="text" name="wd" id="hdrWd" placeholder="搜索影片…" autocomplete="off">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <form class="ksearch-form" action="/index.php" method="get" onsubmit="return hdrSearchSubmit(event)">
+        <input type="hidden" name="s" value="/vod/search">
+        <input type="text" name="wd" id="hdrWd" placeholder="搜索影片…" autocomplete="off" required>
+        <button type="submit" class="ksearch-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+      </form>
       <div class="ksg" id="hdrSg"></div>
     </div>
-    <div class="kuser">
+    <div class="kuser"><div class="kuser">
       <a href="/user/login">登录</a>
       <?php if (config('register_enable', '1') == '1'): ?><a class="kreg" href="/user/register">注册</a><?php endif; ?>
     </div>

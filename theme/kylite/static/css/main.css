@@ -442,3 +442,18 @@ body{animation:pageLoad .3s ease}
   .ktabbar a svg{width:20px;height:20px}
   body{padding-bottom:58px}
 }
+
+/* ─── header搜索框 ─── */
+.ksearch-hdr{display:flex;align-items:center;position:relative;margin-left:auto;margin-right:12px}
+.ksearch-form{display:flex;align-items:center;position:relative}
+.ksearch-form input[type=text]{width:180px;height:38px;border:1.5px solid var(--line);border-radius:22px;padding:0 40px 0 16px;font-size:13px;color:var(--txt);background:var(--card);outline:none;transition:all .25s}
+.ksearch-form input[type=text]:focus{width:240px;border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-soft)}
+.ksearch-form input::placeholder{color:var(--sub2)}
+.ksearch-btn{position:absolute;right:4px;width:32px;height:32px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--sub);border-radius:50%;transition:all .2s}
+.ksearch-btn:hover{color:var(--pri);background:var(--pri-soft)}
+.ksearch-hdr .ksg{position:absolute;top:calc(100% + 6px);right:0;left:0;width:auto;min-width:280px}
+@media(max-width:900px){
+  .ksearch-hdr{margin-right:8px}
+  .ksearch-form input[type=text]{width:140px}
+  .ksearch-form input[type=text]:focus{width:180px}
+}
