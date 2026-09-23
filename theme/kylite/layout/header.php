@@ -38,10 +38,11 @@ if (isset($vod) && $vod) {
 <?php if (isset($vod) && $vod): ?><link rel="canonical" href="<?= $seoBase ?><?= config('rewrite_enable', '0') == '1' ? '/detail-' . (int)$vod['id'] . '.html' : '/index.php?s=/vod/detail&id=' . (int)$vod['id'] ?>"><?php endif; ?>
 <link rel="stylesheet" href="<?= theme_url('static/css/main.css') ?>?v=<?= asset_v('/theme/' . active_theme() . '/static/css/main.css') ?>">
 <link rel="preload" href="<?= theme_url('static/css/main.css') ?>" as="style">
-<link rel="preload" href="<?= theme_url('static/js/main.js') ?>" as="script">
+<script src="<?= theme_url('static/js/main.js') ?>?v=<?= asset_v('/theme/' . active_theme() . '/static/js/main.js') ?>" defer></script>
+<?php if (config('captcha_provider', '') === 'geetest'): ?>
 <link rel="preconnect" href="https://static.geetest.com" crossorigin>
 <link rel="preconnect" href="https://api.geetest.com">
-</head>
+<?php endif; ?>
 <script>
 function hdrSearchSubmit(ev){
   ev.preventDefault();
@@ -53,33 +54,15 @@ function hdrSearchSubmit(ev){
 }
 </script>
 <script>
+/* 暗色模式初始化:尽早执行避免闪白 */
 (function(){
   var t = localStorage.getItem('ky_theme');
   if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
     document.documentElement.setAttribute('data-theme','dark');
   }
 })();
-function updateThemeIcon(){
-  var icon=document.getElementById('themeIcon');
-  if(icon)icon.innerHTML=document.documentElement.getAttribute('data-theme')==='dark'
-    ?'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>'
-    :'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
-}
-document.addEventListener('DOMContentLoaded',function(){updateThemeIcon()});
-function toggleTheme(){
-  var html = document.documentElement;
-  var isDark = html.getAttribute('data-theme') === 'dark';
-  if (isDark) { html.removeAttribute('data-theme'); localStorage.setItem('ky_theme','light'); }
-  else { html.setAttribute('data-theme','dark'); localStorage.setItem('ky_theme','dark'); }
-  var btn = document.getElementById('themeBtn');
-  if (btn) btn.textContent = isDark ? '🌙' : '☀️';
-}
-// 更新按钮图标
-document.addEventListener('DOMContentLoaded', function(){
-  var btn = document.getElementById('themeBtn');
-  if (btn) btn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
-});
 </script>
+</head>
 <body>
 <header class="ktop">
   <div class="ktop-in">

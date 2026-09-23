@@ -1,8 +1,8 @@
-<?php include theme_path('layout/header.php'); $pageTitle = '观看历史'; ?>
-<div class="wrap" style="margin-top:96px">
+<?php $pageTitle = '观看历史'; include theme_path('layout/header.php'); ?>
+<div class="wrap" style="margin-top:86px">
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
-    <b style="font-size:20px;color:#fff">🕐 观看历史</b>
-    <?php if ($records): ?><button class="btn plain sm" style="color:#e5322d;border-color:#e5322d" onclick="clearHist()">🗑 清空历史</button><?php endif; ?>
+    <b style="font-size:20px;color:var(--txt)">🕐 观看历史</b>
+    <?php if ($records): ?><button class="btn-main" style="width:auto;padding:8px 18px;background:var(--red,#e5322d)" onclick="clearHist()">🗑 清空历史</button><?php endif; ?>
   </div>
   <?php if (empty($records)): ?>
   <p style="text-align:center;color:var(--sub);padding:60px 0">暂无观看记录,快去看几部影片吧</p>
@@ -25,7 +25,8 @@
 <script>
 async function clearHist(){
   if (!confirm('确定清空全部观看历史?')) return;
-  var j = await kyPost('/index.php?s=/user/historyclear', new FormData());
+  var d = new FormData(); d.append('_csrf', '<?= e(Security::csrfToken()) ?>');
+  var j = await kyPost('/index.php?s=/user/historyclear', d);
   j.code === 1 ? location.reload() : kyToast(j.msg || '操作失败', false);
 }
 </script>

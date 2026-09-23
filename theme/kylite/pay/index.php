@@ -1,5 +1,5 @@
 <?php
-/** dsv1 充值中心 */
+/** kylite 充值中心 */
 $pageTitle = '充值中心';
 $searchWd = '';
 include theme_path('layout/header.php');
@@ -31,7 +31,7 @@ $enabled = array_filter($payList, function ($p) {
     <?php if (empty($goods)): ?><p style="color:var(--sub)">暂无充值套餐,请联系站长在后台配置</p><?php endif; ?>
     <div class="paycards">
       <?php foreach ($goods as $g): ?>
-      <div class="paycard <?= $g['days'] > 0 ? '' : '' ?>" data-gid="<?= (int)$g['id'] ?>" onclick="selGoods(this)">
+      <div class="paycard" data-gid="<?= (int)$g['id'] ?>" onclick="selGoods(this)">
         <div><?= $g['days'] > 0 ? '👑 ' : '💎 ' ?><?= e($g['name']) ?></div>
         <div class="pr">¥<?= number_format((float)$g['price'], 2) ?></div>
         <div class="ds"><?= $g['days'] > 0 ? 'VIP ' . (int)$g['days'] . ' 天' : '' ?><?= $g['points'] > 0 ? ($g['days'] > 0 ? ' + ' : '') . (int)$g['points'] . ' 积分' : '' ?></div>

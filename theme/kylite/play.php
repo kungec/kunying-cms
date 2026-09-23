@@ -1,5 +1,5 @@
 <?php
-/** dsv1 播放/详情页 */
+/** kylite 播放/详情页 */
 $pageTitle = $vod['name'];
 $pageDescription = mb_substr(strip_tags((string)$vod['content']), 0, 100);
 include theme_path('layout/header.php');
@@ -109,7 +109,7 @@ foreach ($sources as $src) {
 <section class="sec">
   <div class="sec-h"><h3>相关视频</h3></div>
   <div class="mgrid">
-    <?php foreach ($related as $v): $vv = $v; ?>
+    <?php foreach ($related as $v): ?>
     <a class="mcard" href="/index.php?s=/vod/detail&id=<?= (int)$v['id'] ?>">
       <div class="pic"><img src="<?= e(pic_url($v['pic'])) ?>" loading="lazy" alt="<?= e($v['name']) ?>">
         <?php if ((float)$v['score'] > 0): ?><span class="bd"><?= rtrim(rtrim(number_format((float)$v['score'], 1), '0'), '.') ?></span><?php endif; ?>
@@ -190,11 +190,13 @@ var curSid = <?= (int)$sid ?>, curEp = <?= (int)$ep ?>, player = null, streamErr
 var kyAuto = <?= config('player_autoplay', '1') == '1' ? 'true' : 'false' ?>;
 
 function renderEpGrid(){
+  var grid = document.getElementById('epGrid');
+  if (!kyVod.sources.length) { grid.innerHTML = '<p style="color:var(--sub);font-size:12px">暂无播放资源</p>'; return; }
   var eps = kyVod.sources[curSid].episodes, h = '';
   for (var i = 0; i < eps.length; i++) {
     h += '<a class="' + (i+1===curEp ? 'on' : '') + '" href="javascript:;" onclick="playEpisode(' + (i+1) + ')">' + eps[i].name.replace(/[<>&"]/g,'') + '</a>';
   }
-  document.getElementById('epGrid').innerHTML = h || '<p style="color:var(--sub);font-size:12px">暂无选集</p>';
+  grid.innerHTML = h || '<p style="color:var(--sub);font-size:12px">暂无选集</p>';
   var srcTabs = document.querySelectorAll('.pinfo a.pm');
   srcTabs.forEach && srcTabs.forEach(function(a,i){ a.classList.toggle('on', i===curSid); });
   document.getElementById('srcName').textContent = kyVod.sources[curSid].name;

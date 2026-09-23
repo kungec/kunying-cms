@@ -1,5 +1,5 @@
 <?php
-/** dsv1 支付结果页 */
+/** kylite 支付结果页 */
 $pageTitle = '支付结果';
 $searchWd = '';
 include theme_path('layout/header.php');

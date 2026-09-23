@@ -99,7 +99,7 @@ class Addon
         $item = Db::fetch("SELECT * FROM ky_plugin WHERE code=?", [$code]);
         if (!$item) return false;
         // 模板使用中禁止卸载
-        if ($item['type'] === 'template' && config('site_template', 'dsv1') === $code) {
+        if ($item['type'] === 'template' && config('site_template', 'kylite') === $code) {
             throw new RuntimeException('该模板使用中,请先切换其他模板');
         }
         $dir = KY_PATH . '/' . self::typeDir($item['type']) . '/' . basename($code);

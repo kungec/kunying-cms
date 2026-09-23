@@ -1,5 +1,5 @@
 <?php
-/** dsv1 收银台(扫码/等待支付) */
+/** kylite 收银台(扫码/等待支付) */
 $pageTitle = '收银台';
 $searchWd = '';
 include theme_path('layout/header.php');

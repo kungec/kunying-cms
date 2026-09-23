@@ -266,6 +266,8 @@ class UserController
     {
         $user = Auth::user();
         if (!$user) json_error('请先登录');
+        if (!Request::isPost()) json_error('非法请求');
+        Security::csrfCheck();
         Db::delete('ky_play_record', 'user_id=?', [$user['id']]);
         json_ok(null, '观看历史已清空');
     }

@@ -196,6 +196,8 @@ input::placeholder,textarea::placeholder{color:var(--sub2)}
 .ksg b{font-weight:600;color:var(--txt);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ksg b i{color:var(--pri);font-style:normal;font-weight:700}
 .ksg em{font-style:normal;font-size:12px;color:var(--sub)}
+.ksg .sg-i{flex:1;min-width:0}
+.ksg .sg-i b,.ksg .sg-i em{display:block}
 .ksg .ksg-all{text-align:center;color:var(--pri);font-weight:600;font-size:12px;background:var(--pri-soft)}
 
 /* ─── 移动端抽屉 ─── */
@@ -476,3 +478,38 @@ body{animation:pageLoad .3s ease}
   .ksearch-form input[type=text]{width:140px}
   .ksearch-form input[type=text]:focus{width:180px}
 }
+
+/* ─── 观看历史页 ─── */
+.hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}
+.hist-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)}
+.hist-card .hp{position:relative;display:block}
+.hist-card .hp img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:var(--card2)}
+.hist-card .hp .prog{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(0,0,0,.35)}
+.hist-card .hp .prog i{display:block;height:100%;background:var(--pri);border-radius:0 2px 2px 0}
+.hist-card .hnm{display:block;padding:8px 10px 2px;font-weight:600;font-size:13px;color:var(--txt);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-card .hmeta{padding:0 10px 10px;font-size:12px;color:var(--sub)}
+
+/* ─── 用户中心订单表格 ─── */
+.ut{width:100%;border-collapse:collapse;font-size:13px}
+.ut th,.ut td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
+.ut th{color:var(--sub);font-weight:600;font-size:12px;white-space:nowrap;background:var(--card2)}
+.ut tr:hover td{background:var(--pri-soft)}
+
+/* ─── 专题卡片 ─── */
+.tcard{position:relative;display:block;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);text-decoration:none}
+.tcard img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--card2);transition:transform .3s}
+.tcard:hover img{transform:scale(1.04)}
+.tcard b{position:absolute;left:0;right:0;bottom:0;padding:24px 12px 10px;color:#fff;font-size:14px;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+
+/* ─── 充值页套餐/支付方式 ─── */
+.paycards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin:14px 0 6px}
+.paycard{background:var(--card);border:2px solid var(--line);border-radius:var(--radius);padding:16px 14px;cursor:pointer;text-align:center;transition:all .2s;font-weight:600;color:var(--txt)}
+.paycard:hover{border-color:var(--pri);transform:translateY(-2px)}
+.paycard.on{border-color:var(--pri);background:var(--pri-soft);box-shadow:0 4px 16px rgba(99,102,241,.18)}
+.paycard .pr{font-size:22px;font-weight:800;color:var(--pri);margin:6px 0 2px}
+.paycard .ds{font-size:12px;color:var(--sub);font-weight:400}
+.paymethods{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 20px}
+.paymethods .pm{padding:10px 22px;font-size:14px}
+.qrbox{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 0}
+.addr{display:inline-block;background:var(--card2);border:1px dashed var(--line2);border-radius:10px;padding:8px 16px;font-size:12px;color:var(--txt);cursor:pointer;word-break:break-all;transition:all .2s}
+.addr:hover{border-color:var(--pri);color:var(--pri)}

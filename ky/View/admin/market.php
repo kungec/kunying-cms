@@ -22,7 +22,7 @@
         <div style="display:flex;gap:8px;align-items:center">
           <?php if ($it['installed']): ?>
             <?php if ($it['type'] === 'template'): ?>
-              <button class="btn sm" onclick="setTpl('<?= e($it['code']) ?>')"><?= config('site_template', 'dsv1') === $it['code'] ? '使用中' : '启用模板' ?></button>
+              <button class="btn sm" onclick="setTpl('<?= e($it['code']) ?>')"><?= config('site_template', 'kylite') === $it['code'] ? '使用中' : '启用模板' ?></button>
             <?php else: ?>
               <button class="btn sm" onclick="togglePlugin('<?= e($it['code']) ?>')"><?= $it['installed']['status'] ? '停用' : '启用' ?></button>
             <?php endif; ?>

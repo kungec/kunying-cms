@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 3) {
         // 基础配置
         $cfg = [
             'site_name' => '坤影影视',
-            'site_template' => 'dsv1',
+            'site_template' => 'kylite',
             'site_mode' => 'cms',
             'cdn_mode' => '0',
             'member_enable' => '1',

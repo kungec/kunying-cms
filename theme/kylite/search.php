@@ -28,7 +28,7 @@ $hotWords = Db::fetchAll("SELECT id, name FROM ky_vod WHERE status=1 ORDER BY to
   <?php if ($wd !== ''): ?>
   <p style="font-size:13px;color:var(--sub);margin:14px 0">找到 <b style="color:var(--red)"><?= $total ?></b> 部与「<?= e($wd) ?>」相关的影片</p>
   <div class="mgrid">
-    <?php foreach ($list as $v): $vv = $v; ?>
+    <?php foreach ($list as $v): ?>
     <a class="mcard" href="/index.php?s=/vod/detail&id=<?= (int)$v['id'] ?>">
       <div class="pic"><img src="<?= e(pic_url($v['pic'])) ?>" loading="lazy" alt="<?= e($v['name']) ?>">
         <?php if ((float)$v['score'] > 0): ?><span class="bd"><?= rtrim(rtrim(number_format((float)$v['score'], 1), '0'), '.') ?></span><?php endif; ?>
@@ -46,7 +46,7 @@ $hotWords = Db::fetchAll("SELECT id, name FROM ky_vod WHERE status=1 ORDER BY to
   <div class="ksec">
     <div class="ksec-h"><b>热门推荐</b></div>
     <div class="mgrid">
-      <?php foreach (Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 ORDER BY total_hits DESC LIMIT 18") as $v): $vv = $v; ?>
+      <?php foreach (Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 ORDER BY total_hits DESC LIMIT 18") as $v): ?>
       <a class="mcard" href="/index.php?s=/vod/detail&id=<?= (int)$v['id'] ?>">
         <div class="pic"><img src="<?= e(pic_url($v['pic'])) ?>" loading="lazy" alt="<?= e($v['name']) ?>">
           <?php if ((float)$v['score'] > 0): ?><span class="bd"><?= rtrim(rtrim(number_format((float)$v['score'], 1), '0'), '.') ?></span><?php endif; ?>

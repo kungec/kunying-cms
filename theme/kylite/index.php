@@ -133,38 +133,4 @@ function kLoad(tid, btn){
   }).catch(function(){ grid.innerHTML = ''; });
 }
 </script>
-
-<!-- header搜索联想 -->
-<script>
-(function(){
-  var si = document.getElementById('hdrWd');
-  if (!si) return;
-  var box = document.getElementById('hdrSg');
-  if (!box) return;
-  var t = null;
-  function esc(s){ return String(s||'').replace(/[<>&"]/g,''); }
-  function render(w, j){
-    if (!j.code || !j.data || !j.data.length) { box.style.display = 'none'; return; }
-    var k = w;
-    var h = j.data.map(function(v){
-      var nm = esc(v.name);
-      var hl = k ? nm.split(k).join('<i style="color:var(--pri);font-style:normal;font-weight:700">' + k + '</i>') : nm;
-      return '<a href="/index.php?s=/vod/detail&id=' + v.id + '" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);color:var(--txt)">'
-        + '<img src="' + v.pic + '" style="width:38px;height:52px;object-fit:cover;border-radius:5px;flex:none;background:var(--card2)">'
-        + '<span style="flex:1;min-width:0"><b style="font-size:13px;font-weight:600">' + hl + '</b><em style="display:block;font-size:12px;color:var(--sub)">' + esc(v.remarks || '') + '</em></span></a>';
-    }).join('');
-    box.innerHTML = h;
-    box.style.display = 'block';
-  }
-  si.addEventListener('input', function(){
-    clearTimeout(t);
-    var w = si.value.trim();
-    if (!w) { box.style.display = 'none'; return; }
-    t = setTimeout(function(){
-      fetch('/index.php?s=/api/suggest&wd=' + encodeURIComponent(w)).then(function(r){ return r.json(); }).then(function(j){ render(w, j); }).catch(function(){});
-    }, 300);
-  });
-  document.addEventListener('click', function(ev){ if (!box.contains(ev.target) && ev.target !== si) box.style.display = 'none'; });
-})();
-</script>
 <?php include theme_path('layout/footer.php'); ?>

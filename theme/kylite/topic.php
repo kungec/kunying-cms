@@ -1,5 +1,5 @@
 <?php
-/** dsv1 专题页 */
+/** kylite 专题页 */
 $pageTitle = $topic ? $topic['name'] . ' - 专题' : '专题';
 $searchWd = '';
 include theme_path('layout/header.php');

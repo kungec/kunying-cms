@@ -1,5 +1,5 @@
 <?php
-/** dsv1 404页 */
+/** kylite 404页 */
 $pageTitle = '页面不存在';
 $searchWd = '';
 if (!is_file(theme_path('layout/header.php'))) { echo '404'; exit; }

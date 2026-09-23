@@ -307,7 +307,7 @@ function theme_path(string $path = ''): string {
 }
 
 /**
- * 当前生效主题(配置缺失或目录不存在时回落dsv1,防止站点打不开)
+ * 当前生效主题(配置缺失或目录不存在时回落kylite,防止站点打不开)
  */
 function active_theme(): string {
     static $tpl = null;
@@ -529,7 +529,7 @@ function asset_v(string $rel): string {
 }
 
 /**
- * 资源URL(自动带文件修改时间版本;$sitePath为站内绝对路径,如 /theme/dsv1/static/js/x.js)
+ * 资源URL(自动带文件修改时间版本;$sitePath为站内绝对路径,如 /theme/kylite/static/js/x.js)
  */
 function asset_v_url(string $sitePath): string {
     return $sitePath . '?v=' . asset_v($sitePath);

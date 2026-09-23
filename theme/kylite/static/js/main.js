@@ -1,86 +1,6 @@
-/* 坤影CMS 前台交互 */
+/* 坤影CMS 默认主题 kylite 前台交互 */
 (function(){
   'use strict';
-  // 顶栏滚动
-  var header=document.querySelector('.header');
-  var toTop=document.querySelector('.totop');
-  window.addEventListener('scroll',function(){
-    var y=window.scrollY;
-    if(header)header.classList.toggle('solid',y>60);
-    if(toTop)toTop.classList.toggle('show',y>400);
-  });
-  if(toTop)toTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'})});
-
-  // 抽屉
-  var burger=document.querySelector('.burger');
-  if(burger)burger.addEventListener('click',function(){document.body.classList.add('drawer-open')});
-  var mask=document.querySelector('.drawer-mask');
-  if(mask)mask.addEventListener('click',function(){document.body.classList.remove('drawer-open')});
-
-  // Banner轮播
-  var hero=document.querySelector('.hero');
-  if(hero){
-    var slides=hero.querySelectorAll('.slide'),dots=hero.querySelectorAll('.dots i'),cur=0,timer=null;
-    function go(i){
-      slides.forEach(function(s,idx){s.classList.toggle('on',idx===i)});
-      dots.forEach(function(d,idx){d.classList.toggle('on',idx===i)});
-      cur=i;
-    }
-    if(slides.length>1){
-      timer=setInterval(function(){go((cur+1)%slides.length)},5200);
-      dots.forEach(function(d,i){d.addEventListener('click',function(){clearInterval(timer);go(i);timer=setInterval(function(){go((cur+1)%slides.length)},5200)})});
-    }else if(slides.length===1){go(0)}
-  }
-
-  // 搜索联想
-  var si=document.querySelector('.hsearch input[type=text],.xsg-bar input[type=text]');
-  var box=document.querySelector('.hsearch .sg,.xsg-drawer .sg');
-  if(si&&box){
-    var t=null;
-    si.addEventListener('input',function(){
-      clearTimeout(t);
-      var w=si.value.trim();
-      if(!w){box.style.display='none';return}
-      t=setTimeout(function(){
-        fetch('/index.php?s=/api/suggest&wd='+encodeURIComponent(w)).then(function(r){return r.json()}).then(function(j){
-          if(!j.code||!j.data||!j.data.length){box.style.display='none';return}
-          sgIdx=-1;sgItems=j.data;
-          box.innerHTML=j.data.map(function(v,i){
-            var nm=String(v.name||'').replace(/[<>&"]/g,'');
-            var k=w.replace(/[<>&"]/g,'');
-            var hlName=k?nm.split(k).join('<i class="hl">'+k+'</i>'):nm;
-            return '<a href="/index.php?s=/vod/detail&id='+v.id+'" data-i="'+i+'">'
-              +'<img src="'+v.pic+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">'
-              +'<span class="sg-i"><b>'+hlName+'</b><em>'
-              +(v.remarks?'<i>'+v.remarks+'</i>':'')
-              +(v.year?'<u>'+v.year+'</u>':'')
-              +(v.area?'<u>'+v.area+'</u>':'')
-              +'</em></span></a>';
-          }).join('')
-          +'<a class="sg-all" href="/index.php?s=/vod/search&wd='+encodeURIComponent(w)+'">查看「'+w.replace(/[<>&"]/g,'')+'」的全部搜索结果 →</a>';
-          box.style.display='block';
-        }).catch(function(){});
-      },300);
-    });
-    document.addEventListener('click',function(ev){if(!box.contains(ev.target)&&ev.target!==si)box.style.display='none'});
-    var sgIdx=-1,sgItems=[];
-    si.addEventListener('keydown',function(e){
-      var links=box.querySelectorAll('a:not(.sg-all)');
-      if(e.key==='Enter'){
-        e.preventDefault();
-        if(sgIdx>=0&&links[sgIdx]){location.href=links[sgIdx].href;}
-        else{si.closest('form').submit();}
-        return;
-      }
-      if(!links.length)return;
-      if(e.key==='ArrowDown'||e.key==='ArrowUp'){
-        e.preventDefault();
-        sgIdx=e.key==='ArrowDown'?Math.min(sgIdx+1,links.length-1):Math.max(sgIdx-1,0);
-        links.forEach(function(a,i){a.classList.toggle('on',i===sgIdx)});
-        if(links[sgIdx])si.value=sgItems[sgIdx]?sgItems[sgIdx].name:si.value;
-      }
-    });
-  }
 
   // 全局图片兜底:加载失败自动替换为占位图
   document.addEventListener('error', function(e){
@@ -100,9 +20,45 @@
     d.textContent=msg;document.body.appendChild(d);
     setTimeout(function(){d.remove()},2400);
   };
+
+  // 顶栏搜索联想(全站生效:所有页面header均含#hdrWd)
+  var si=document.getElementById('hdrWd');
+  var box=document.getElementById('hdrSg');
+  if(si&&box){
+    var t=null;
+    function esc(s){ return String(s||'').replace(/[<>&"]/g,''); }
+    function render(w,j){
+      if(!j.code||!j.data||!j.data.length){box.style.display='none';return}
+      box.innerHTML=j.data.map(function(v){
+        var nm=esc(v.name);
+        var hl=w?nm.split(w).join('<i>'+w+'</i>'):nm;
+        return '<a href="/index.php?s=/vod/detail&id='+v.id+'">'
+          +'<img src="'+v.pic+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">'
+          +'<span class="sg-i"><b>'+hl+'</b><em>'+esc(v.remarks||'')+'</em></span></a>';
+      }).join('')
+      +'<a class="ksg-all" href="/index.php?s=/vod/search&wd='+encodeURIComponent(w)+'">查看「'+esc(w)+'」的全部搜索结果 →</a>';
+      box.style.display='block';
+    }
+    si.addEventListener('input',function(){
+      clearTimeout(t);
+      var w=si.value.trim();
+      if(!w){box.style.display='none';return}
+      t=setTimeout(function(){
+        fetch('/index.php?s=/api/suggest&wd='+encodeURIComponent(w)).then(function(r){return r.json()}).then(function(j){render(w,j)}).catch(function(){});
+      },300);
+    });
+    si.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){
+        var first=box.querySelector('a');
+        if(first&&box.style.display==='block'){e.preventDefault();location.href=first.href}
+      }
+      if(e.key==='Escape'){box.style.display='none'}
+    });
+    document.addEventListener('click',function(ev){if(!box.contains(ev.target)&&ev.target!==si)box.style.display='none'});
+  }
 })();
 
-/* ===== 瀑布流无限加载 ===== */
+/* ===== 瀑布流无限加载(分类页/搜索页"加载更多") ===== */
 var WF = {
   grid:null, next:2, hasMore:true, loading:false, base:'',
   init:function(opt){
@@ -115,7 +71,6 @@ var WF = {
     this.typeId = opt.typeId || 0;
     this.order = opt.order || 'time';
     this.cls = opt.cls || ''; this.year = opt.year || ''; this.area = opt.area || '';
-    var self = this;
   },
   url:function(){
     var q = 's=/api/more&mode=' + this.mode + '&page=' + this.next + '&order=' + this.order;
@@ -129,16 +84,10 @@ var WF = {
       var tg = v.year ? '<span class="tag">' + this.esc(v.year) + '</span>' : '';
       return '<a class="iqc" href="/index.php?s=/vod/detail&id=' + v.id + '"><div class="pic"><img src="' + v.pic + '" loading="lazy" alt="' + this.esc(v.name) + '">' + tg + vip + '</div><div class="nm">' + this.esc(v.name) + '</div><div class="st">' + this.esc(v.remarks || v.ds || '') + '</div></a>';
     }
-    if (this.cardStyle === 'poster') {
-      var score = v.score > 0 ? '<span class="bd">' + (Math.round(v.score*10)/10) + '</span>' : '';
-      var vip = v.vip ? '<span class="vip">vip</span>' : '';
-      var rm = v.remarks ? '<span class="rm">' + this.esc(v.remarks) + '</span>' : '';
-      return '<a class="mcard" href="/index.php?s=/vod/detail&id=' + v.id + '"><div class="pic"><img src="' + v.pic + '" loading="lazy" alt="' + this.esc(v.name) + '">' + score + vip + rm + '</div><div class="nm">' + this.esc(v.name) + '</div><div class="ds">' + this.esc(v.ds) + '</div></a>';
-    }
-    var score = v.score > 0 ? '<span class="bd">' + (Math.round(v.score*10)/10) + '分</span>' : '';
-    var vip = v.vip ? '<span class="vip">vip专享</span>' : '';
+    var score = v.score > 0 ? '<span class="bd">' + (Math.round(v.score*10)/10) + '</span>' : '';
+    var vip = v.vip ? '<span class="vip">vip</span>' : '';
     var rm = v.remarks ? '<span class="rm">' + this.esc(v.remarks) + '</span>' : '';
-    return '<a class="vcard land" href="/index.php?s=/vod/detail&id=' + v.id + '"><div class="pic"><img src="' + v.pic + '" loading="lazy">' + score + vip + rm + '</div><div class="nm">' + this.esc(v.name) + '</div><div class="ds">' + this.esc(v.ds) + '</div></a>';
+    return '<a class="mcard" href="/index.php?s=/vod/detail&id=' + v.id + '"><div class="pic"><img src="' + v.pic + '" loading="lazy" alt="' + this.esc(v.name) + '">' + score + vip + rm + '</div><div class="nm">' + this.esc(v.name) + '</div><div class="ds">' + this.esc(v.ds) + '</div></a>';
   },
   load:function(){
     var self = this; this.loading = true;
@@ -171,7 +120,7 @@ if (window.wfConfig) {
   });
 }
 
-/* ===== 海报网格自动对齐(末行不足整行时隐藏多余,PC/手机通用) ===== */
+/* ===== 海报网格自动对齐(末行不足整行时隐藏多余) ===== */
 function kyAlignGrids(){
   document.querySelectorAll('.mgrid,.iqgrid').forEach(function(g){
     var cards = Array.prototype.slice.call(g.children);
@@ -188,29 +137,8 @@ window.addEventListener('load', kyAlignGrids);
 var _kyAlignT;
 window.addEventListener('resize', function(){ clearTimeout(_kyAlignT); _kyAlignT = setTimeout(kyAlignGrids, 200); });
 
-
-/* ─── 暗色模式切换 ─── */
-(function(){
-  var t=localStorage.getItem('ky_theme');
-  if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){
-    document.documentElement.setAttribute('data-theme','dark');
-  }
-
-})();
-function toggleTheme(){
-  var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';
-  if(d){h.removeAttribute('data-theme');localStorage.setItem('ky_theme','light')}
-  else{h.setAttribute('data-theme','dark');localStorage.setItem('ky_theme','dark')}
-  // header按钮已删除,只保留悬浮球
-  // d?'\u2600\ufe0f':'\ud83c\udf19';
-}
-
 /* ─── 暗色模式切换(右下角悬浮球) ─── */
 (function(){
-  var t = localStorage.getItem('ky_theme');
-  if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
   document.addEventListener('DOMContentLoaded', function(){
     if (document.getElementById('ky-theme-fab')) return;
     var btn = document.createElement('div');
@@ -235,5 +163,4 @@ function toggleTheme(){
       ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/></svg>'
       : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
   }
-  window.addEventListener('DOMContentLoaded', updateFabIcon);
 })();

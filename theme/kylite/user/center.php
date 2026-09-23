@@ -1,10 +1,10 @@
 <?php
-/** dsv1 用户中心 */
+/** kylite 用户中心 */
 $pageTitle = '用户中心';
 $searchWd = '';
 include theme_path('layout/header.php');
 $u = Auth::user();
-$tabsMap = ['index' => '我的账户', 'fav' => '我的收藏', 'record' => '播放记录', 'orders' => '充值订单'];
+$tabsMap = ['index' => '我的账户', 'fav' => '我的收藏', 'record' => '播放记录', 'orders' => '充值订单', 'filmreq' => '求片', 'account' => '账号设置'];
 ?>
 <div class="wrap">
 <div class="uc-head">
@@ -39,7 +39,7 @@ $tabsMap = ['index' => '我的账户', 'fav' => '我的收藏', 'record' => '播
     <h3>我的收藏</h3>
     <div class="uc-grid">
       <?php foreach (($udata['favs'] ?? []) as $v): ?>
-      <a class="vcard" href="/index.php?s=/vod/detail&id=<?= (int)$v['id'] ?>">
+      <a class="uc-vcard" href="/index.php?s=/vod/detail&id=<?= (int)$v['id'] ?>">
         <div class="pic"><img src="<?= e(pic_url($v['pic'])) ?>" loading="lazy"></div>
         <div class="nm"><?= e($v['name']) ?></div>
       </a>
@@ -50,7 +50,7 @@ $tabsMap = ['index' => '我的账户', 'fav' => '我的收藏', 'record' => '播
     <h3>播放记录</h3>
     <div class="uc-grid">
       <?php foreach (($udata['records'] ?? []) as $r): ?>
-      <a class="vcard" href="/index.php?s=/vod/detail&id=<?= (int)$r['vod_id'] ?>&ep=<?= (int)$r['episode'] ?>&play=1">
+      <a class="uc-vcard" href="/index.php?s=/vod/detail&id=<?= (int)$r['vod_id'] ?>&ep=<?= (int)$r['episode'] ?>&play=1">
         <div class="pic"><img src="<?= e(pic_url($r['pic'])) ?>" loading="lazy"><span class="rm">看到第<?= (int)$r['episode'] ?>集</span></div>
         <div class="nm"><?= e($r['name']) ?></div>
         <div class="ds"><?= friend_date((int)$r['updated']) ?></div>
@@ -104,6 +104,30 @@ $tabsMap = ['index' => '我的账户', 'fav' => '我的收藏', 'record' => '播
         var j = await kyPost('/index.php?s=/user/account', d);
         kyToast(j.msg, j.code === 1);
         if (j.code === 1) setTimeout(function(){ location.href = '/user/login'; }, 900);
+        else go.disabled = false;
+      } catch(e) { kyToast('网络异常', false); go.disabled = false; }
+      return false;
+    }
+    </script>
+    <?php elseif ($tab === 'filmreq'): ?>
+    <div style="max-width:560px">
+      <b>我要求片</b>
+      <p style="color:var(--sub);font-size:13px;margin:6px 0 12px">告诉我们你想看的影片,我们会尽快上架!</p>
+      <form onsubmit="return doReq(event)">
+        <input type="hidden" name="_csrf" value="<?= e(Security::csrfToken()) ?>">
+        <div class="afield"><label>影片名称</label><input type="text" name="title" required maxlength="60" placeholder="如: 流浪地球3"></div>
+        <div class="afield"><label>备注(选填)</label><input type="text" name="note" maxlength="200" placeholder="如: 想看国语版/某演员的作品"></div>
+        <button class="abtn" type="submit" id="rgo">提交求片</button>
+      </form>
+    </div>
+    <script>
+    async function doReq(ev){
+      ev.preventDefault();
+      var go = document.getElementById('rgo'); go.disabled = true; go.textContent = '提交中…';
+      try {
+        var j = await kyPost('/index.php?s=/user/filmreq', new FormData(ev.target));
+        kyToast(j.msg, j.code === 1);
+        if (j.code === 1) setTimeout(function(){ location.href = '/user/center?tab=filmreq'; }, 800);
         else go.disabled = false;
       } catch(e) { kyToast('网络异常', false); go.disabled = false; }
       return false;
