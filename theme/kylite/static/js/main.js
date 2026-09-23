@@ -195,23 +195,14 @@ window.addEventListener('resize', function(){ clearTimeout(_kyAlignT); _kyAlignT
   if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){
     document.documentElement.setAttribute('data-theme','dark');
   }
-  document.addEventListener('DOMContentLoaded',function(){
-    var top=document.querySelector('.ktop,.ktop-in');
-    if(!top)return;
-    var btn=document.createElement('button');
-    btn.className='theme-toggle';btn.id='themeBtn';
-    btn.onclick=toggleTheme;
-    btn.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'\u2600\ufe0f':'\ud83c\udf19';
-    var kuser=document.querySelector('.kuser');
-    if(kuser)kuser.insertBefore(btn,kuser.firstChild);
-    else top.appendChild(btn);
-  });
+
 })();
 function toggleTheme(){
   var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';
   if(d){h.removeAttribute('data-theme');localStorage.setItem('ky_theme','light')}
   else{h.setAttribute('data-theme','dark');localStorage.setItem('ky_theme','dark')}
-  var b=document.getElementById('themeBtn');if(b)b.textContent=d?'\u2600\ufe0f':'\ud83c\udf19';
+  // header按钮已删除,只保留悬浮球
+  // d?'\u2600\ufe0f':'\ud83c\udf19';
 }
 
 /* ─── 暗色模式切换(右下角悬浮球) ─── */

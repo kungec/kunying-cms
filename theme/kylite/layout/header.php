@@ -97,7 +97,6 @@ document.addEventListener('DOMContentLoaded', function(){
       <?php endforeach; ?>
     </nav>
     <div class="kuser">
-      <button class="theme-toggle" id="themeBtn" title="切换暗色模式"><svg id="themeIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
       <a href="/user/login">登录</a>
       <?php if (config('register_enable', '1') == '1'): ?><a class="kreg" href="/user/register">注册</a><?php endif; ?>
     </div>
