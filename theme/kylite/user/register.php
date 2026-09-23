@@ -48,5 +48,3 @@ async function doRegister(ev){
 }
 </script>
 <?php include theme_path('layout/footer.php'); ?>
-
-<?php include theme_path('layout/footer.php'); ?>
