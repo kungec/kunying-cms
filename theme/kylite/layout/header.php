@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function(){
       </form>
       <div class="ksg" id="hdrSg"></div>
     </div>
-    <div class="kuser"><div class="kuser">
+    <div class="kuser">
       <a href="/user/login">登录</a>
       <?php if (config('register_enable', '1') == '1'): ?><a class="kreg" href="/user/register">注册</a><?php endif; ?>
     </div>

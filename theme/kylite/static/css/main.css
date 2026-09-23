@@ -44,19 +44,19 @@ button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit
 .ktop{position:sticky;top:0;z-index:500;background:rgba(255,255,255,.82);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line);transition:background .3s,box-shadow .3s}
 [data-theme="dark"] .ktop{background:rgba(26,29,40,.82)}
 .ktop.scrolled{box-shadow:var(--shadow)}
-.ktop-in{max-width:1440px;margin:0 auto;padding:0 24px;height:var(--header-h);display:flex;align-items:center;gap:10px;position:relative}
+.ktop-in{max-width:1440px;margin:0 auto;padding:0 24px;height:var(--header-h);display:flex;align-items:center;gap:8px}
 .klogo{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:800;color:var(--txt);transition:opacity .2s}
 .klogo:hover{opacity:.85}
 .klogo svg{filter:drop-shadow(0 2px 4px rgba(0,0,0,.1))}
 
 /* 主导航 */
-.knav{display:flex;align-items:center;gap:4px;margin-left:28px}
+.knav{display:flex;align-items:center;gap:2px;margin-left:12px}
 .knav a{color:var(--sub);font-size:14px;font-weight:500;padding:7px 14px;border-radius:var(--radius-sm);transition:all var(--transition)}
 .knav a:hover{color:var(--txt);background:var(--pri-soft)}
 .knav a.on{color:var(--pri);font-weight:600;background:var(--pri-soft)}
 
 /* 用户区域 */
-.kuser{position:absolute;right:24px;display:flex;gap:6px;align-items:center}
+.kuser{display:flex;gap:6px;align-items:center;margin-left:4px;flex:none}
 .kuser a{color:var(--sub);font-size:13px;padding:7px 16px;border-radius:var(--radius-sm);transition:all .2s;font-weight:500}
 .kuser a:hover{color:var(--pri);background:var(--pri-soft)}
 .kuser a.kreg{background:var(--pri-grad);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(99,102,241,.25)}
@@ -444,7 +444,7 @@ body{animation:pageLoad .3s ease}
 }
 
 /* ─── header搜索框 ─── */
-.ksearch-hdr{display:flex;align-items:center;position:relative;margin-left:auto;margin-right:12px}
+.ksearch-hdr{display:flex;align-items:center;position:relative;margin-left:auto}
 .ksearch-form{display:flex;align-items:center;position:relative}
 .ksearch-form input[type=text]{width:180px;height:38px;border:1.5px solid var(--line);border-radius:22px;padding:0 40px 0 16px;font-size:13px;color:var(--txt);background:var(--card);outline:none;transition:all .25s}
 .ksearch-form input[type=text]:focus{width:240px;border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-soft)}
