@@ -1,16 +1,14 @@
 <?php
-/** 坤影CMS 默认主题 kylite - 首页 */
+/** 坤影CMS 默认主题 kylite - 首页(幻灯轮播+分类网格) */
 $pageTitle = config('site_name', '坤影影视');
-include theme_path('layout/header.php');
-$heroSlides = array_slice($hot ?: [], 0, 6);
+$heroSlides = array_slice(($hot ?: []), 0, 6);
 $heroJson = json_encode(array_map(function($v){
-  return ['id'=>(int)$v['id'],'name'=>$v['name'],'pic'=>pic_url($v['pic']),'cat'=>trim(explode(',',$v['class']??'')[0]??'')?:'精选','year'=>(string)$v['year'],'remarks'=>(string)$v['remarks']];
+    return ['id'=>(int)$v['id'],'name'=>$v['name'],'pic'=>pic_url($v['pic']),'cat'=>trim(explode(',',$v['class']??'')[0]??'')?:'精选','year'=>(string)$v['year'],'remarks'=>(string)$v['remarks']];
 }, $heroSlides), JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP);
+include theme_path('layout/header.php');
 $allTypes = $types;
 ?>
-</div>
-
-<!-- 全屏幻灯轮播 -->
+<!-- 幻灯轮播 -->
 <div class="khero" id="kHero">
   <div class="khero-bg" id="kHeroBg"></div>
   <div class="khero-shade"></div>
@@ -22,18 +20,31 @@ $allTypes = $types;
     <div class="khero-dots" id="kHeroDots"></div>
   </div>
 </div>
-
 <script>
-var kHeroData = [];
-try { kHeroData = JSON.parse(document.getElementById('kHeroDataRaw').textContent); } catch(e) {}
+var kHeroSlides = <?= $heroJson ?>;
+var kHeroIdx = 0, kHeroTimer = null;
+function kHeroRender(i){
+  var d = kHeroSlides[i]; if(!d) return; kHeroIdx = i;
+  var hero = document.getElementById('kHero');
+  hero.querySelector('.khero-bg').style.backgroundImage = "url('"+d.pic+"')";
+  document.getElementById('kHeroCat').textContent = d.cat;
+  document.getElementById('kHeroTitle').textContent = d.name;
+  var tags = document.getElementById('kHeroTags');
+  tags.innerHTML = (d.year?'<span>'+d.year+'</span>':'')+(d.remarks?'<span>'+d.remarks.replace(/[<>&"]/g,'')+'</span>':'');
+  document.getElementById('kHeroPlay').href = '/index.php?s=/vod/detail&id='+d.id;
+  document.querySelectorAll('#kHeroDots i').forEach(function(dot,k){dot.classList.toggle('on',k===i)});
+}
+function kHeroGo(i){kHeroRender(i);kHeroAuto()}
+function kHeroAuto(){clearInterval(kHeroTimer);if(kHeroSlides.length>1)kHeroTimer=setInterval(function(){kHeroRender((kHeroIdx+1)%kHeroSlides.length)},5500)}
+if (kHeroSlides.length > 0) {
+  kHeroRender(0); kHeroAuto();
+  var hero = document.getElementById('kHero');
+  hero.addEventListener('mouseenter', function(){ clearInterval(kHeroTimer); });
+  hero.addEventListener('mouseleave', function(){ kHeroAuto(); });
+}
 </script>
-<script type="application/json" id="kHeroDataRaw"><?= $heroJson ?></script>
 
-<div class="ksec">
-  <div class="ksec-h"><b>热门推荐</b></div>
-  <div class="ktabs" id="ktabs">
-    <button class="on" data-t="0" onclick="kLoad(0,this)">首页</button>
-
+<!-- 热门推荐 -->
 <div class="ksec">
   <div class="ksec-h"><b>热门推荐</b></div>
   <div class="ktabs" id="ktabs">
@@ -91,16 +102,13 @@ function kLoad(tid, btn){
 }
 </script>
 
+<!-- header搜索联想 -->
 <script>
 (function(){
-  var si = document.querySelector('.ksearch-bar input[name=wd]');
+  var si = document.getElementById('hdrWd');
   if (!si) return;
-  var bar = si.closest('.ksearch-bar');
-  if (getComputedStyle(bar).position === 'static') bar.style.position = 'relative';
-  var box = document.createElement('div');
-  box.className = 'ksg';
-  box.style.cssText = 'display:none;left:0;right:0;top:calc(100% + 8px);position:absolute;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.14);z-index:300;overflow:hidden;max-height:420px;overflow-y:auto';
-  bar.appendChild(box);
+  var box = document.getElementById('hdrSg');
+  if (!box) return;
   var t = null;
   function esc(s){ return String(s||'').replace(/[<>&"]/g,''); }
   function render(w, j){
@@ -108,12 +116,11 @@ function kLoad(tid, btn){
     var k = w;
     var h = j.data.map(function(v){
       var nm = esc(v.name);
-      var hl = k ? nm.split(k).join('<i style="color:var(--red);font-style:normal;font-weight:700">' + k + '</i>') : nm;
-      return '<a href="/index.php?s=/vod/detail&id=' + v.id + '" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #f0f1f3;color:var(--txt)">'
-        + '<img src="' + v.pic + '" onerror="this.style.visibility=\'hidden\'" style="width:38px;height:52px;object-fit:cover;border-radius:5px;flex:none;background:#f0f1f3">'
+      var hl = k ? nm.split(k).join('<i style="color:var(--pri);font-style:normal;font-weight:700">' + k + '</i>') : nm;
+      return '<a href="/index.php?s=/vod/detail&id=' + v.id + '" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);color:var(--txt)">'
+        + '<img src="' + v.pic + '" style="width:38px;height:52px;object-fit:cover;border-radius:5px;flex:none;background:var(--card2)">'
         + '<span style="flex:1;min-width:0"><b style="font-size:13px;font-weight:600">' + hl + '</b><em style="display:block;font-size:12px;color:var(--sub)">' + esc(v.remarks || '') + '</em></span></a>';
-    }).join('')
-    + '<a class="ksg-all" href="/index.php?s=/vod/search&wd=' + encodeURIComponent(w) + '" style="display:block;text-align:center;padding:9px;color:var(--red);font-weight:600;font-size:12px;background:var(--card2)">查看「' + k + '」的全部搜索结果 →</a>';
+    }).join('');
     box.innerHTML = h;
     box.style.display = 'block';
   }
@@ -124,10 +131,6 @@ function kLoad(tid, btn){
     t = setTimeout(function(){
       fetch('/index.php?s=/api/suggest&wd=' + encodeURIComponent(w)).then(function(r){ return r.json(); }).then(function(j){ render(w, j); }).catch(function(){});
     }, 300);
-  });
-  si.addEventListener('keydown', function(e){
-    if (e.key === 'Enter') { e.preventDefault(); si.closest('form').submit(); }
-    if (e.key === 'Escape') { box.style.display = 'none'; }
   });
   document.addEventListener('click', function(ev){ if (!box.contains(ev.target) && ev.target !== si) box.style.display = 'none'; });
 })();
