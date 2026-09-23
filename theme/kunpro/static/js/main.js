@@ -187,3 +187,29 @@ window.addEventListener('DOMContentLoaded', kyAlignGrids);
 window.addEventListener('load', kyAlignGrids);
 var _kyAlignT;
 window.addEventListener('resize', function(){ clearTimeout(_kyAlignT); _kyAlignT = setTimeout(kyAlignGrids, 200); });
+
+
+/* ─── 暗色模式切换 ─── */
+(function(){
+  var t=localStorage.getItem('ky_theme');
+  if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){
+    document.documentElement.setAttribute('data-theme','dark');
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    var top=document.querySelector('.ktop,.ktop-in');
+    if(!top)return;
+    var btn=document.createElement('button');
+    btn.className='theme-toggle';btn.id='themeBtn';
+    btn.onclick=toggleTheme;
+    btn.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'\u2600\ufe0f':'\ud83c\udf19';
+    var kuser=document.querySelector('.kuser');
+    if(kuser)kuser.parentNode.insertBefore(btn,kuser);
+    else top.appendChild(btn);
+  });
+})();
+function toggleTheme(){
+  var h=document.documentElement,d=h.getAttribute('data-theme')==='dark';
+  if(d){h.removeAttribute('data-theme');localStorage.setItem('ky_theme','light')}
+  else{h.setAttribute('data-theme','dark');localStorage.setItem('ky_theme','dark')}
+  var b=document.getElementById('themeBtn');if(b)b.textContent=d?'\u2600\ufe0f':'\ud83c\udf19';
+}
