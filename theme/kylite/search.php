@@ -79,7 +79,7 @@ $hotWords = Db::fetchAll("SELECT id, name FROM ky_vod WHERE status=1 ORDER BY to
     var k = w;
     var h = j.data.map(function(v){
       var nm = esc(v.name);
-      var hl = k ? nm.split(k).join('<i style="color:var(--red);font-style:normal;font-weight:700">' + k + '</i>') : nm;
+      var hl = k ? nm.split(k).join('<i style="color:var(--red);font-style:normal;font-weight:700">' + esc(k) + '</i>') : nm;
       return '<a href="/index.php?s=/vod/detail&id=' + v.id + '" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #f0f1f3;color:var(--txt)">'
         + '<img src="' + v.pic + '" onerror="this.style.visibility=\'hidden\'" style="width:38px;height:52px;object-fit:cover;border-radius:5px;flex:none;background:#f0f1f3">'
         + '<span style="flex:1;min-width:0"><b style="font-size:13px;font-weight:600">' + hl + '</b><em style="display:block;font-size:12px;color:var(--sub)">' + esc(v.remarks || '') + '</em></span></a>';

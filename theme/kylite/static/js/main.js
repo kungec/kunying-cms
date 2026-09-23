@@ -31,9 +31,9 @@
       if(!j.code||!j.data||!j.data.length){box.style.display='none';return}
       box.innerHTML=j.data.map(function(v){
         var nm=esc(v.name);
-        var hl=w?nm.split(w).join('<i>'+w+'</i>'):nm;
+        var hl=w?nm.split(w).join('<i>'+esc(w)+'</i>'):nm;
         return '<a href="/index.php?s=/vod/detail&id='+v.id+'">'
-          +'<img src="'+v.pic+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">'
+          +'<img src="'+esc(v.pic)+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">'
           +'<span class="sg-i"><b>'+hl+'</b><em>'+esc(v.remarks||'')+'</em></span></a>';
       }).join('')
       +'<a class="ksg-all" href="/index.php?s=/vod/search&wd='+encodeURIComponent(w)+'">查看「'+esc(w)+'」的全部搜索结果 →</a>';
@@ -82,12 +82,12 @@ var WF = {
     if (this.cardStyle === 'iq') {
       var vip = v.vip ? '<span class="vip">vip专享</span>' : '';
       var tg = v.year ? '<span class="tag">' + this.esc(v.year) + '</span>' : '';
-      return '<a class="iqc" href="/index.php?s=/vod/detail&id=' + v.id + '"><div class="pic"><img src="' + v.pic + '" loading="lazy" alt="' + this.esc(v.name) + '">' + tg + vip + '</div><div class="nm">' + this.esc(v.name) + '</div><div class="st">' + this.esc(v.remarks || v.ds || '') + '</div></a>';
+      return '<a class="iqc" href="/index.php?s=/vod/detail&id=' + v.id + '"><div class="pic"><img src="' + this.esc(v.pic) + '" loading="lazy" alt="' + this.esc(v.name) + '">' + tg + vip + '</div><div class="nm">' + this.esc(v.name) + '</div><div class="st">' + this.esc(v.remarks || v.ds || '') + '</div></a>';
     }
     var score = v.score > 0 ? '<span class="bd">' + (Math.round(v.score*10)/10) + '</span>' : '';
     var vip = v.vip ? '<span class="vip">vip</span>' : '';
     var rm = v.remarks ? '<span class="rm">' + this.esc(v.remarks) + '</span>' : '';
-    return '<a class="mcard" href="/index.php?s=/vod/detail&id=' + v.id + '"><div class="pic"><img src="' + v.pic + '" loading="lazy" alt="' + this.esc(v.name) + '">' + score + vip + rm + '</div><div class="nm">' + this.esc(v.name) + '</div><div class="ds">' + this.esc(v.ds) + '</div></a>';
+    return '<a class="mcard" href="/index.php?s=/vod/detail&id=' + v.id + '"><div class="pic"><img src="' + this.esc(v.pic) + '" loading="lazy" alt="' + this.esc(v.name) + '">' + score + vip + rm + '</div><div class="nm">' + this.esc(v.name) + '</div><div class="ds">' + this.esc(v.ds) + '</div></a>';
   },
   load:function(){
     var self = this; this.loading = true;
