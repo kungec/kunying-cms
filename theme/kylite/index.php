@@ -10,37 +10,69 @@ $allTypes = $types;
 ?>
 <!-- 幻灯轮播 -->
 <div class="khero" id="kHero">
-  <div class="khero-bg" id="kHeroBg"></div>
+  <div class="khero-bg" id="kHeroBg1"></div>
+  <div class="khero-bg" id="kHeroBg2"></div>
   <div class="khero-shade"></div>
-  <div class="wrap khero-in">
+  <button class="khero-arrow pl" id="kHeroPrev" type="button" aria-label="上一部">‹</button>
+  <button class="khero-arrow pr" id="kHeroNext" type="button" aria-label="下一部">›</button>
+  <div class="wrap khero-in" id="kHeroIn">
     <span class="khero-cat" id="kHeroCat"></span>
     <h1 class="khero-title" id="kHeroTitle"></h1>
     <div class="khero-tags" id="kHeroTags"></div>
     <a class="khero-play" id="kHeroPlay" href="#">▶ 立即播放</a>
-    <div class="khero-dots" id="kHeroDots"></div>
   </div>
+  <div class="khero-dots" id="kHeroDots"></div>
 </div>
 <script>
 var kHeroSlides = <?= $heroJson ?>;
-var kHeroIdx = 0, kHeroTimer = null;
+var kHeroIdx = 0, kHeroTimer = null, kHeroLayer = 0;
+(function(){
+  var box = document.getElementById('kHeroDots');
+  kHeroSlides.forEach(function(d, i){
+    var s = document.createElement('i');
+    s.onclick = function(){ kHeroGo(i); };
+    box.appendChild(s);
+  });
+})();
 function kHeroRender(i){
-  var d = kHeroSlides[i]; if(!d) return; kHeroIdx = i;
-  var hero = document.getElementById('kHero');
-  hero.querySelector('.khero-bg').style.backgroundImage = "url('"+d.pic+"')";
+  var d = kHeroSlides[i]; if(!d) return;
+  var first = (kHeroIdx === i && !document.getElementById('kHeroBg1').style.backgroundImage);
+  kHeroIdx = i;
+  var b1 = document.getElementById('kHeroBg1'), b2 = document.getElementById('kHeroBg2');
+  var showEl = kHeroLayer ? b1 : b2, hideEl = kHeroLayer ? b2 : b1;
+  kHeroLayer = 1 - kHeroLayer;
+  showEl.style.backgroundImage = "url('"+d.pic+"')";
+  if (first) { showEl.style.transition = 'none'; }
+  showEl.classList.add('on');
+  hideEl.classList.remove('on');
+  if (first) { void showEl.offsetWidth; showEl.style.transition = ''; }
+  showEl.classList.remove('zoom'); void showEl.offsetWidth; showEl.classList.add('zoom');
   document.getElementById('kHeroCat').textContent = d.cat;
   document.getElementById('kHeroTitle').textContent = d.name;
   var tags = document.getElementById('kHeroTags');
   tags.innerHTML = (d.year?'<span>'+d.year+'</span>':'')+(d.remarks?'<span>'+d.remarks.replace(/[<>&"]/g,'')+'</span>':'');
   document.getElementById('kHeroPlay').href = '/index.php?s=/vod/detail&id='+d.id;
+  var inn = document.getElementById('kHeroIn');
+  inn.classList.remove('anim'); void inn.offsetWidth; inn.classList.add('anim');
   document.querySelectorAll('#kHeroDots i').forEach(function(dot,k){dot.classList.toggle('on',k===i)});
 }
 function kHeroGo(i){kHeroRender(i);kHeroAuto()}
-function kHeroAuto(){clearInterval(kHeroTimer);if(kHeroSlides.length>1)kHeroTimer=setInterval(function(){kHeroRender((kHeroIdx+1)%kHeroSlides.length)},5500)}
+function kHeroStep(n){kHeroGo((kHeroIdx+n+kHeroSlides.length)%kHeroSlides.length)}
+function kHeroAuto(){clearInterval(kHeroTimer);if(kHeroSlides.length>1)kHeroTimer=setInterval(function(){kHeroStep(1)},5500)}
 if (kHeroSlides.length > 0) {
   kHeroRender(0); kHeroAuto();
   var hero = document.getElementById('kHero');
+  document.getElementById('kHeroPrev').onclick = function(){ kHeroStep(-1); };
+  document.getElementById('kHeroNext').onclick = function(){ kHeroStep(1); };
   hero.addEventListener('mouseenter', function(){ clearInterval(kHeroTimer); });
   hero.addEventListener('mouseleave', function(){ kHeroAuto(); });
+  var kTx = 0;
+  hero.addEventListener('touchstart', function(e){ kTx = e.touches[0].clientX; clearInterval(kHeroTimer); }, {passive:true});
+  hero.addEventListener('touchend', function(e){
+    var dx = e.changedTouches[0].clientX - kTx;
+    if (Math.abs(dx) > 40) { kHeroStep(dx < 0 ? 1 : -1); }
+    kHeroAuto();
+  }, {passive:true});
 }
 </script>
 

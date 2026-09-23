@@ -412,25 +412,40 @@ body{animation:pageLoad .3s ease}
 #ky-theme-fab:hover{color:var(--red2);border-color:var(--red2);transform:scale(1.1)}
 
 /* ─── 首页幻灯轮播(圆角卡片式) ─── */
-.khero{position:relative;height:420px;overflow:hidden;background:#1a1d28;border-radius:var(--radius-lg);margin:20px auto 28px;max-width:1392px;box-shadow:var(--shadow-lg)}
-.khero-bg{position:absolute;inset:0;background-size:cover;background-position:center 25%;transition:background-image .6s,opacity .3s;filter:brightness(.75) saturate(1.1)}
+.khero{position:relative;height:360px;overflow:hidden;background:#1a1d28;border-radius:var(--radius-lg);margin:20px auto 28px;width:calc(100% - 48px);max-width:1392px;box-shadow:var(--shadow-lg)}
+.khero-bg{position:absolute;inset:0;background-size:cover;background-position:center 25%;opacity:0;transition:opacity .9s ease;filter:brightness(.78) saturate(1.1);will-change:opacity,transform}
+.khero-bg.on{opacity:1}
+.khero-bg.zoom{animation:kheroZoom 7s ease-out forwards}
+@keyframes kheroZoom{from{transform:scale(1.07)}to{transform:scale(1)}}
 .khero-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.65) 0%,rgba(0,0,0,.25) 50%,transparent 100%),linear-gradient(transparent 40%,rgba(0,0,0,.6) 100%)}
-.khero-in{position:absolute;bottom:0;left:0;right:0;padding:36px 48px;color:#fff;z-index:2}
+.khero-in{position:absolute;bottom:0;left:0;right:0;padding:32px 48px;color:#fff;z-index:2}
+.khero-in.anim .khero-cat{animation:heroUp .55s .08s both}
+.khero-in.anim .khero-title{animation:heroUp .55s .16s both}
+.khero-in.anim .khero-tags{animation:heroUp .55s .26s both}
+.khero-in.anim .khero-play{animation:heroUp .55s .36s both}
+@keyframes heroUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .khero-cat{display:inline-block;font-size:11px;color:rgba(255,255,255,.7);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;border-left:3px solid var(--pri);padding-left:12px}
-.khero-title{font-size:34px;font-weight:800;color:#fff;margin:0 0 10px;line-height:1.25;text-shadow:0 2px 16px rgba(0,0,0,.5);max-width:600px}
+.khero-title{font-size:32px;font-weight:800;color:#fff;margin:0 0 10px;line-height:1.25;text-shadow:0 2px 16px rgba(0,0,0,.5);max-width:600px}
 .khero-tags{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 .khero-tags span{background:rgba(255,255,255,.15);backdrop-filter:blur(8px);padding:4px 14px;border-radius:16px;font-size:12px;font-weight:500}
-.khero-play{display:inline-flex;align-items:center;gap:8px;background:var(--pri-grad);color:#fff;padding:12px 36px;border-radius:32px;font-size:15px;font-weight:700;text-decoration:none;margin-top:4px;transition:all .25s;box-shadow:0 4px 24px rgba(99,102,241,.45)}
+.khero-play{display:inline-flex;align-items:center;gap:8px;background:var(--pri-grad);color:#fff;padding:11px 34px;border-radius:32px;font-size:15px;font-weight:700;text-decoration:none;margin-top:4px;transition:all .25s;box-shadow:0 4px 24px rgba(99,102,241,.45)}
 .khero-play:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 8px 36px rgba(99,102,241,.55)}
-.khero-dots{position:absolute;bottom:24px;right:48px;display:flex;gap:8px;z-index:3}
+.khero-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:5;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.3);backdrop-filter:blur(10px);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .25s;padding:0}
+.khero:hover .khero-arrow{opacity:1}
+.khero-arrow:hover{background:var(--pri);border-color:var(--pri);transform:translateY(-50%) scale(1.12)}
+.khero-arrow.pl{left:18px}
+.khero-arrow.pr{right:18px}
+.khero-dots{position:absolute;bottom:22px;right:48px;display:flex;gap:8px;z-index:4}
 .khero-dots i{width:20px;height:4px;border-radius:2px;background:rgba(255,255,255,.25);cursor:pointer;transition:all .3s}
 .khero-dots i.on{background:#fff;width:32px}
+.khero-dots i:hover{background:rgba(255,255,255,.6)}
 @media(max-width:640px){
-  .khero{height:280px;margin:12px 12px 20px;border-radius:var(--radius)}
-  .khero-title{font-size:22px}
-  .khero-in{padding:0 20px;bottom:24px}
-  .khero-play{padding:9px 24px;font-size:13px}
-  .khero-dots{right:20px;bottom:16px}
+  .khero{height:240px;margin:12px 12px 18px;border-radius:var(--radius);width:calc(100% - 24px)}
+  .khero-title{font-size:20px}
+  .khero-in{padding:0 18px;bottom:20px}
+  .khero-play{padding:8px 22px;font-size:13px}
+  .khero-dots{right:18px;bottom:14px}
+  .khero-arrow{display:none}
 }
 
 /* ─── 手机底部Tab栏 ─── */
