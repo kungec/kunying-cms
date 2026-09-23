@@ -362,3 +362,18 @@ table.ut{width:100%;border-collapse:collapse;font-size:13px}
 .ky-verify iframe,.ky-verify .geetest_result{max-width:100%!important}
 .ky-verify .cf-turnstile,.ky-verify .cf-turnstile iframe{max-width:100%!important;border-radius:8px;overflow:hidden}
 .xsg-drawer .sg{top:58px;box-shadow:0 18px 44px rgba(0,0,0,.6)}
+
+/* ─── 观看历史页 ─── */
+.hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}
+.hist-card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.hist-card .hp{position:relative;display:block}
+.hist-card .hp img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:var(--card2)}
+.hist-card .hp .prog{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(0,0,0,.45)}
+.hist-card .hp .prog i{display:block;height:100%;background:var(--red2);border-radius:0 2px 2px 0}
+.hist-card .hnm{display:block;padding:8px 10px 2px;font-weight:600;font-size:13px;color:var(--txt);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-card .hmeta{padding:0 10px 10px;font-size:12px;color:var(--sub)}
+
+/* ─── 用户中心订单表格 ─── */
+.ut{width:100%;border-collapse:collapse;font-size:13px}
+.ut th,.ut td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
+.ut th{color:var(--sub);font-weight:600;font-size:12px;white-space:nowrap;background:var(--card2)}

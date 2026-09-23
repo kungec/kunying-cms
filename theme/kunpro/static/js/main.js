@@ -52,9 +52,9 @@
             return '<a href="/index.php?s=/vod/detail&id='+v.id+'" data-i="'+i+'">'
               +'<img src="'+esc(v.pic)+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">'
               +'<span class="sg-i"><b>'+hlName+'</b><em>'
-              +(v.remarks?'<i>'+v.remarks+'</i>':'')
-              +(v.year?'<u>'+v.year+'</u>':'')
-              +(v.area?'<u>'+v.area+'</u>':'')
+              +(v.remarks?'<i>'+String(v.remarks).replace(/[<>&"\']/g,'')+'</i>':'')
+              +(v.year?'<u>'+String(v.year).replace(/[<>&"\']/g,'')+'</u>':'')
+              +(v.area?'<u>'+String(v.area).replace(/[<>&"\']/g,'')+'</u>':'')
               +'</em></span></a>';
           }).join('')
           +'<a class="sg-all" href="/index.php?s=/vod/search&wd='+encodeURIComponent(w)+'">查看「'+w.replace(/[<>&"]/g,'')+'」的全部搜索结果 →</a>';

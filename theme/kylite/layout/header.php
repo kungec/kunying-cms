@@ -1,6 +1,15 @@
 <?php
 /** 坤影CMS 默认主题 kylite - 头部 */
-$navTypes = Db::fetchAll("SELECT * FROM ky_type WHERE pid=0 AND status=1 ORDER BY sort ASC, id ASC LIMIT 12");
+$navData = cache_get('kylite_nav');
+if (!is_array($navData)) {
+    $navTypes = Db::fetchAll("SELECT * FROM ky_type WHERE pid=0 AND status=1 ORDER BY sort ASC, id ASC LIMIT 12");
+    $navKids = [];
+    foreach (Db::fetchAll("SELECT * FROM ky_type WHERE pid>0 AND status=1 ORDER BY sort ASC, id ASC") as $nk) $navKids[(int)$nk['pid']][] = $nk;
+    $navData = [$navTypes, $navKids];
+    cache_set('kylite_nav', $navData, 300);
+} else {
+    list($navTypes, $navKids) = $navData;
+}
 $curTypeId = ((($GLOBALS['ky_controller'] ?? '') === 'vod') && ($GLOBALS['ky_action'] ?? '') === 'type') ? (int)($_GET['id'] ?? 0) : 0;
 $curUser = Auth::user();
 $curController = $GLOBALS['ky_controller'] ?? '';
@@ -71,8 +80,6 @@ function hdrSearchSubmit(ev){
     <nav class="knav">
       <a href="/" class="<?= ($curController ?? '') === 'index' ? 'on' : '' ?>">首页</a>
       <?php
-      $navKids = [];
-      foreach (Db::fetchAll("SELECT * FROM ky_type WHERE pid>0 AND status=1 ORDER BY sort ASC, id ASC") as $nk) $navKids[(int)$nk['pid']][] = $nk;
       foreach ($navTypes as $t):
           $kids = $navKids[(int)$t['id']] ?? [];
           $cur = ($curController ?? '') === 'vod' && $curTypeId === (int)$t['id'];
