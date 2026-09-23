@@ -2,15 +2,37 @@
 /** 坤影CMS 默认主题 kylite - 首页 */
 $pageTitle = config('site_name', '坤影影视');
 include theme_path('layout/header.php');
+$heroSlides = array_slice($hot ?: [], 0, 6);
+$heroJson = json_encode(array_map(function($v){
+  return ['id'=>(int)$v['id'],'name'=>$v['name'],'pic'=>pic_url($v['pic']),'cat'=>trim(explode(',',$v['class']??'')[0]??'')?:'精选','year'=>(string)$v['year'],'remarks'=>(string)$v['remarks']];
+}, $heroSlides), JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP);
 $allTypes = $types;
 ?>
-<div class="ksearch-card">
-  <form class="ksearch-bar" action="/index.php" method="get">
-    <input type="hidden" name="s" value="/vod/search">
-    <input type="text" name="wd" placeholder="输入关键词" autocomplete="off">
-    <button type="submit"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
-  </form>
 </div>
+
+<!-- 全屏幻灯轮播 -->
+<div class="khero" id="kHero">
+  <div class="khero-bg" id="kHeroBg"></div>
+  <div class="khero-shade"></div>
+  <div class="wrap khero-in">
+    <span class="khero-cat" id="kHeroCat"></span>
+    <h1 class="khero-title" id="kHeroTitle"></h1>
+    <div class="khero-tags" id="kHeroTags"></div>
+    <a class="khero-play" id="kHeroPlay" href="#">▶ 立即播放</a>
+    <div class="khero-dots" id="kHeroDots"></div>
+  </div>
+</div>
+
+<script>
+var kHeroData = [];
+try { kHeroData = JSON.parse(document.getElementById('kHeroDataRaw').textContent); } catch(e) {}
+</script>
+<script type="application/json" id="kHeroDataRaw"><?= $heroJson ?></script>
+
+<div class="ksec">
+  <div class="ksec-h"><b>热门推荐</b></div>
+  <div class="ktabs" id="ktabs">
+    <button class="on" data-t="0" onclick="kLoad(0,this)">首页</button>
 
 <div class="ksec">
   <div class="ksec-h"><b>热门推荐</b></div>

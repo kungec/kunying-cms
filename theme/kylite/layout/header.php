@@ -96,6 +96,11 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
       <?php endforeach; ?>
     </nav>
+    <div class="ksearch-hdr">
+      <input type="text" name="wd" id="hdrWd" placeholder="搜索影片…" autocomplete="off">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <div class="ksg" id="hdrSg"></div>
+    </div>
     <div class="kuser">
       <a href="/user/login">登录</a>
       <?php if (config('register_enable', '1') == '1'): ?><a class="kreg" href="/user/register">注册</a><?php endif; ?>
