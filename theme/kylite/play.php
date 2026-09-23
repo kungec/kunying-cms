@@ -274,8 +274,7 @@ function toggleFav(id,el){
 function postComment(id){
   var inp=document.getElementById('cmtInput'),t=inp.value.trim();
   if(!t)return kyToast('请输入评论内容',false);
-  var d=new FormData();d.append('vod_id',id);d.append('content',t);d.append('_csrf','<?= e(Security::csrfToken()) ?>');
-  kyPost('/index.php?s=/api/comment',d).then(function(j){
+  fetch('/index.php?s=/api/comment',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({vod_id:id,content:t,_csrf:kyVod.csrf})}).then(function(r){return r.json()}).then(function(j){
     kyToast(j.msg,j.code===1);
     if(j.code===1){inp.value='';setTimeout(function(){location.reload()},700)}
   });

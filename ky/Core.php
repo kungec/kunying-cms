@@ -31,7 +31,8 @@ class Request
     public static function jsonPost(string $key, $default = '', string $type = 's')
     {
         $body = self::jsonBody();
-        return self::filter($body[$key] ?? $default, $type);
+        if (array_key_exists($key, $body)) return self::filter($body[$key], $type);
+        return self::filter($_POST[$key] ?? $default, $type);
     }
 
     private static function filter($val, string $type)
