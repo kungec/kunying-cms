@@ -37,7 +37,32 @@ if (isset($vod) && $vod) {
 <?php if ($seoImg !== ''): ?><meta property="og:image" content="<?= e($seoImg) ?>"><meta name="twitter:card" content="summary_large_image"><?php endif; ?>
 <?php if (isset($vod) && $vod): ?><link rel="canonical" href="<?= $seoBase ?><?= config('rewrite_enable', '0') == '1' ? '/detail-' . (int)$vod['id'] . '.html' : '/index.php?s=/vod/detail&id=' . (int)$vod['id'] ?>"><?php endif; ?>
 <link rel="stylesheet" href="<?= theme_url('static/css/main.css') ?>?v=<?= asset_v('/theme/' . active_theme() . '/static/css/main.css') ?>">
+<link rel="preload" href="<?= theme_url('static/css/main.css') ?>" as="style">
+<link rel="preload" href="<?= theme_url('static/js/main.js') ?>" as="script">
+<link rel="preconnect" href="https://static.geetest.com" crossorigin>
+<link rel="preconnect" href="https://api.geetest.com">
 </head>
+<script>
+(function(){
+  var t = localStorage.getItem('ky_theme');
+  if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.setAttribute('data-theme','dark');
+  }
+})();
+function toggleTheme(){
+  var html = document.documentElement;
+  var isDark = html.getAttribute('data-theme') === 'dark';
+  if (isDark) { html.removeAttribute('data-theme'); localStorage.setItem('ky_theme','light'); }
+  else { html.setAttribute('data-theme','dark'); localStorage.setItem('ky_theme','dark'); }
+  var btn = document.getElementById('themeBtn');
+  if (btn) btn.textContent = isDark ? '🌙' : '☀️';
+}
+// 更新按钮图标
+document.addEventListener('DOMContentLoaded', function(){
+  var btn = document.getElementById('themeBtn');
+  if (btn) btn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+});
+</script>
 <body>
 <header class="ktop">
   <div class="ktop-in">
@@ -64,6 +89,7 @@ if (isset($vod) && $vod) {
       </div>
       <?php endforeach; ?>
     </nav>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
     <div class="kuser">
       <?php if ($curUser): ?>
       <a href="/user/center"><?= e(mb_substr($curUser['name'], 0, 12)) ?></a>

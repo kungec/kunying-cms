@@ -368,3 +368,39 @@ td{padding:10px;border-bottom:1px solid var(--line)}
 
 /* ─── 打印 ─── */
 @media print{.ktop,.kfooter,.ksearch-card,.filter,.ky-page{display:none!important}.kpage{box-shadow:none;border:none}}
+
+
+/* ─── 桌面端强制隐藏移动端元素 ─── */
+@media(min-width:901px){
+  .kdrawer,.kdrawer-mask,.ktabbar{display:none!important}
+}
+
+/* ─── 暗色模式切换按钮 ─── */
+.theme-toggle{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .3s;flex:none;line-height:1}
+.theme-toggle:hover{transform:rotate(20deg) scale(1.1);border-color:var(--pri);box-shadow:0 0 12px var(--pri-soft2)}
+
+/* ─── kuser区域调整(放暗色按钮) ─── */
+.kuser{gap:8px}
+
+/* ─── v2 视觉打磨 ─── */
+/* 滚动渐入 */
+.kcard,.mcard{opacity:0;transform:translateY(16px)}
+.kcard.in-view,.mcard.in-view{opacity:1;transform:translateY(0);transition:opacity .4s ease,transform .4s cubic-bezier(.25,.46,.45,.94)}
+.kcard:hover,.mcard:hover{transform:translateY(-6px) scale(1.02)}
+/* 卡片悬停光晕 */
+.mcard:hover{box-shadow:0 8px 30px rgba(99,102,241,.15),0 2px 8px rgba(0,0,0,.08)}
+/* 搜索栏优化 */
+.ksearch-bar{border-radius:16px;padding:4px 4px 4px 24px}
+.ksearch-bar input{font-size:16px;font-weight:500}
+/* 区块标题优化 */
+.ksec-h b,.sec-h h3{letter-spacing:-.02em}
+/* 导航优化 */
+.knav a{position:relative}
+.knav a::after{content:'';position:absolute;bottom:0;left:50%;width:0;height:2px;background:var(--pri);border-radius:2px;transition:all .25s;transform:translateX(-50%)}
+.knav a:hover::after,.knav a.on::after{width:60%}
+/* 页面切换过渡 */
+body{animation:pageLoad .3s ease}
+@keyframes pageLoad{from{opacity:0}to{opacity:1}}
+/* 图片加载优化 */
+img[loading="lazy"]{opacity:0;transition:opacity .3s}
+img[loading="lazy"].loaded{opacity:1}
