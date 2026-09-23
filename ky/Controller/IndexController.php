@@ -13,7 +13,7 @@ class IndexController
         }
         $slides = Db::fetchAll("SELECT * FROM ky_slide WHERE status=1 AND (pos='top' OR pos='') ORDER BY sort ASC, id DESC LIMIT 10");
         $movieSlides = Db::fetchAll("SELECT * FROM ky_slide WHERE status=1 AND pos='movie' ORDER BY sort ASC, id DESC LIMIT 8");
-        $hot = VodService::list(['order' => 'total_hits DESC'], 10);
+        $hot = VodService::list(['order' => 'total_hits DESC'], 18);
         $new = VodService::list(['order' => 'addtime DESC'], 14);
         if (config('kp_slide_source', 'new') === 'hot') {
             $hotSlides = VodService::list(['order' => 'total_hits DESC'], (int)config('kp_slide_count', '6') ?: 6);
