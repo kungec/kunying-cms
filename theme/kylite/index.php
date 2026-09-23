@@ -54,7 +54,7 @@ if (kHeroSlides.length > 0) {
     <?php endforeach; ?>
   </div>
   <div class="kgrid" id="kGrid">
-    <?php foreach (array_slice($hot, 0, 18) as $v): ?>
+    <?php foreach (array_slice($hot, 6, 18) as $v): ?>
     <a class="kcard" href="/index.php?s=/vod/detail&id=<?= (int)$v['id'] ?>">
       <div class="kc-pic"><img src="<?= e(pic_url($v['pic'])) ?>" loading="lazy" alt="<?= e($v['name']) ?>">
         <?php if ($v['remarks']): ?><span class="kc-rm"><?= e($v['remarks']) ?></span><?php endif; ?>
