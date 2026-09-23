@@ -432,3 +432,13 @@ body{animation:pageLoad .3s ease}
   .khero-play{padding:9px 24px;font-size:13px}
   .khero-dots{right:20px;bottom:16px}
 }
+
+/* ─── 手机底部Tab栏 ─── */
+.ktabbar{display:none}
+@media(max-width:900px){
+  .ktabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:200;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+  .ktabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--sub);text-decoration:none;font-size:11px;padding:4px 0}
+  .ktabbar a.on{color:var(--pri)}
+  .ktabbar a svg{width:20px;height:20px}
+  body{padding-bottom:58px}
+}
