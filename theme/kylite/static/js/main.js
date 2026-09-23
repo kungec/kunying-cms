@@ -203,7 +203,7 @@ window.addEventListener('resize', function(){ clearTimeout(_kyAlignT); _kyAlignT
     btn.onclick=toggleTheme;
     btn.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'\u2600\ufe0f':'\ud83c\udf19';
     var kuser=document.querySelector('.kuser');
-    if(kuser)kuser.parentNode.insertBefore(btn,kuser);
+    if(kuser)kuser.insertBefore(btn,kuser.firstChild);
     else top.appendChild(btn);
   });
 })();
