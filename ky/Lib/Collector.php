@@ -222,6 +222,12 @@ class Collector
 
         // 同名去重:其他来源的同名影片不重复创建,只增量并入播放地址(后台可关)
         // 含归一化匹配:过滤空格/标点/罗马数字差异后的同名(如"Ⅲ"与"第三季")也视为同一部
+        $lockKey = '';
+        if (config('collect_dedup_title', '1') == '1') {
+            // 多进程并行采集防竞态:同片名跨进程串行化(MySQL命名锁)
+            $lockKey = 'kycol:' . md5(self::normalizeName($name));
+            if ((int)Db::fetchOne("SELECT GET_LOCK(?, 5)", [$lockKey]) !== 1) $lockKey = '';
+        }
         if (config('collect_dedup_title', '1') == '1') {
             $norm = self::normalizeName($name);
             $same = Db::fetch("SELECT id, play_from, play_url, pic, remarks, name FROM ky_vod WHERE (name=? OR name_norm=?) AND (api_id<>? OR api_vid<>?) ORDER BY id ASC LIMIT 1", [$name, $norm, $apiId, $apiVid]);
@@ -232,6 +238,7 @@ class Collector
                 if ($same['pic'] === '' && $pic !== '') $upd['pic'] = $pic;
                 Db::update('ky_vod', $upd, 'id=?', [$same['id']]);
                 if ($queuedPic !== null) self::$pendingPics[$queuedPic][] = (int)$same['id'];
+                if ($lockKey !== '') Db::query("SELECT RELEASE_LOCK(?)", [$lockKey]);
                 return 2;
             }
         }
@@ -270,6 +277,7 @@ class Collector
         Db::insert('ky_vod', $row);
         $newId = (int)Db::pdo()->lastInsertId();
         if ($queuedPic !== null) self::$pendingPics[$queuedPic][] = $newId;
+        if ($lockKey !== '') Db::query("SELECT RELEASE_LOCK(?)", [$lockKey]);
         return 1;
     }
 
