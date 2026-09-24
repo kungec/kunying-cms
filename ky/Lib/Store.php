@@ -198,6 +198,8 @@ class Store
         $key = 'store-test-' . date('Ymd-His') . '.txt';
         $url = self::put($key, 'kunying-store-test-' . time());
         if ($url === null) return [false, '存储上传失败,请检查配置(可用性/账号/路径/外链域名)'];
+        // 本地驱动:探针文件用完即删,不在图片目录残留
+        if (self::driver() === 'local') @unlink(KY_PATH . self::localWebPath() . '/' . $key);
         return [true, '上传成功', $url];
     }
 }

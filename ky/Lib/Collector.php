@@ -87,11 +87,17 @@ class Collector
 
     /**
      * curl_multi 并发下载(带跳转跟随),返回 [url => body|null]
+     * SSRF防护:仅允许公网http(s)地址,拒绝内网/保留段;协议白名单含重定向
      */
     public static function downloadBatch(array $urls, int $concurrency = 8): array
     {
         $out = [];
-        $queue = array_values(array_unique($urls));
+        $queue = [];
+        foreach (array_unique($urls) as $u) {
+            if (Http::isPublicHttpUrl($u)) $queue[] = $u;
+            else $out[$u] = null;
+        }
+        $protocols = CURLPROTO_HTTP | CURLPROTO_HTTPS;
         while ($queue) {
             $batch = array_splice($queue, 0, max(1, $concurrency));
             $mh = curl_multi_init();
@@ -103,6 +109,8 @@ class Collector
                     CURLOPT_RETURNTRANSFER => true,
                     CURLOPT_FOLLOWLOCATION => true,
                     CURLOPT_MAXREDIRS => 3,
+                    CURLOPT_PROTOCOLS => $protocols,
+                    CURLOPT_REDIR_PROTOCOLS => $protocols,
                     CURLOPT_TIMEOUT => 15,
                     CURLOPT_CONNECTTIMEOUT => 8,
                     CURLOPT_SSL_VERIFYPEER => config('http_verify_ssl', '1') == '1',
@@ -321,7 +329,7 @@ class Collector
      */
     public static function localizePic(string $url): string
     {
-        if (!preg_match('#^https?://#i', $url)) return $url;
+        if (!preg_match('#^https?://#i', $url) || !Http::isPublicHttpUrl($url)) return $url;
         $known = self::knownPic($url);
         if ($known !== null) return $known;
         $body = Http::getFollow($url, 12);
