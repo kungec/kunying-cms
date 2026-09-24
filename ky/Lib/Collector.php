@@ -388,8 +388,8 @@ class Collector
         }
         $group = self::classifyGroup($typeName);
         if ($group === null) {
-            // 无法归类:建为一级分类(主分类)
-            $id = Db::insert('ky_type', ['pid' => 0, 'name' => $typeName, 'sort' => 50, 'status' => 1, 'nav' => 1]);
+            // 无法归类:建为顶级分类,但默认不进导航(防陌生分类污染导航栏),管理员可在后台升级
+            $id = Db::insert('ky_type', ['pid' => 0, 'name' => $typeName, 'sort' => 50, 'status' => 1, 'nav' => 0]);
             cache_del('kylite_nav');
             return $id;
         }
