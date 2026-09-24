@@ -139,8 +139,14 @@ class ApiController
         if (!$ok) json_ok([]);
         $wd = trim(Request::get('wd', ''));
         if ($wd === '' || mb_strlen($wd) < 1) json_ok([]);
+        // 热词结果缓存120秒:热门关键词的重复联想打零数据库;浏览器侧同样缓存2分钟
+        $ck = 'sg_' . md5($wd);
+        $hit = cache_get($ck);
+        if ($hit !== null) { header('Cache-Control: public, max-age=120'); json_ok($hit); }
         $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $wd) . '%';
         $list = Db::fetchAll("SELECT id,name,pic,remarks,year,area FROM ky_vod WHERE status=1 AND name LIKE ? ORDER BY total_hits DESC LIMIT 8", [$like]);
+        cache_set($ck, $list, 120);
+        header('Cache-Control: public, max-age=120');
         json_ok($list);
     }
 }
