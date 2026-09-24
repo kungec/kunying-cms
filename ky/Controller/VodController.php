@@ -9,6 +9,7 @@ class VodController
         $typeId = Request::get('id', 0, 'i');
         $page = max(1, Request::get('page', 1, 'i'));
         $cacheable = !Auth::isLogin() && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET';
+        if ($cacheable) @session_write_close();
         $class = mb_substr(trim(str_replace(['<', '>', '"', "'"], '', (string)Request::get('class', ''))), 0, 30);
         $year = mb_substr(trim(str_replace(['<', '>', '"', "'"], '', (string)Request::get('year', ''))), 0, 10);
         $area = mb_substr(trim(str_replace(['<', '>', '"', "'"], '', (string)Request::get('area', ''))), 0, 20);
@@ -179,6 +180,7 @@ class VodController
         $list = []; $total = 0; $pageSize = 24;
         // 访客搜索结果缓存:热词重复搜索零数据库(浏览器同样缓存60秒)
         $searchCacheable = !Auth::isLogin() && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && $wd !== '';
+        if ($searchCacheable) @session_write_close();
         $sck = 'search_' . md5($wd . '|' . $page);
         if ($searchCacheable) {
             $shit = page_cache_get($sck);

@@ -8,6 +8,7 @@ class IndexController
     {
         $cacheable = !Auth::isLogin() && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET';
         if ($cacheable) {
+            @session_write_close(); // 缓存页无需会话写:提前释放文件锁,高并发不排队
             $hit = page_cache_get('home');
             if ($hit !== null) { guest_cache_headers(60); echo $hit; return; }
         }
