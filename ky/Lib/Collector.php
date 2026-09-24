@@ -7,6 +7,8 @@ if (!defined('KY_PATH')) exit('Access denied');
 
 class Collector
 {
+    /** 页内待下载封面队列:url => [rowId...] — collectPage尾部统一并发处理 */
+    private static $pendingPics = [];
 
     /**
      * 采集速度档位 => 请求间隔(微秒):温和/慢速/标准/极速
@@ -33,6 +35,7 @@ class Collector
         if (!is_array($data) || (int)($data['code'] ?? 0) !== 1) {
             throw new RuntimeException('资源站接口响应异常');
         }
+        self::$pendingPics = [];
         $list = $data['list'] ?? [];
         $added = 0; $updated = 0; $items = [];
         foreach ($list as $item) {
@@ -45,9 +48,11 @@ class Collector
                 'remarks' => mb_substr(trim((string)($item['vod_remarks'] ?? '')), 0, 20),
                 'status' => $r, // 1=新增 2=更新 0=跳过
                 'pic' => mb_substr($pic, 0, 300),
-                'pic_local' => (strpos($pic, '/upload/vod/') === 0),
+                'pic_local' => (strpos($pic, '/') === 0),
             ];
         }
+        // 页内新片封面并发下载(curl_multi,8路),成功则回写 pic
+        self::flushPendingPics();
         return [
             'total' => (int)($data['total'] ?? count($list)),
             'page' => (int)($data['page'] ?? $page),
@@ -56,6 +61,95 @@ class Collector
             'updated' => $updated,
             'items' => array_slice($items, 0, 30),
         ];
+    }
+
+    /**
+     * 并发下载页内待处理封面并回写(失败影片保留外链)
+     */
+    private static function flushPendingPics(): void
+    {
+        if (empty(self::$pendingPics)) return;
+        $urls = array_keys(self::$pendingPics);
+        $results = self::downloadBatch($urls, 8);
+        foreach ($results as $url => $body) {
+            $stored = null;
+            if (is_string($body) && strlen($body) > 64) {
+                $stored = self::storePicBody($url, $body);
+            }
+            if ($stored !== null) {
+                foreach (self::$pendingPics[$url] as $rowId) {
+                    Db::update('ky_vod', ['pic' => $stored], 'id=?', [$rowId]);
+                }
+            }
+        }
+        self::$pendingPics = [];
+    }
+
+    /**
+     * curl_multi 并发下载(带跳转跟随),返回 [url => body|null]
+     */
+    public static function downloadBatch(array $urls, int $concurrency = 8): array
+    {
+        $out = [];
+        $queue = array_values(array_unique($urls));
+        while ($queue) {
+            $batch = array_splice($queue, 0, max(1, $concurrency));
+            $mh = curl_multi_init();
+            $chs = [];
+            foreach ($batch as $i => $u) {
+                $ch = curl_init();
+                curl_setopt_array($ch, [
+                    CURLOPT_URL => str_replace(' ', '%20', $u),
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_MAXREDIRS => 3,
+                    CURLOPT_TIMEOUT => 15,
+                    CURLOPT_CONNECTTIMEOUT => 8,
+                    CURLOPT_SSL_VERIFYPEER => config('http_verify_ssl', '1') == '1',
+                    CURLOPT_USERAGENT => 'Mozilla/5.0 (KunYing Collector)',
+                ]);
+                curl_multi_add_handle($mh, $ch);
+                $chs[$i] = $ch;
+            }
+            do {
+                $status = curl_multi_exec($mh, $active);
+                if ($active) curl_multi_select($mh, 0.2);
+            } while ($active && $status === CURLM_OK);
+            foreach ($batch as $i => $u) {
+                $body = curl_multi_getcontent($chs[$i]);
+                $code = (int)curl_getinfo($chs[$i], CURLINFO_HTTP_CODE);
+                $out[$u] = ($body !== false && $code >= 200 && $code < 300) ? $body : null;
+                curl_multi_remove_handle($mh, $chs[$i]);
+                curl_close($chs[$i]);
+            }
+            curl_multi_close($mh);
+        }
+        return $out;
+    }
+
+    /**
+     * 下载内容入库:按存储驱动上传(local/ftp/oss/s3),返回可访问地址;失败null
+     */
+    private static function storePicBody(string $url, string $body): ?string
+    {
+        $info = @getimagesizefromstring($body);
+        if ($info === false) return null;
+        $exts = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp'];
+        $ext = $exts[$info[2]] ?? 'jpg';
+        $key = 'vod/' . md5($url) . '.' . $ext;
+        $stored = Store::put($key, $body);
+        if ($stored !== null) {
+            // 远端存储成功:记录本地标记文件用于后续去重复用
+            if (Store::driver() !== 'local') @mkdir(KY_PATH . '/data/store-cache', 0755, true);
+            if (Store::driver() !== 'local') @file_put_contents(KY_PATH . '/data/store-cache/' . md5($url), $stored);
+            return $stored;
+        }
+        // 云盘失败:回退本地(自选目录)
+        $dir = KY_PATH . Store::localWebPath();
+        if (!is_dir($dir)) @mkdir($dir, 0755, true);
+        $file = $dir . '/' . md5($url) . '.' . $ext;
+        if (!is_file($file)) file_put_contents($file, $body, LOCK_EX);
+        return Store::localWebPath() . '/' . md5($url) . '.' . $ext;
     }
 
     /**
@@ -68,7 +162,9 @@ class Collector
         $url = rtrim($api['api_url'], '?&/');
         $data = Http::getJson($url . '?' . http_build_query(['ac' => 'detail', 'ids' => $apiVid]), 30);
         if (!is_array($data) || empty($data['list'][0])) return 0;
-        return self::upsertVod($apiId, $data['list'][0]);
+        $r = self::upsertVod($apiId, $data['list'][0]);
+        self::flushPendingPics();
+        return $r;
     }
 
     private static function upsertVod(int $apiId, array $item): int
@@ -86,10 +182,19 @@ class Collector
         $exists = Db::fetch("SELECT id, play_from, play_url, pic, remarks FROM ky_vod WHERE api_id=? AND api_vid=?", [$apiId, $apiVid]);
 
         // 封面去重:影片已有封面绝不重复采集,只有新影片/无封面影片才会下载
+        $queuedPic = null;
         if ($exists && $exists['pic'] !== '') {
             $pic = $exists['pic'];
         } elseif (config('collect_img_local', '0') == '1' && preg_match('#^https?://#i', $remotePic)) {
-            $pic = self::localizePic($remotePic);
+            $known = self::knownPic($remotePic);
+            if ($known !== null) {
+                $pic = $known;
+            } else {
+                // 先以外链入库,页尾统一并发下载后回写(采集提速核心)
+                $pic = $remotePic;
+                $queuedPic = $remotePic;
+                self::$pendingPics[$remotePic] = self::$pendingPics[$remotePic] ?? [];
+            }
         } else {
             $pic = $remotePic;
         }
@@ -111,6 +216,7 @@ class Collector
             $upd = ['play_from' => $mFrom, 'play_url' => $mUrl, 'updatetime' => time()];
             if ($remarks !== '' && $remarks !== (string)$exists['remarks']) $upd['remarks'] = $remarks;
             Db::update('ky_vod', $upd, 'id=?', [$exists['id']]);
+            if ($queuedPic !== null) self::$pendingPics[$queuedPic][] = (int)$exists['id'];
             return 2;
         }
 
@@ -125,6 +231,7 @@ class Collector
                 if ($same['remarks'] === '' && $remarks !== '') $upd['remarks'] = $remarks;
                 if ($same['pic'] === '' && $pic !== '') $upd['pic'] = $pic;
                 Db::update('ky_vod', $upd, 'id=?', [$same['id']]);
+                if ($queuedPic !== null) self::$pendingPics[$queuedPic][] = (int)$same['id'];
                 return 2;
             }
         }
@@ -161,7 +268,27 @@ class Collector
             'addtime' => time(),
         ];
         Db::insert('ky_vod', $row);
+        $newId = (int)Db::pdo()->lastInsertId();
+        if ($queuedPic !== null) self::$pendingPics[$queuedPic][] = $newId;
         return 1;
+    }
+
+    /**
+     * 已下载过的封面缓存:本地文件或云盘URL映射,命中则不再下载
+     */
+    private static function knownPic(string $url): ?string
+    {
+        $name = md5($url);
+        foreach (['jpg', 'png', 'gif', 'webp'] as $e) {
+            $f = KY_PATH . Store::localWebPath() . '/' . $name . '.' . $e;
+            if (is_file($f)) return Store::localWebPath() . '/' . $name . '.' . $e;
+        }
+        $m = KY_PATH . '/data/store-cache/' . $name;
+        if (is_file($m)) {
+            $u = trim((string)@file_get_contents($m));
+            if ($u !== '') return $u;
+        }
+        return null;
     }
 
     /**
@@ -182,30 +309,17 @@ class Collector
     }
 
     /**
-     * 下载远程海报到本站,返回本地地址;失败返回原地址
+     * 下载远程海报入库(本地自选目录/FTP/OSS/S3由Store驱动),失败返回原地址
      */
     public static function localizePic(string $url): string
     {
         if (!preg_match('#^https?://#i', $url)) return $url;
-        // 同一URL的封面已下载过:直接复用本地文件,不重复下载
-        $dir = KY_PATH . '/upload/vod';
-        if (!is_dir($dir)) @mkdir($dir, 0755, true);
-        foreach (['jpg', 'png', 'gif', 'webp'] as $e) {
-            $known = $dir . '/' . md5($url) . '.' . $e;
-            if (is_file($known)) return '/upload/vod/' . md5($url) . '.' . $e;
-        }
+        $known = self::knownPic($url);
+        if ($known !== null) return $known;
         $body = Http::getFollow($url, 12);
         if ($body === false || strlen($body) < 64) return $url;
-        $info = @getimagesizefromstring($body);
-        if ($info === false) return $url;
-        $exts = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp'];
-        $ext = $exts[$info[2]] ?? 'jpg';
-        $dir = KY_PATH . '/upload/vod';
-        if (!is_dir($dir)) @mkdir($dir, 0755, true);
-        $name = md5($url) . '.' . $ext;
-        $file = $dir . '/' . $name;
-        if (!is_file($file)) file_put_contents($file, $body, LOCK_EX);
-        return '/upload/vod/' . $name;
+        $stored = self::storePicBody($url, $body);
+        return $stored ?? $url;
     }
 
     /**

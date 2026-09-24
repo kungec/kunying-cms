@@ -30,7 +30,7 @@ require __DIR__ . '/Auth.php';
 // 控制器与Lib自动加载
 spl_autoload_register(function ($class) {
     if (strpos($class, '\\') !== false) return;
-    static $libs = ['Http', 'Captcha', 'Mailer', 'Verify', 'Pay', 'Collector', 'Addon', 'License', 'Updater'];
+    static $libs = ['Http', 'Captcha', 'Mailer', 'Verify', 'Pay', 'Collector', 'Addon', 'License', 'Updater', 'Store'];
     if (in_array($class, $libs, true)) {
         $file = KY_PATH . '/ky/Lib/' . $class . '.php';
         if (is_file($file)) require $file;

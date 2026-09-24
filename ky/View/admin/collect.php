@@ -60,9 +60,44 @@ foreach ($lastResult as $r) {
     <div class="fi"><label>定时自动采集</label><select id="g_auto"><option value="1" <?= config('collect_auto_enable', '0') == '1' ? 'selected' : '' ?>>开启</option><option value="0" <?= config('collect_auto_enable', '0') != '1' ? 'selected' : '' ?>>关闭</option></select></div>
     <div class="fi"><label>间隔(分钟,最小5)</label><input type="number" id="g_interval" value="<?= $interval ?>" min="5"></div>
     <div class="fi"><label>同名影片去重</label><select id="g_dedup"><option value="1" <?= config('collect_dedup_title', '1') == '1' ? 'selected' : '' ?>>合并播放地址(推荐)</option><option value="0" <?= config('collect_dedup_title', '1') != '1' ? 'selected' : '' ?>>关闭</option></select></div>
-    <div class="fi"><label>采集图片到本地</label><select id="g_imglocal"><option value="1" <?= config('collect_img_local', '0') == '1' ? 'selected' : '' ?>>下载到本站(推荐)</option><option value="0" <?= config('collect_img_local', '0') != '1' ? 'selected' : '' ?>>用外链</option></select></div>
+    <div class="fi"><label>采集图片</label><select id="g_imglocal"><option value="1" <?= config('collect_img_local', '0') == '1' ? 'selected' : '' ?>>下载入库(推荐)</option><option value="0" <?= config('collect_img_local', '0') != '1' ? 'selected' : '' ?>>用外链</option></select></div>
     <div class="fi"><label>采集速度</label><select id="g_speed" onchange="saveSpeed(this.value)"><option value="gentle" <?= config('collect_speed', 'normal') == 'gentle' ? 'selected' : '' ?>>温和(防封)</option><option value="slow" <?= config('collect_speed', 'normal') == 'slow' ? 'selected' : '' ?>>慢速</option><option value="normal" <?= config('collect_speed', 'normal') == 'normal' ? 'selected' : '' ?>>标准(推荐)</option><option value="fast" <?= config('collect_speed', 'normal') == 'fast' ? 'selected' : '' ?>>极速</option></select></div>
     <div class="fi" style="align-self:flex-end"><button class="btn" onclick="saveGlobal()">保存设置</button></div>
+  </div>
+  <p class="hint" style="margin-top:8px">多线程采集:后台快速采集为逐页执行;整库批量采集请在服务器CLI执行 <code>php ky/cron/collect.php --full --pages=30 --threads=4</code>(线程数在下方"并行进程数"设置,1~8)。</p>
+
+  <div class="row" style="margin-top:8px;max-width:860px">
+    <div class="fi"><label>并行进程数(CLI整库采集,1~8)</label><input type="number" id="g_threads" value="<?= (int)config('collect_threads', '1') ?>" min="1" max="8"></div>
+  </div>
+
+  <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:14px">
+    <b>图片存储位置</b>
+    <span style="font-size:12px;color:var(--sub)">(采集的封面图存放位置;本地存放在站点 /upload 下的目录,云盘上传后直接存外链地址)</span>
+    <div class="row" style="margin-top:10px;max-width:960px">
+      <div class="fi"><label>存储方式</label><select id="s_store" onchange="storeFields()">
+        <option value="local" <?= config('img_store', 'local') == 'local' ? 'selected' : '' ?>>本站磁盘</option>
+        <option value="ftp" <?= config('img_store', 'local') == 'ftp' ? 'selected' : '' ?>>FTP远程附件</option>
+        <option value="oss" <?= config('img_store', 'local') == 'oss' ? 'selected' : '' ?>>阿里云OSS</option>
+        <option value="s3" <?= config('img_store', 'local') == 's3' ? 'selected' : '' ?>>S3兼容(MinIO/B2/COS等)</option>
+      </select></div>
+      <div class="fi sf-local"><label>本站目录(/upload/开头)</label><input id="s_dir" value="<?= e(config('img_dir', '/upload/vod')) ?>" placeholder="/upload/vod"></div>
+      <div class="fi" style="align-self:flex-end"><button class="btn sm" onclick="storeTest()">🔌 测试存储</button></div>
+    </div>
+    <div class="row sf-remote" style="display:none;margin-top:8px;max-width:960px">
+      <div class="fi sf-ftp"><label>FTP地址</label><input id="s_ftp_host" value="<?= e(config('ftp_host', '')) ?>"></div>
+      <div class="fi sf-ftp"><label>端口</label><input type="number" id="s_ftp_port" value="<?= (int)config('ftp_port', '21') ?>" style="max-width:90px"></div>
+      <div class="fi sf-ftp"><label>账号</label><input id="s_ftp_user" value="<?= e(config('ftp_user', '')) ?>"></div>
+      <div class="fi sf-ftp"><label>密码</label><input type="password" id="s_ftp_pass" value="<?= e(config('ftp_pass', '')) ?>"></div>
+      <div class="fi sf-ftp"><label>目录</label><input id="s_ftp_path" value="<?= e(config('ftp_path', '')) ?>" placeholder="/vod"></div>
+      <div class="fi sf-oss"><label>Endpoint</label><input id="s_oss_ep" value="<?= e(config('oss_endpoint', '')) ?>" placeholder="oss-cn-hangzhou.aliyuncs.com"></div>
+      <div class="fi sf-oss"><label>Bucket</label><input id="s_oss_bucket" value="<?= e(config('oss_bucket', '')) ?>"></div>
+      <div class="fi sf-s3"><label>S3 Endpoint</label><input id="s_s3_ep" value="<?= e(config('s3_endpoint', '')) ?>" placeholder="https://s3.us-west-004.backblazeb2.com"></div>
+      <div class="fi sf-s3"><label>Bucket</label><input id="s_s3_bucket" value="<?= e(config('s3_bucket', '')) ?>"></div>
+      <div class="fi sf-oss sf-s3"><label>AccessKey</label><input id="s_ak" value="<?= e(config('oss_ak', '') ?: config('s3_ak', '')) ?>"></div>
+      <div class="fi sf-oss sf-s3"><label>SecretKey</label><input type="password" id="s_sk" value="<?= e(config('oss_sk', '') ?: config('s3_sk', '')) ?>"></div>
+      <div class="fi sf-remote"><label>外链域名(必填,图片访问地址前缀)</label><input id="s_baseurl" value="<?= e(config(config('img_store', 'local') . '_baseurl', '')) ?>" placeholder="https://img.example.com" style="min-width:260px"></div>
+    </div>
+    <p class="hint" id="storeMsg" style="margin-top:6px"></p>
   </div>
 </div>
 
@@ -282,10 +317,45 @@ async function saveGlobal(){
   d.append('collect_dedup_title', g_dedup.value);
   d.append('collect_img_local', g_imglocal.value);
   d.append('collect_speed', g_speed.value);
+  d.append('collect_threads', g_threads ? g_threads.value : 1);
+  d.append('img_store', document.getElementById('s_store') ? s_store.value : 'local');
+  d.append('img_dir', document.getElementById('s_dir') ? s_dir.value : '/upload/vod');
+  d.append('ftp_host', v('s_ftp_host')); d.append('ftp_port', v('s_ftp_port') || 21);
+  d.append('ftp_user', v('s_ftp_user')); d.append('ftp_pass', v('s_ftp_pass')); d.append('ftp_path', v('s_ftp_path'));
+  d.append('oss_endpoint', v('s_oss_ep')); d.append('oss_bucket', v('s_oss_bucket'));
+  d.append('s3_endpoint', v('s_s3_ep')); d.append('s3_bucket', v('s_s3_bucket'));
+  var isOss = document.getElementById('s_store') && s_store.value === 'oss';
+  var isS3 = document.getElementById('s_store') && s_store.value === 's3';
+  d.append('oss_ak', isOss ? v('s_ak') : ''); d.append('oss_sk', isOss ? v('s_sk') : '');
+  d.append('s3_ak', isS3 ? v('s_ak') : ''); d.append('s3_sk', isS3 ? v('s_sk') : '');
+  var baseMap = {ftp: 'ftp_baseurl', oss: 'oss_baseurl', s3: 's3_baseurl'};
+  d.append('img_baseurl', '');
+  ['ftp_baseurl','oss_baseurl','s3_baseurl'].forEach(k=>d.append(k, k===baseMap[s_store.value] ? v('s_baseurl') : ''));
   d.append('_csrf','<?= e(Security::csrfToken()) ?>');
   var j=await api('/admin.php?s=/content/collectglobal',d);
   toast(j.msg||'完成',j.code===1);
 }
+function v(id){var el=document.getElementById(id);return el?el.value:''}
+function storeFields(){
+  var s=s_store.value;
+  document.querySelectorAll('.sf-remote').forEach(el=>el.style.display = s==='local' ? 'none' : 'flex');
+  document.querySelectorAll('.sf-ftp').forEach(el=>el.style.display = s==='ftp' ? '' : 'none');
+  document.querySelectorAll('.sf-oss').forEach(el=>el.style.display = s==='oss' ? '' : 'none');
+  document.querySelectorAll('.sf-s3').forEach(el=>el.style.display = s==='s3' ? '' : 'none');
+  document.querySelectorAll('.sf-local').forEach(el=>el.style.display = s==='local' ? '' : 'none');
+  var baseInput=document.getElementById('s_baseurl');
+  var cur={local:'',ftp:'<?= e(config('ftp_baseurl', '')) ?>',oss:'<?= e(config('oss_baseurl', '')) ?>',s3:'<?= e(config('s3_baseurl', '')) ?>'};
+  if(baseInput) baseInput.value=cur[s]||'';
+}
+function storeTest(){
+  var d=new FormData();d.append('_csrf','<?= e(Security::csrfToken()) ?>');
+  var msg=document.getElementById('storeMsg');
+  msg.textContent='正在上传测试文件…';
+  api('/admin.php?s=/content/imgstoretest',d).then(function(j){
+    msg.textContent=j.msg||'';msg.style.color=j.code===1?'#1f9d55':'#e5322d';
+  });
+}
+storeFields();
 async function runAuto(){
   var d=new FormData();d.append('_csrf','<?= e(Security::csrfToken()) ?>');
   toast('定时采集中,请稍候…');
