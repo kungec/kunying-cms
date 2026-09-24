@@ -8,7 +8,12 @@ class ProxyController
 {
     public function m3u8()
     {
+        // 立即释放session文件锁:播放器并行拉取分片时不能被session串行化(卡顿主因)
+        if (function_exists('session_write_close')) @session_write_close();
         @set_time_limit(300);
+        while (ob_get_level() > 0) @ob_end_clean();
+        @ini_set('zlib.output_compression', '0');
+
         $u = trim(Request::get('u', ''));
         $sg = trim(Request::get('sg', ''));
         if ($u === '' || $sg === '' || !preg_match('#^https?://#i', $u)) {
@@ -26,23 +31,77 @@ class ProxyController
             exit('host not allowed');
         }
 
-        $isList = preg_match('/\.m3u8(\?|#|$)/i', $u);
+        if (preg_match('/\.m3u8(\?|#|$)/i', $u)) {
+            $this->playlist($u);
+            exit;
+        }
+        $this->segment($u);
+        exit;
+    }
+
+    /** 播放列表:VOD磁盘缓存1小时,直播(无ENDLIST)不缓存 */
+    private function playlist(string $u): void
+    {
+        header('Content-Type: application/vnd.apple.mpegurl');
+        header('Access-Control-Allow-Origin: *');
+        $cacheDir = KY_PATH . '/data/cache/m3u8';
+        $cache = $cacheDir . '/' . md5($u) . '.m3u8';
+        if (is_file($cache) && filesize($cache) > 0 && time() - filemtime($cache) < 3600) {
+            $body = file_get_contents($cache);
+            if ($body !== false && $body !== '') {
+                header('X-Cache: HIT');
+                header('Content-Length: ' . strlen($body));
+                echo $body;
+                return;
+            }
+        }
         $body = Http::getFollow($u, 20, ['Referer:']);
         if ($body === false || $body === '') {
             http_response_code(502);
             exit('upstream failed');
         }
-
-        if ($isList) {
-            header('Content-Type: application/vnd.apple.mpegurl');
-            echo $this->rewritePlaylist($body, $u);
-        } else {
-            header('Content-Type: video/mp2t');
-            header('Accept-Ranges: none');
-            header('Cache-Control: public, max-age=3600');
-            echo $body;
+        $rewritten = $this->rewritePlaylist($body, $u);
+        if (strpos($body, '#EXT-X-ENDLIST') !== false) {
+            if (!is_dir($cacheDir)) @mkdir($cacheDir, 0755, true);
+            @file_put_contents($cache, $rewritten, LOCK_EX);
         }
-        exit;
+        header('X-Cache: MISS');
+        header('Content-Length: ' . strlen($rewritten));
+        echo $rewritten;
+    }
+
+    /** 视频分片:真流式透传(边收边发,客户端断开即中止上游) */
+    private function segment(string $u): void
+    {
+        header('Content-Type: video/mp2t');
+        header('Accept-Ranges: none');
+        header('Cache-Control: public, max-age=86400');
+        header('Access-Control-Allow-Origin: *');
+
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => str_replace(' ', '%20', $u),
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 3,
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_CONNECTTIMEOUT => 8,
+            CURLOPT_SSL_VERIFYPEER => config('http_verify_ssl', '1') == '1',
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (KunYing Proxy)',
+            CURLOPT_REFERER => '',
+            CURLOPT_BUFFERSIZE => 262144,
+        ]);
+        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) {
+            static $sent = 0;
+            echo $chunk;
+            $sent += strlen($chunk);
+            if ($sent >= 262144) { $sent = 0; flush(); }
+            if (connection_aborted()) return -1; // 观众已离开/seek:中止上游下载
+            return strlen($chunk);
+        });
+        curl_exec($ch);
+        curl_close($ch);
     }
 
     /**

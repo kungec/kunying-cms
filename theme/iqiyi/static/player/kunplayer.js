@@ -60,7 +60,7 @@ KunPlayer.prototype._load=function(src,type){
   // iOS/iPadOS Safari 优先原生HLS:性能更好且支持AirPlay投屏
   if(isM3u8 && window.Hls && Hls.isSupported() && !(isIOS && isSafari)){
     if(this.hls)this.hls.destroy();
-    this.hls=new Hls({maxBufferLength:60,maxMaxBufferLength:180,maxBufferSize:120*1000*1000,fragLoadingTimeOut:40000,fragLoadingMaxRetry:8,manifestLoadingTimeOut:25000,startLevel:-1,abrEwmaDefaultEstimate:2000000});
+    this.hls=new Hls({maxBufferLength:60,maxMaxBufferLength:180,maxBufferSize:120*1000*1000,backBufferLength:45,fragLoadingTimeOut:40000,fragLoadingMaxRetry:8,manifestLoadingTimeOut:25000,startLevel:-1,abrEwmaDefaultEstimate:2000000});
     this.hls.loadSource(src);
     this.hls.attachMedia(v);
   }else{
