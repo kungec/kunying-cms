@@ -351,7 +351,9 @@ table.ut{width:100%;border-collapse:collapse;font-size:13px}
 @media(max-width:640px){.iqgrid{grid-template-columns:repeat(2,1fr);gap:18px 12px}.iqtitle{font-size:32px}.iqhero{min-height:420px}.iqc .nm{font-size:14px}}
 
 /* ===== 人机验证自适应(极验v4/Turnstile) ===== */
-.ky-verify .geetest_btn{background:#22242d!important;border:1px solid #3a3d49!important;box-shadow:none!important;width:100%!important}
+.ky-verify{width:100%}
+.ky-verify .geetest_holder,.ky-verify .geetest_box,.ky-verify .geetest_widget,.ky-verify .geetest_btn{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+.ky-verify .geetest_btn{background:#22242d!important;border:1px solid #3a3d49!important;box-shadow:none!important}
 .ky-verify .geetest_btn .geetest_btn_label,.ky-verify .geetest_radar_tip,.ky-verify .geetest_success_radar_tip,.ky-verify .geetest_radar_cls,.ky-verify .geetest_panel_box_title{color:#e9eaee!important;background:transparent!important}
 .ky-verify .geetest_radar{background:transparent!important}
 .ky-verify .geetest_radar .geetest_radar_img,.ky-verify .geetest_radar .geetest_box{background:transparent!important}
