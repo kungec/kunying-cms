@@ -318,20 +318,21 @@ class AdminContentController
         $sp = (string)Request::post('collect_speed', '');
         if (in_array($sp, ['gentle', 'slow', 'normal', 'fast'], true)) config_set('collect_speed', $sp);
         config_set('collect_threads', (string)max(1, min(8, Request::post('collect_threads', 1, 'i'))));
-        // 图片存储配置(local/ftp/oss/s3)
+        // 图片存储配置(local/ftp/oss/s3):只更新表单里实际提交的键,非当前驱动的已存配置不动
         $store = (string)Request::post('img_store', 'local');
         if (in_array($store, ['local', 'ftp', 'oss', 's3'], true)) config_set('img_store', $store);
         $dir = '/' . trim((string)Request::post('img_dir', '/upload/vod'), '/');
         config_set('img_dir', preg_match('#^/upload(/[a-z0-9_\-]{1,40}){0,4}$#i', $dir) ? rtrim($dir, '/') : '/upload/vod');
         foreach ([
-            'img_baseurl' => 200, 'ftp_host' => 120, 'ftp_user' => 60, 'ftp_pass' => 60,
+            'ftp_host' => 120, 'ftp_user' => 60, 'ftp_pass' => 60,
             'ftp_path' => 100, 'ftp_baseurl' => 200,
             'oss_endpoint' => 150, 'oss_bucket' => 60, 'oss_ak' => 80, 'oss_sk' => 120, 'oss_baseurl' => 200,
             's3_endpoint' => 150, 's3_bucket' => 60, 's3_ak' => 80, 's3_sk' => 120, 's3_baseurl' => 200,
         ] as $k => $max) {
+            if (!isset($_POST[$k])) continue;
             config_set($k, mb_substr(trim((string)Request::post($k, '')), 0, $max));
         }
-        config_set('ftp_port', (string)max(1, min(65535, Request::post('ftp_port', 21, 'i'))));
+        if (isset($_POST['ftp_port'])) config_set('ftp_port', (string)max(1, min(65535, (int)$_POST['ftp_port'])));
         Admin::log('修改定时采集配置');
         json_ok(null, '已保存');
     }

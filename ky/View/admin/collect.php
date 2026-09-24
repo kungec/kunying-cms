@@ -318,19 +318,25 @@ async function saveGlobal(){
   d.append('collect_img_local', g_imglocal.value);
   d.append('collect_speed', g_speed.value);
   d.append('collect_threads', g_threads ? g_threads.value : 1);
-  d.append('img_store', document.getElementById('s_store') ? s_store.value : 'local');
-  d.append('img_dir', document.getElementById('s_dir') ? s_dir.value : '/upload/vod');
-  d.append('ftp_host', v('s_ftp_host')); d.append('ftp_port', v('s_ftp_port') || 21);
-  d.append('ftp_user', v('s_ftp_user')); d.append('ftp_pass', v('s_ftp_pass')); d.append('ftp_path', v('s_ftp_path'));
-  d.append('oss_endpoint', v('s_oss_ep')); d.append('oss_bucket', v('s_oss_bucket'));
-  d.append('s3_endpoint', v('s_s3_ep')); d.append('s3_bucket', v('s_s3_bucket'));
-  var isOss = document.getElementById('s_store') && s_store.value === 'oss';
-  var isS3 = document.getElementById('s_store') && s_store.value === 's3';
-  d.append('oss_ak', isOss ? v('s_ak') : ''); d.append('oss_sk', isOss ? v('s_sk') : '');
-  d.append('s3_ak', isS3 ? v('s_ak') : ''); d.append('s3_sk', isS3 ? v('s_sk') : '');
-  var baseMap = {ftp: 'ftp_baseurl', oss: 'oss_baseurl', s3: 's3_baseurl'};
-  d.append('img_baseurl', '');
-  ['ftp_baseurl','oss_baseurl','s3_baseurl'].forEach(k=>d.append(k, k===baseMap[s_store.value] ? v('s_baseurl') : ''));
+  // 只提交当前所选驱动的字段,其他驱动的已存配置保持不动
+  var s = document.getElementById('s_store') ? s_store.value : 'local';
+  d.append('img_store', s);
+  d.append('img_dir', v('s_dir'));
+  if (s === 'ftp') {
+    d.append('ftp_host', v('s_ftp_host')); d.append('ftp_port', v('s_ftp_port') || 21);
+    d.append('ftp_user', v('s_ftp_user')); d.append('ftp_pass', v('s_ftp_pass')); d.append('ftp_path', v('s_ftp_path'));
+    d.append('ftp_baseurl', v('s_baseurl'));
+  }
+  if (s === 'oss') {
+    d.append('oss_endpoint', v('s_oss_ep')); d.append('oss_bucket', v('s_oss_bucket'));
+    d.append('oss_ak', v('s_ak')); d.append('oss_sk', v('s_sk'));
+    d.append('oss_baseurl', v('s_baseurl'));
+  }
+  if (s === 's3') {
+    d.append('s3_endpoint', v('s_s3_ep')); d.append('s3_bucket', v('s_s3_bucket'));
+    d.append('s3_ak', v('s_ak')); d.append('s3_sk', v('s_sk'));
+    d.append('s3_baseurl', v('s_baseurl'));
+  }
   d.append('_csrf','<?= e(Security::csrfToken()) ?>');
   var j=await api('/admin.php?s=/content/collectglobal',d);
   toast(j.msg||'完成',j.code===1);

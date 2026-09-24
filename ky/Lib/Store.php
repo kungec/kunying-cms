@@ -188,9 +188,13 @@ class Store
         return $fp;
     }
 
-    /** 存储连通性测试:写一个探针文件,返回 [ok, msg, url] */
+    /** 存储连通性测试:按后台所选驱动严格校验(配置不完整直接报错,不误测本地) */
     public static function test(): array
     {
+        $selected = (string)config('img_store', 'local');
+        if (in_array($selected, ['ftp', 'oss', 's3'], true) && self::driver() === 'local') {
+            return [false, '云盘配置不完整(地址/Bucket/密钥/外链域名有缺失),当前仍按本地存储'];
+        }
         $key = 'store-test-' . date('Ymd-His') . '.txt';
         $url = self::put($key, 'kunying-store-test-' . time());
         if ($url === null) return [false, '存储上传失败,请检查配置(可用性/账号/路径/外链域名)'];

@@ -73,11 +73,12 @@ if (isset($opts['full'])) {
     foreach ($chunks as $chunk) {
         if (!$chunk) continue;
         $cmd = PHP_BINARY . ' ' . escapeshellarg(__FILE__) . ' --worker --shards=' . escapeshellarg(implode(',', $chunk));
-        $p = proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        // stderr指向文件,避免子进程警告写满管道造成死锁/污染JSON输出
+        $devnull = fopen('/dev/null', 'w');
+        $p = proc_open($cmd, [1 => ['pipe', 'w'], 2 => $devnull], $pipes);
         if (!is_resource($p)) { $sum['errors'] += count($chunk); continue; }
         $out = stream_get_contents($pipes[1]);
         fclose($pipes[1]);
-        fclose($pipes[2]);
         proc_close($p);
         foreach (explode("\n", (string)$out) as $line) {
             $j = json_decode(trim($line), true);
