@@ -8,11 +8,27 @@ if (!defined('KY_PATH')) exit('Access denied');
 
 class Store
 {
-    /** 当前存储驱动 */
+    /**
+     * 当前存储驱动:云盘驱动必须配置完整才启用,否则一律回落本地
+     * (默认本地;上传云盘需在后台明确配置并通过「测试存储」验证)
+     */
     public static function driver(): string
     {
         $d = (string)config('img_store', 'local');
-        return in_array($d, ['local', 'ftp', 'oss', 's3'], true) ? $d : 'local';
+        if (!in_array($d, ['local', 'ftp', 'oss', 's3'], true)) return 'local';
+        if ($d === 'ftp') {
+            if ((string)config('ftp_host', '') === '' || (string)config('ftp_user', '') === ''
+                || (string)config('ftp_pass', '') === '' || (string)config('ftp_baseurl', '') === '') return 'local';
+        }
+        if ($d === 'oss') {
+            if ((string)config('oss_endpoint', '') === '' || (string)config('oss_bucket', '') === ''
+                || (string)config('oss_ak', '') === '' || (string)config('oss_sk', '') === '') return 'local';
+        }
+        if ($d === 's3') {
+            if ((string)config('s3_endpoint', '') === '' || (string)config('s3_bucket', '') === ''
+                || (string)config('s3_ak', '') === '' || (string)config('s3_sk', '') === '') return 'local';
+        }
+        return $d;
     }
 
     /** 本地驱动:站点内目录(相对站根,默认 /upload/vod) */
