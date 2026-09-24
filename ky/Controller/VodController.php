@@ -194,7 +194,7 @@ class VodController
         }
         $types = Db::fetchAll("SELECT * FROM ky_type WHERE pid=0 AND status=1 ORDER BY sort ASC, id ASC");
         $pageHtml = $wd !== '' ? page_html($total, $pageSize, $page, U('vod/search', ['wd' => $wd, 'page' => '{page}'])) : '';
-        if ($searchCacheable) {
+        if ($searchCacheable && $total > 0) {
             page_cache_set($sck, View::load('search', compact('list', 'total', 'wd', 'types', 'pageHtml')), 300);
             guest_cache_headers(60);
         }

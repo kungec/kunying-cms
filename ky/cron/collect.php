@@ -47,7 +47,12 @@ if ((int)date('G') < 5 && (int)config('maint_last_day', '0') !== $today) {
     Db::query("DELETE FROM ky_login_fail WHERE updated_at < " . (time() - 90 * 86400));
     $minLog = (int)Db::fetchOne("SELECT id FROM ky_admin_log ORDER BY id DESC LIMIT 1 OFFSET 2000");
     if ($minLog > 0) Db::query("DELETE FROM ky_admin_log WHERE id < $minLog");
-    echo "每日维护完成(验证码/日志瘦身)\n";
+    // 页面缓存修剪:详情页按源/集数存在变体,7天前的缓存文件定期清理防累积
+    $pruned = 0;
+    foreach (glob(KY_PATH . '/data/cache/pages/*.html') ?: [] as $pcf) {
+        if (time() - filemtime($pcf) > 7 * 86400) { @unlink($pcf); $pruned++; }
+    }
+    echo "每日维护完成(验证码/日志瘦身,页面缓存清理{$pruned})\n";
 }
 
 // 磁盘看门狗:剩余<3GB自动暂停采集(采集是磁盘消耗大头),防止磁盘写满导致全站故障
