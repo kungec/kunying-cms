@@ -351,6 +351,13 @@ class Collector
         ]);
         if (function_exists('mb_convert_kana')) $n = mb_convert_kana($n, 'a', 'UTF-8');
         $n = preg_replace('/第([0-9一二三四五六七八九十]+)季/u', '$1季', $n);
+        // 同季拆分标注剥除: "Part 2/Part2" 与名称内已有的季标(Ⅱ/第N季)重复
+        $n = preg_replace('/part[0-9]+/u', '', $n);
+        // 名称已含中文季数标注(第N季→N季)时,剥离重复的阿拉伯数字季标
+        // 例: "无职转生Ⅲ…第三季" 与 "无职转生…第三季" 归一为同一部
+        if (preg_match('/[0-9一二三四五六七八九十]+季/u', $n)) {
+            $n = preg_replace('/[0-9]+/u', '', $n);
+        }
         $n = preg_replace('/[\p{Han}a-z0-9]/u', '', $n) === null ? $n : preg_replace('/[^\p{Han}a-z0-9]/u', '', $n);
         return $n;
     }
