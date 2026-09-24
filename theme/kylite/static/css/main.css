@@ -359,8 +359,8 @@ td{padding:10px;border-bottom:1px solid var(--line)}
 .auth .ky-verify,.auth .ky-verify *{box-sizing:border-box}
 .auth .ky-verify{width:100%;margin-bottom:18px}
 .auth .ky-verify>div{width:100%}
-.auth .ky-verify .geetest_holder,.auth .ky-verify .geetest_btn,.auth .ky-verify .geetest_box,.auth .ky-verify .geetest_widget,.auth .ky-verify .geetest_radar{width:100%!important;max-width:100%!important;border-radius:var(--radius-sm)!important}
-.auth .ky-verify .geetest_btn{height:48px!important;background:var(--card)!important;border:1px solid var(--line)!important;box-shadow:none!important}
+.auth .ky-verify .geetest_btn{width:100%!important;border-radius:var(--radius-sm)!important}
+.auth .ky-verify .geetest_holder{border-radius:var(--radius-sm)!important}
 .auth .ky-verify .geetest_btn .geetest_btn_label{color:var(--sub)!important;font-size:14px!important}
 .auth .ky-verify .geetest_radar_tip,.auth .ky-verify .geetest_success_radar_tip{color:var(--sub)!important;font-size:13px!important}
 .auth .ky-verify .geetest_radar .geetest_radar_img{opacity:0}
