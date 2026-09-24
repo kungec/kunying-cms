@@ -9,7 +9,7 @@ class IndexController
         $cacheable = !Auth::isLogin() && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET';
         if ($cacheable) {
             $hit = page_cache_get('home');
-            if ($hit !== null) { echo $hit; return; }
+            if ($hit !== null) { guest_cache_headers(60); echo $hit; return; }
         }
         $slides = Db::fetchAll("SELECT * FROM ky_slide WHERE status=1 AND (pos='top' OR pos='') ORDER BY sort ASC, id DESC LIMIT 10");
         $movieSlides = Db::fetchAll("SELECT * FROM ky_slide WHERE status=1 AND pos='movie' ORDER BY sort ASC, id DESC LIMIT 8");
@@ -41,7 +41,7 @@ class IndexController
             if ($list) $homeBlocks[] = ['type' => $ht, 'list' => $list];
         }
         $html = View::load('index', compact('slides', 'movieSlides', 'hot', 'new', 'hotSlides', 'score', 'types', 'topicNew', 'links', 'announcements', 'homeBlocks'));
-        if ($cacheable) page_cache_set('home', $html, 600);
+        if ($cacheable) { page_cache_set('home', $html, 600); guest_cache_headers(60); }
         echo $html;
     }
 

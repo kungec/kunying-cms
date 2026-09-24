@@ -37,9 +37,10 @@ class VodController
         if ($cacheable) {
             $ck = 'type_' . md5($typeId . '|' . $class . '|' . $year . '|' . $area . '|' . $order . '|' . $page . '|' . config('site_mode', 'cms'));
             $hit = page_cache_get($ck);
-            if ($hit !== null) { echo $hit; return; }
+            if ($hit !== null) { guest_cache_headers(60); echo $hit; return; }
             $html = View::load('type', compact('type', 'list', 'types', 'total', 'pageHtml', 'class', 'year', 'area', 'order'));
             page_cache_set($ck, $html, 300);
+            guest_cache_headers(60);
             echo $html;
             return;
         }
@@ -67,7 +68,8 @@ class VodController
         if ($guestCache) {
             $ck = 'detail_' . md5($id . '|' . $sid . '|' . $ep . '|' . (int)Request::get('play', 0, 'i'));
             $hit = page_cache_get($ck);
-            if ($hit !== null) { echo $hit; return; }
+            if ($hit !== null) { guest_cache_headers(60); echo $hit; return; }
+            guest_cache_headers(60);
         }
 
         $sources = VodService::parsePlay($vod);

@@ -431,6 +431,15 @@ function img_clean_orphans(): int {
 }
 
 /* ===================== 游客页面缓存(后台任何操作自动失效) ===================== */
+/**
+ * 访客缓存页响应头:允许浏览器短缓存(覆盖session默认的no-store,实现返回秒开)
+ */
+function guest_cache_headers(int $ttl = 60): void {
+    header('Cache-Control: public, max-age=' . $ttl);
+    header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $ttl) . ' GMT');
+    header_remove('Pragma');
+}
+
 function page_cache_get(string $key): ?string {
     $f = KY_PATH . '/data/cache/pages/' . md5($key) . '.html';
     if (!is_file($f)) return null;
