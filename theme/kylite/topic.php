@@ -4,7 +4,7 @@ $pageTitle = $topic ? $topic['name'] . ' - 专题' : '专题';
 $searchWd = '';
 include theme_path('layout/header.php');
 ?>
-<div class="wrap" style="margin-top:86px">
+<div class="wrap" style="margin-top:14px">
   <div class="sec-h"><h3>专题列表</h3></div>
   <div class="tgrid" style="margin-bottom:26px">
     <?php foreach ($topics as $t): ?>

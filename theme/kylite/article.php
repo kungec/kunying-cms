@@ -4,7 +4,7 @@ $pageTitle = $article ? $article['title'] : '网站公告';
 $searchWd = '';
 include theme_path('layout/header.php');
 ?>
-<div class="wrap" style="margin-top:86px;max-width:900px">
+<div class="wrap" style="margin-top:14px;max-width:900px">
   <?php if ($article): ?>
     <div class="vdesc" style="padding:26px">
       <h1 style="font-size:20px;color:var(--txt);margin-bottom:10px"><?= e($article['title']) ?></h1>

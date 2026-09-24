@@ -45,7 +45,7 @@ foreach ($sources as $src) {
     ];
 }
 ?>
-<div class="wrap">
+<div class="wrap" style="margin-top:14px">
 <?= ad_slot('ad_playtop') ?>
 <div class="play-wrap">
   <div>
@@ -77,7 +77,7 @@ foreach ($sources as $src) {
     </div>
 
     <?= ad_slot('ad_playbottom') ?>
-    <div class="vdesc" style="margin-top:16px">
+    <div class="vdesc" style="margin-top:22px">
       <b style="color:var(--txt);font-size:16px"><?= e($vod['name']) ?></b>
       <span style="color:var(--sub);margin-left:10px"><?= e($vod['remarks']) ?> · 播放来源:<span id="srcName"><?= e($source['name'] ?? '无') ?></span></span>
       <p style="margin-top:10px"><?= nl2text(mb_substr((string)$vod['content'], 0, 1000)) ?></p>
@@ -106,7 +106,7 @@ foreach ($sources as $src) {
   </aside>
 </div>
 
-<section class="sec">
+<section class="sec" style="margin-top:10px">
   <div class="sec-h"><h3>相关视频</h3></div>
   <div class="mgrid">
     <?php foreach ($related as $v): ?>

@@ -4,7 +4,7 @@ $pageTitle = '收银台';
 $searchWd = '';
 include theme_path('layout/header.php');
 ?>
-<div class="wrap" style="margin-top:86px;max-width:560px">
+<div class="wrap" style="margin-top:14px;max-width:560px">
   <div class="uc-main" style="text-align:center">
     <h3>订单收银台</h3>
     <p style="color:var(--sub);font-size:13px"><?= e($order['title']) ?> · 应付 <b style="color:var(--red2)">¥<?= number_format((float)$order['amount'], 2) ?></b></p>

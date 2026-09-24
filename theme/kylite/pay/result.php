@@ -5,7 +5,7 @@ $searchWd = '';
 include theme_path('layout/header.php');
 $paid = $order && (int)$order['status'] === 1;
 ?>
-<div class="wrap" style="margin-top:86px;max-width:560px">
+<div class="wrap" style="margin-top:14px;max-width:560px">
   <div class="uc-main" style="text-align:center;padding:50px 22px">
     <div style="font-size:52px"><?= $paid ? '✅' : '⏳' ?></div>
     <h3 style="margin:12px 0 6px"><?= $paid ? '支付成功!' : '订单尚未支付' ?></h3>

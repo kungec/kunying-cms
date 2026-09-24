@@ -4,7 +4,7 @@ $pageTitle = $type ? $type['name'] : '影片库';
 $searchWd = '';
 include theme_path('layout/header.php');
 ?>
-<div class="wrap" style="margin-top:86px">
+<div class="wrap" style="margin-top:14px">
   <div class="filter">
     <div class="frow"><b>分类</b>
       <a class="<?= $type ? '' : 'on' ?>" href="/index.php?s=/vod/type&id=0&order=<?= e($order) ?>">全部</a>

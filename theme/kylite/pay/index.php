@@ -25,7 +25,7 @@ $enabled = array_filter($payList, function ($p) {
     }
 });
 ?>
-<div class="wrap" style="margin-top:86px;max-width:860px">
+<div class="wrap" style="margin-top:14px;max-width:860px">
   <div class="uc-main">
     <h3>选择充值套餐</h3>
     <?php if (empty($goods)): ?><p style="color:var(--sub)">暂无充值套餐,请联系站长在后台配置</p><?php endif; ?>
