@@ -152,6 +152,8 @@ class App
             $route = $uri;
         }
         $route = trim(str_replace(['..', "\0"], '', $route), '/');
+        // 裸入口(如 /admin.php 不带?s=)视为默认路由,避免把脚本名当控制器名
+        if ($route === ltrim($_SERVER['SCRIPT_NAME'] ?? ' ', '/') || $route === basename($_SERVER['SCRIPT_NAME'] ?? '')) $route = '';
         if (defined('KY_SUB_DIR') && KY_SUB_DIR !== '' && strpos($route, KY_SUB_DIR) === 0) {
             $route = trim(substr($route, strlen(KY_SUB_DIR)), '/');
         }
