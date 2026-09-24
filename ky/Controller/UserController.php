@@ -198,7 +198,8 @@ class UserController
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) json_error('邮箱格式不正确');
             $user = Db::fetch("SELECT * FROM ky_user WHERE email=?", [$email]);
             if ($step === 'send') {
-                if (!$user) json_error('该邮箱未注册');
+                // 统一话术防邮箱枚举(不泄露邮箱是否已注册)
+                if (!$user) json_ok(null, '若该邮箱已注册,重置码已发送,请查收邮箱');
                 if ((int)Db::fetchOne("SELECT COUNT(*) FROM ky_email_code WHERE created>?", [time() - 60]) > 200) json_error('发送繁忙,请稍后再试');
                 $last = Db::fetchOne("SELECT created FROM ky_email_code WHERE email=? AND type='reset' ORDER BY id DESC LIMIT 1", [$email]);
                 if ($last && time() - (int)$last < 60) json_error('发送过于频繁,请1分钟后再试');
