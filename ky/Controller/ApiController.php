@@ -92,6 +92,13 @@ class ApiController
 
     public function more()
     {
+        // 访客GET:按完整参数缓存300秒(同一筛选组合的"加载更多"零重复查询)
+        $guestCache = !Auth::isLogin() && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET';
+        $mck = 'more_' . md5((string)($_SERVER['REQUEST_URI'] ?? ''));
+        if ($guestCache) {
+            $hit = page_cache_get($mck);
+            if ($hit !== null) { guest_cache_headers(300); header('Content-Type: application/json; charset=utf-8'); echo $hit; exit; }
+        }
         $mode = Request::get('mode', 'home') === 'type' ? 'type' : 'home';
         $page = max(1, Request::get('page', 2, 'i'));
         $pageSize = 24;
@@ -126,6 +133,14 @@ class ApiController
                 'year' => $v['year'],
                 'ds' => mb_substr($v['class'] ?: (trim($v['area'] . ' ' . $v['year'])), 0, 30),
             ];
+        }
+        if ($guestCache) {
+            $body = json_encode(['code' => 1, 'msg' => 'ok', 'data' => ['list' => $items, 'has_more' => $page * $pageSize < $total, 'next_page' => $page + 1]], JSON_UNESCAPED_UNICODE);
+            page_cache_set($mck, $body, 300);
+            guest_cache_headers(300);
+            header('Content-Type: application/json; charset=utf-8');
+            echo $body;
+            exit;
         }
         json_ok(['list' => $items, 'has_more' => $page * $pageSize < $total, 'next_page' => $page + 1]);
     }

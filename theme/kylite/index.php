@@ -6,6 +6,8 @@ $heroJson = json_encode(array_map(function($v){
     return ['id'=>(int)$v['id'],'name'=>$v['name'],'pic'=>pic_url($v['pic']),'cat'=>trim(explode(',',$v['class']??'')[0]??'')?:'精选','year'=>(string)$v['year'],'remarks'=>(string)$v['remarks']];
 }, $heroSlides), JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP);
 include theme_path('layout/header.php');
+// LCP预加载:首帧海报(播放器首屏大图)
+if (!empty($heroSlides[0]['pic'])) echo '<link rel="preload" as="image" href="' . e(pic_url((string)$heroSlides[0]['pic'])) . '">' . "\n";
 $allTypes = $types;
 ?>
 <!-- 幻灯轮播 -->
@@ -52,6 +54,9 @@ function kHeroRender(i){
   var tags = document.getElementById('kHeroTags');
   tags.innerHTML = (d.year?'<span>'+d.year+'</span>':'')+(d.remarks?'<span>'+d.remarks.replace(/[<>&"]/g,'')+'</span>':'');
   document.getElementById('kHeroPlay').href = '/index.php?s=/vod/detail&id='+d.id;
+  // 预加载下一帧海报:切换无白屏
+  var nx = kHeroSlides[(i+1)%kHeroSlides.length];
+  if (nx) { var im = new Image(); im.src = nx.pic; }
   var inn = document.getElementById('kHeroIn');
   inn.classList.remove('anim'); void inn.offsetWidth; inn.classList.add('anim');
   document.querySelectorAll('#kHeroDots i').forEach(function(dot,k){dot.classList.toggle('on',k===i)});
