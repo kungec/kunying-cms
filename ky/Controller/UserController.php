@@ -72,6 +72,10 @@ class UserController
     public function sendcode()
     {
         if (config('register_enable', '1') != '1' && config('member_enable', '1') != '1') json_error('功能未开放');
+        Security::csrfCheck();
+        // 每IP限流:防跨站刷信(邮件炸弹/SMTP配额燃烧)
+        [$ok] = Security::rateLimit('sendcode', 10, 3600);
+        if (!$ok) json_error('操作过于频繁,请稍后再试');
         if (config('smtp_host', '') === '') json_error('邮件服务未配置,请联系站长');
         // 频率限制:同IP 60秒1条,同邮箱 10分钟3条
         $ip = client_ip();
@@ -200,6 +204,8 @@ class UserController
                 if ($last && time() - (int)$last < 60) json_error('发送过于频繁,请1分钟后再试');
                 if ((int)Db::fetchOne("SELECT COUNT(*) FROM ky_email_code WHERE email=? AND type='reset' AND created>?", [$email, time() - 600]) >= 3) json_error('验证码发送次数已达上限');
                 if (config('smtp_host', '') === '') json_error('邮件服务未配置,请联系站长');
+                [$mok] = Security::rateLimit('forgotmail', 10, 3600);
+                if (!$mok) json_error('操作过于频繁,请稍后再试');
                 $code = rand_str(6, '0123456789');
                 Db::insert('ky_email_code', ['email' => $email, 'code' => $code, 'type' => 'reset', 'expire' => time() + 600, 'used' => 0, 'created' => time()]);
                 if (!Mailer::sendCode($email, $code)) json_error('邮件发送失败,请稍后再试');
