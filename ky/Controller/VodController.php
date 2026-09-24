@@ -177,6 +177,13 @@ class VodController
         $wd = trim(Request::get('wd', ''));
         $page = max(1, Request::get('page', 1, 'i'));
         $list = []; $total = 0; $pageSize = 24;
+        // 访客搜索结果缓存:热词重复搜索零数据库(浏览器同样缓存60秒)
+        $searchCacheable = !Auth::isLogin() && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && $wd !== '';
+        $sck = 'search_' . md5($wd . '|' . $page);
+        if ($searchCacheable) {
+            $shit = page_cache_get($sck);
+            if ($shit !== null) { guest_cache_headers(60); echo $shit; return; }
+        }
         if ($wd !== '') {
             if (!preg_match('/^[\x{4e00}-\x{9fa5}A-Za-z0-9_\- \x{0080}-\x{FFFF}]{1,60}$/u', $wd)) {
                 $wd = '';
@@ -187,6 +194,10 @@ class VodController
         }
         $types = Db::fetchAll("SELECT * FROM ky_type WHERE pid=0 AND status=1 ORDER BY sort ASC, id ASC");
         $pageHtml = $wd !== '' ? page_html($total, $pageSize, $page, U('vod/search', ['wd' => $wd, 'page' => '{page}'])) : '';
+        if ($searchCacheable) {
+            page_cache_set($sck, View::load('search', compact('list', 'total', 'wd', 'types', 'pageHtml')), 300);
+            guest_cache_headers(60);
+        }
         View::display('search', compact('list', 'total', 'wd', 'types', 'pageHtml'));
     }
 
