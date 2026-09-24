@@ -32,14 +32,32 @@ class IndexController
         // 首页分类模块:后台勾选"首页显示"的顶级分类,含子分类影片
         $homeBlocks = [];
         $homeTypes = Db::fetchAll("SELECT * FROM ky_type WHERE pid=0 AND status=1 AND show_home=1 ORDER BY sort ASC, id ASC");
-        foreach ($homeTypes as $ht) {
-            $ids = [(int)$ht['id']];
-            foreach (Db::fetchAll("SELECT id FROM ky_type WHERE pid=?", [$ht['id']]) as $c) {
-                $ids[] = (int)$c['id'];
+        if ($homeTypes) {
+            // N+1合并:子分类一条SQL,影片一条SQL,PHP内存分组
+            $topIds = array_map(fn($t) => (int)$t['id'], $homeTypes);
+            $kidMap = [];
+            foreach (Db::fetchAll("SELECT id,pid FROM ky_type WHERE pid IN (" . implode(',', $topIds) . ")") as $c) {
+                $kidMap[(int)$c['pid']][] = (int)$c['id'];
             }
-            $in = implode(',', array_map('intval', $ids));
-            $list = Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 AND type_id IN ({$in}) ORDER BY id DESC LIMIT 12");
-            if ($list) $homeBlocks[] = ['type' => $ht, 'list' => $list];
+            $allMap = [];
+            $allIds = [];
+            foreach ($homeTypes as $ht) {
+                $ids = array_merge([(int)$ht['id']], $kidMap[(int)$ht['id']] ?? []);
+                $allMap[(int)$ht['id']] = $ids;
+                $allIds = array_merge($allIds, $ids);
+            }
+            $films = [];
+            if ($allIds) {
+                foreach (Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 AND type_id IN (" . implode(',', array_map('intval', $allIds)) . ") ORDER BY id DESC LIMIT " . (count($homeTypes) * 24)) as $fv) {
+                    foreach ($allMap as $tid => $ids2) {
+                        if (in_array((int)$fv['type_id'], $ids2, true)) { $films[$tid][] = $fv; break; }
+                    }
+                }
+            }
+            foreach ($homeTypes as $ht) {
+                $list = array_slice($films[(int)$ht['id']] ?? [], 0, 12);
+                if ($list) $homeBlocks[] = ['type' => $ht, 'list' => $list];
+            }
         }
         $html = View::load('index', compact('slides', 'movieSlides', 'hot', 'new', 'hotSlides', 'score', 'types', 'topicNew', 'links', 'announcements', 'homeBlocks'));
         if ($cacheable) { page_cache_set('home', $html, 600); guest_cache_headers(60); }
