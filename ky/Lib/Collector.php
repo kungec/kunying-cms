@@ -137,6 +137,7 @@ class Collector
 
     /**
      * 下载内容入库:按存储驱动上传(local/ftp/oss/s3),返回可访问地址;失败null
+     * 附带压缩:JPEG/WebP封面统一重编码为宽≤480px quality80(网格/详情显示足够,流量省6成)
      */
     private static function storePicBody(string $url, string $body): ?string
     {
@@ -144,6 +145,10 @@ class Collector
         if ($info === false) return null;
         $exts = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp'];
         $ext = $exts[$info[2]] ?? 'jpg';
+        // 压缩:仅JPEG/WebP位图重编码;GIF(可能动图)与PNG(可能透明)保留原样
+        if ($info[2] === IMAGETYPE_JPEG || $info[2] === IMAGETYPE_WEBP) {
+            $body = self::shrinkImage($body, $info) ?? $body;
+        }
         $key = 'vod/' . md5($url) . '.' . $ext;
         $stored = Store::put($key, $body);
         if ($stored !== null) {
@@ -158,6 +163,32 @@ class Collector
         $file = $dir . '/' . md5($url) . '.' . $ext;
         if (!is_file($file)) file_put_contents($file, $body, LOCK_EX);
         return Store::localWebPath() . '/' . md5($url) . '.' . $ext;
+    }
+
+    /**
+     * 封面压缩:宽>480px时等比缩至480,quality80;GD不可用/失败返回null(保留原图)
+     */
+    public static function shrinkImage(string $body, array $info): ?string
+    {
+        if (!function_exists('imagecreatefromstring')) return null;
+        $w = (int)($info[0] ?? 0);
+        if ($w <= 480 && strlen($body) < 150000) return null; // 已足够小
+        $img = @imagecreatefromstring($body);
+        if ($img === false) return null;
+        $targetW = 480;
+        $targetH = $w > 480 ? (int)round(($info[1] ?? 0) * $targetW / $w) : (int)($info[1] ?? 0);
+        if ($targetW < 1 || $targetH < 1) { imagedestroy($img); return null; }
+        $out = imagecreatetruecolor($targetW, $targetH);
+        imagecopyresampled($out, $img, 0, 0, 0, 0, $targetW, $targetH, $w, (int)($info[1] ?? 0));
+        ob_start();
+        $ok = imagejpeg($out, null, 80);
+        $data = $ok ? (string)ob_get_clean() : null;
+        ob_end_clean();
+        imagedestroy($img);
+        imagedestroy($out);
+        // 压缩没收益(小图/异常)则保留原字节
+        if ($data === null || strlen($data) >= strlen($body)) return null;
+        return $data;
     }
 
     /**
