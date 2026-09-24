@@ -30,7 +30,7 @@ foreach ($lastResult as $r) {
     <div style="flex:1;min-width:150px;background:#f7f8fb;border-radius:12px;padding:12px 16px">
       <div style="font-size:12px;color:var(--sub)">下次预计执行</div>
       <div style="font-size:14px;font-weight:700;margin-top:4px"><?= $autoOn ? ($nextAt ? date('m-d H:i', $nextAt) : '访问触发') : '待开启' ?></div>
-      <div style="font-size:12px;color:var(--sub);margin-top:2px">由访客访问自动触发</div>
+      <div style="font-size:12px;color:var(--sub);margin-top:2px">由Cron定时任务执行</div>
     </div>
     <div style="flex:1;min-width:150px;background:#f7f8fb;border-radius:12px;padding:12px 16px">
       <div style="font-size:12px;color:var(--sub)">上次执行成果</div>

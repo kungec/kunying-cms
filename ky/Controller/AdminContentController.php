@@ -209,6 +209,7 @@ class AdminContentController
         if ($data['name'] === '' || $data['url'] === '') json_error('名称与网址不能为空');
         if ($id > 0) Db::update('ky_link', $data, 'id=?', [$id]);
         else Db::insert('ky_link', $data);
+        cache_del('kylite_links');
         page_cache_flush();
         Admin::log($id > 0 ? '编辑友链:' . $data['name'] : '添加友链:' . $data['name']);
         json_ok();
@@ -217,6 +218,9 @@ class AdminContentController
     public function linkdel()
     {
         Db::delete('ky_link', 'id=?', [Request::post('id', 0, 'i')]);
+        cache_del('kylite_links');
+        page_cache_flush();
+        Admin::log('删除友链#' . (int)Request::post('id', 0, 'i'));
         json_ok();
     }
 

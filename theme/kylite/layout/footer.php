@@ -1,4 +1,8 @@
-<?php $links = Db::fetchAll("SELECT * FROM ky_link WHERE status=1 ORDER BY sort ASC, id ASC LIMIT 20"); ?>
+<?php $links = cache_get('kylite_links');
+if (!is_array($links)) {
+    $links = Db::fetchAll("SELECT * FROM ky_link WHERE status=1 ORDER BY sort ASC, id ASC LIMIT 20");
+    cache_set('kylite_links', $links, 600);
+} ?>
 <footer class="kfooter">
   <?php if ($links): ?>
   <div class="kflink">
