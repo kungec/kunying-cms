@@ -326,7 +326,7 @@ function active_theme(): string {
 function cache_get(string $key) {
     $file = KY_PATH . '/data/cache/' . md5($key) . '.php';
     if (!is_file($file)) return null;
-    $data = @unserialize(file_get_contents($file));
+    $data = @unserialize(file_get_contents($file), ['allowed_classes' => false]);
     if (!is_array($data)) return null;
     if ($data['expire'] > 0 && $data['expire'] < time()) { @unlink($file); return null; }
     return $data['value'];
