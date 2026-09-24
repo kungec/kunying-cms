@@ -108,25 +108,37 @@ class AdminContentController
     public function type()
     {
         $list = Db::fetchAll("SELECT t.*, (SELECT COUNT(*) FROM ky_vod v WHERE v.type_id=t.id) c FROM ky_type t ORDER BY t.sort ASC, t.id ASC");
-        View::display('type', ['list' => $list]);
+        $tops = Db::fetchAll("SELECT id, name FROM ky_type WHERE pid=0 ORDER BY sort ASC, id ASC");
+        View::display('type', ['list' => $list, 'tops' => $tops]);
     }
 
     public function typesave()
     {
         if (!Request::isPost()) json_error('非法请求');
         $id = Request::post('id', 0, 'i');
+        $nav = Request::post('nav', 1, 'i');
+        if (!in_array($nav, [0, 1, 2], true)) $nav = 1;
+        $pid = Request::post('pid', 0, 'i');
+        if ($nav === 2 && $pid === 0) json_error('副分类必须选择所属的主分类');
+        if ($nav === 2 && $pid > 0) {
+            $pp = Db::fetch("SELECT nav, pid FROM ky_type WHERE id=?", [$pid]);
+            if (!$pp) json_error('所属主分类不存在');
+            if ((int)$pp['nav'] !== 1 || (int)$pp['pid'] !== 0) json_error('所属分类必须是主分类');
+        }
         $data = [
-            'pid' => Request::post('pid', 0, 'i'),
+            'pid' => $pid,
             'name' => mb_substr(trim(Request::post('name')), 0, 30),
             'sort' => Request::post('sort', 0, 'i'),
             'status' => Request::post('status', 1, 'i') ? 1 : 0,
             'show_home' => Request::post('show_home', 0, 'i') ? 1 : 0,
             'icon' => mb_substr(trim((string)Request::post('icon')), 0, 8),
+            'nav' => $nav,
         ];
         if ($data['name'] === '') json_error('名称不能为空');
         if ($data['pid'] === $id && $id > 0) json_error('不能选择自己为父级');
         if ($id > 0) Db::update('ky_type', $data, 'id=?', [$id]);
         else Db::insert('ky_type', $data);
+        if (function_exists('cache_del')) cache_del('kylite_nav');
         Admin::log('保存分类:' . $data['name']);
         json_ok();
     }
@@ -136,6 +148,7 @@ class AdminContentController
         $id = Request::post('id', 0, 'i');
         if ((int)Db::fetchOne("SELECT COUNT(*) FROM ky_vod WHERE type_id=?", [$id]) > 0) json_error('该分类下有影片,请先转移');
         Db::delete('ky_type', 'id=?', [$id]);
+        cache_del('kylite_nav');
         Admin::log('删除分类#' . $id);
         json_ok();
     }

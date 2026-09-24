@@ -388,11 +388,15 @@ class Collector
         }
         $group = self::classifyGroup($typeName);
         if ($group === null) {
-            // 无法归类:建为一级分类
-            return Db::insert('ky_type', ['pid' => 0, 'name' => $typeName, 'sort' => 50, 'status' => 1]);
+            // 无法归类:建为一级分类(主分类)
+            $id = Db::insert('ky_type', ['pid' => 0, 'name' => $typeName, 'sort' => 50, 'status' => 1, 'nav' => 1]);
+            cache_del('kylite_nav');
+            return $id;
         }
         $gid = self::ensureGroup($group);
-        return Db::insert('ky_type', ['pid' => $gid, 'name' => $typeName, 'sort' => 50, 'status' => 1]);
+        $id = Db::insert('ky_type', ['pid' => $gid, 'name' => $typeName, 'sort' => 50, 'status' => 1, 'nav' => 2]);
+        cache_del('kylite_nav');
+        return $id;
     }
 
     /**
@@ -414,7 +418,8 @@ class Collector
     {
         $gid = (int)(Db::fetchOne("SELECT id FROM ky_type WHERE name=? AND pid=0", [$name]) ?? 0);
         if ($gid === 0) {
-            $gid = Db::insert('ky_type', ['pid' => 0, 'name' => $name, 'sort' => 10, 'status' => 1]);
+            $gid = Db::insert('ky_type', ['pid' => 0, 'name' => $name, 'sort' => 10, 'status' => 1, 'nav' => 1]);
+            cache_del('kylite_nav');
         }
         return $gid;
     }
