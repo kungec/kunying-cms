@@ -152,8 +152,8 @@ class ApiController
         // 联想使用独立限流桶(宽松),不影响正式搜索配额;触发限流时静默返回空
         [$ok] = Security::rateLimit('suggest', 90, 60);
         if (!$ok) json_ok([]);
-        $wd = trim(Request::get('wd', ''));
-        if ($wd === '' || mb_strlen($wd) < 1) json_ok([]);
+        $wd = mb_substr(trim(Request::get('wd', '')), 0, 30);
+        if ($wd === '') json_ok([]);
         // 热词结果缓存120秒:热门关键词的重复联想打零数据库;浏览器侧同样缓存2分钟
         $ck = 'sg_' . md5($wd);
         $hit = cache_get($ck);
