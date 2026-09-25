@@ -138,22 +138,37 @@ function e($str): string {
 function client_ip(): string {
     $cdn = config('cdn_mode');
     if ($cdn) {
-        foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP'] as $k) {
-            if (!empty($_SERVER[$k]) && filter_var($_SERVER[$k], FILTER_VALIDATE_IP)) {
-                return $_SERVER[$k];
-            }
+        // SSRF/防刷加固: 仅当请求来自已知转发节点网段时才信任真实IP头,
+        // 直连源站伪造X-Forwarded-For无法再绕过限流
+        $trust = array_filter(array_map('trim', explode(',', (string)config('cdn_trust_ips', '38.244.17.0/24,198.20.0.0/24'))));
+        $ra = $_SERVER['REMOTE_ADDR'] ?? '';
+        $trusted = false;
+        foreach ($trust as $cidr) {
+            if (strpos($cidr, '/') === false) { if ($ra === $cidr) { $trusted = true; break; } continue; }
+            list($net, $mask) = explode('/', $cidr);
+            if (!filter_var($ra, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) || !filter_var($net, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) continue;
+            $l = (int)$mask;
+            if ($l < 1 || $l > 32) continue;
+            if ((ip2long($ra) >> (32 - $l)) === (ip2long($net) >> (32 - $l))) { $trusted = true; break; }
         }
-        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-            foreach ($ips as $ip) {
-                $ip = trim($ip);
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                    return $ip;
+        if ($trusted) {
+            foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP'] as $k) {
+                if (!empty($_SERVER[$k]) && filter_var($_SERVER[$k], FILTER_VALIDATE_IP)) {
+                    return $_SERVER[$k];
+                }
+            }
+            if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+                foreach ($ips as $ip) {
+                    $ip = trim($ip);
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                        return $ip;
+                    }
                 }
             }
         }
     }
-    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    return $_SERVER['REMOTE_ADDR'] ?? '';
 }
 
 /**
