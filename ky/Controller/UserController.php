@@ -127,6 +127,7 @@ class UserController
             if ($u['status'] != 1) json_error('账号已被禁用,请联系管理员');
             Security::loginClear('user', $email);
             Auth::login($u);
+            setcookie('ky_name', rawurlencode((string)$u['name']), 0, '/', '', is_https(), false);
             json_ok(['redirect' => '/user/center']);
         }
         $redirect = Request::get('back', '');
@@ -136,6 +137,7 @@ class UserController
     public function logout()
     {
         Auth::logout();
+        setcookie('ky_name', '', time() - 3600, '/');
         redirect('/');
     }
 

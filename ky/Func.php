@@ -434,6 +434,20 @@ function img_clean_orphans(): int {
 /**
  * 访客缓存页响应头:允许浏览器短缓存(覆盖session默认的no-store,实现返回秒开)
  */
+/**
+ * 缓存页登录态修正:访客缓存页被已登录用户回访时,前端把「登录/注册」
+ * 替换为「用户名/退出」(浏览器60秒短缓存期间的显示修正,防串号观感)
+ */
+function guest_personalize(string $html): string {
+    $js = <<<'JS'
+<script>(function(){var m=document.cookie.match(/(?:^|; )ky_name=([^;]+)/);if(!m)return;var n="";try{n=decodeURIComponent(m[1])}catch(e){return}var a=document.querySelector('a[href*="user/login"]');if(!a)return;var box=a.parentElement;box.innerHTML="";var c1=document.createElement("a");c1.href="/user/center";c1.textContent=n;if(a.className)c1.className=a.className;var c2=document.createElement("a");c2.href="/user/logout";c2.textContent="退出";box.appendChild(c1);box.appendChild(c2);})();</script>
+JS;
+    if (strpos($html, '</body>') !== false) {
+        return str_replace('</body>', $js . '</body>', $html);
+    }
+    return $html . $js; // 主题模板未闭合body标签时直接追加
+}
+
 function guest_cache_headers(int $ttl = 60): void {
     header('Cache-Control: public, max-age=' . $ttl);
     header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $ttl) . ' GMT');

@@ -38,10 +38,11 @@ class VodController
         if ($cacheable) {
             $ck = 'type_' . md5($typeId . '|' . $class . '|' . $year . '|' . $area . '|' . $order . '|' . $page . '|' . config('site_mode', 'cms'));
             $hit = page_cache_get($ck);
-            if ($hit !== null) { guest_cache_headers(60); echo $hit; return; }
+            if ($hit !== null) { guest_cache_headers(60); echo guest_personalize($hit); return; }
             $html = View::load('type', compact('type', 'list', 'types', 'total', 'pageHtml', 'class', 'year', 'area', 'order'));
             page_cache_set($ck, $html, 300);
             guest_cache_headers(60);
+            $html = guest_personalize($html);
             echo $html;
             return;
         }
@@ -69,7 +70,7 @@ class VodController
         if ($guestCache) {
             $ck = 'detail_' . md5($id . '|' . $sid . '|' . $ep . '|' . (int)Request::get('play', 0, 'i'));
             $hit = page_cache_get($ck);
-            if ($hit !== null) { guest_cache_headers(60); echo $hit; return; }
+            if ($hit !== null) { guest_cache_headers(60); echo guest_personalize($hit); return; }
             guest_cache_headers(60);
         }
 
@@ -135,7 +136,7 @@ class VodController
             [$id]
         );
         $html = View::load('play', compact('vod', 'sources', 'source', 'episodes', 'ep', 'current', 'related', 'comments', 'canPlay', 'reason', 'record'));
-        if ($guestCache) page_cache_set('detail_' . md5($id . '|' . $sid . '|' . $ep . '|' . (int)Request::get('play', 0, 'i')), $html, 600);
+        if ($guestCache) { page_cache_set('detail_' . md5($id . '|' . $sid . '|' . $ep . '|' . (int)Request::get('play', 0, 'i')), $html, 600); guest_cache_headers(60); $html = guest_personalize($html); }
         echo $html;
         // 页面已送达:断开用户连接,在后台完成源探测(结果写缓存,下次访问生效)
         if (!$allKnown) {
@@ -184,7 +185,7 @@ class VodController
         $sck = 'search_' . md5($wd . '|' . $page);
         if ($searchCacheable) {
             $shit = page_cache_get($sck);
-            if ($shit !== null) { guest_cache_headers(60); echo $shit; return; }
+            if ($shit !== null) { guest_cache_headers(60); echo guest_personalize($shit); return; }
         }
         if ($wd !== '') {
             if (!preg_match('/^[\x{4e00}-\x{9fa5}A-Za-z0-9_\- \x{0080}-\x{FFFF}]{1,60}$/u', $wd)) {
@@ -197,7 +198,7 @@ class VodController
         $types = Db::fetchAll("SELECT * FROM ky_type WHERE pid=0 AND status=1 ORDER BY sort ASC, id ASC");
         $pageHtml = $wd !== '' ? page_html($total, $pageSize, $page, U('vod/search', ['wd' => $wd, 'page' => '{page}'])) : '';
         if ($searchCacheable && $total > 0) {
-            page_cache_set($sck, View::load('search', compact('list', 'total', 'wd', 'types', 'pageHtml')), 300);
+            page_cache_set($sck, guest_personalize(View::load('search', compact('list', 'total', 'wd', 'types', 'pageHtml'))), 300);
             guest_cache_headers(60);
         }
         View::display('search', compact('list', 'total', 'wd', 'types', 'pageHtml'));

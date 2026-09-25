@@ -10,7 +10,7 @@ class IndexController
         if ($cacheable) {
             @session_write_close(); // 缓存页无需会话写:提前释放文件锁,高并发不排队
             $hit = page_cache_get('home');
-            if ($hit !== null) { guest_cache_headers(60); echo $hit; return; }
+            if ($hit !== null) { guest_cache_headers(60); echo guest_personalize($hit); return; }
         }
         $slides = Db::fetchAll("SELECT * FROM ky_slide WHERE status=1 AND (pos='top' OR pos='') ORDER BY sort ASC, id DESC LIMIT 10");
         $movieSlides = Db::fetchAll("SELECT * FROM ky_slide WHERE status=1 AND pos='movie' ORDER BY sort ASC, id DESC LIMIT 8");
@@ -60,7 +60,7 @@ class IndexController
             }
         }
         $html = View::load('index', compact('slides', 'movieSlides', 'hot', 'new', 'hotSlides', 'score', 'types', 'topicNew', 'links', 'announcements', 'homeBlocks'));
-        if ($cacheable) { page_cache_set('home', $html, 600); guest_cache_headers(60); }
+        if ($cacheable) { page_cache_set('home', $html, 600); guest_cache_headers(60); $html = guest_personalize($html); }
         echo $html;
     }
 
