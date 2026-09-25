@@ -169,24 +169,24 @@ class VodController
 
     public function search()
     {
-        // 搜索频率限制(后台可配)
+        // 访客搜索结果缓存:命中直接返回(不消耗搜索配额,热门词零数据库)
+        $wd = trim(Request::get('wd', ''));
+        $page = max(1, Request::get('page', 1, 'i'));
+        $searchCacheable = !Auth::isLogin() && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && $wd !== '';
+        $sck = 'search_' . md5($wd . '|' . $page);
+        if ($searchCacheable) {
+            @session_write_close();
+            $shit = page_cache_get($sck);
+            if ($shit !== null) { guest_cache_headers(60); echo guest_personalize($shit); return; }
+        }
+        // 搜索频率限制(后台可配),仅在实际查询时计数
         if (config('search_limit_enable', '1') == '1') {
             [$ok] = Security::rateLimit('search', max(1, (int)config('search_limit_times', '30')), max(5, (int)config('search_limit_window', '60')));
             if (!$ok) {
                 Request::isAjax() ? json_error('搜索太频繁,请稍后再试') : halt_msg('搜索太频繁,请稍后再试');
             }
         }
-        $wd = trim(Request::get('wd', ''));
-        $page = max(1, Request::get('page', 1, 'i'));
         $list = []; $total = 0; $pageSize = 24;
-        // 访客搜索结果缓存:热词重复搜索零数据库(浏览器同样缓存60秒)
-        $searchCacheable = !Auth::isLogin() && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && $wd !== '';
-        if ($searchCacheable) @session_write_close();
-        $sck = 'search_' . md5($wd . '|' . $page);
-        if ($searchCacheable) {
-            $shit = page_cache_get($sck);
-            if ($shit !== null) { guest_cache_headers(60); echo guest_personalize($shit); return; }
-        }
         if ($wd !== '') {
             if (!preg_match('/^[\x{4e00}-\x{9fa5}A-Za-z0-9_\- \x{0080}-\x{FFFF}]{1,60}$/u', $wd)) {
                 $wd = '';
