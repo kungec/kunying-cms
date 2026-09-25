@@ -75,19 +75,25 @@ $tabsMap = ['index' => '我的账户', 'fav' => '我的收藏', 'record' => '播
       <?php if (empty($udata['orders'])): ?><tr><td colspan="6" style="color:var(--sub)">暂无订单</td></tr><?php endif; ?>
     </table></div>
     <?php elseif ($tab === 'account'): ?>
-    <div style="max-width:460px">
-      <b>修改昵称</b>
-      <form id="nf" style="display:flex;gap:8px;margin:10px 0 22px">
-        <input class="ky-input" type="text" name="name" required minlength="2" maxlength="20" value="<?= e($udata['user']['name'] ?? '') ?>" placeholder="2-20个字符" style="flex:1">
-        <button class="btn-main" type="submit" style="width:auto;padding:0 18px">保存</button>
-      </form>
-      <b>修改密码</b>
-      <form id="pf" onsubmit="return doPwd(event)" style="margin-top:10px">
-        <div class="afield"><label>当前密码</label><input class="ky-input" type="password" name="oldpwd" required autocomplete="current-password"></div>
-        <div class="afield"><label>新密码</label><input class="ky-input" type="password" name="newpwd" required minlength="6" autocomplete="new-password"></div>
-        <div class="afield"><label>确认新密码</label><input class="ky-input" type="password" name="repwd" required minlength="6" autocomplete="new-password"></div>
-        <button class="btn-main" type="submit" id="pgo">修改密码</button>
-      </form>
+    <div class="uc2-grid" style="max-width:960px">
+      <div class="uc2-card">
+        <h4>✏️ 修改昵称</h4>
+        <p class="desc">昵称将显示在评论与个人中心,2-20个字符。</p>
+        <form id="nf">
+          <div class="afield"><label>昵称</label><input class="ky-input" type="text" name="name" required minlength="2" maxlength="20" value="<?= e($udata['user']['name'] ?? '') ?>" placeholder="输入新昵称"></div>
+          <button class="btn-main uc2-full" type="submit">保存昵称</button>
+        </form>
+      </div>
+      <div class="uc2-card">
+        <h4>🔐 修改密码</h4>
+        <p class="desc">修改成功后需使用新密码重新登录。</p>
+        <form id="pf" onsubmit="return doPwd(event)">
+          <div class="afield"><label>当前密码</label><input class="ky-input" type="password" name="oldpwd" required autocomplete="current-password"></div>
+          <div class="afield"><label>新密码</label><input class="ky-input" type="password" name="newpwd" required minlength="6" autocomplete="new-password"></div>
+          <div class="afield"><label>确认新密码</label><input class="ky-input" type="password" name="repwd" required minlength="6" autocomplete="new-password"></div>
+          <button class="btn-main uc2-full" type="submit" id="pgo">确认修改</button>
+        </form>
+      </div>
     </div>
     <script>
     document.getElementById('nf').addEventListener('submit', async function(ev){
@@ -109,16 +115,34 @@ $tabsMap = ['index' => '我的账户', 'fav' => '我的收藏', 'record' => '播
       return false;
     }
     </script>
-    <?php elseif ($tab === 'filmreq'): ?>
-    <div style="max-width:560px">
-      <b>我要求片</b>
-      <p style="color:var(--sub);font-size:13px;margin:6px 0 12px">告诉我们你想看的影片,我们会尽快上架!</p>
-      <form onsubmit="return doReq(event)">
-        <input type="hidden" name="_csrf" value="<?= e(Security::csrfToken()) ?>">
-        <div class="afield"><label>影片名称</label><input type="text" name="title" required maxlength="60" placeholder="如: 流浪地球3"></div>
-        <div class="afield"><label>备注(选填)</label><input type="text" name="note" maxlength="200" placeholder="如: 想看国语版/某演员的作品"></div>
-        <button class="abtn" type="submit" id="rgo">提交求片</button>
-      </form>
+    <?php elseif ($tab === 'filmreq'): $myreqs = $udata['filmreqs'] ?? []; ?>
+    <div class="uc2-grid" style="max-width:960px">
+      <div class="uc2-card">
+        <h4>🎬 提交求片</h4>
+        <p class="desc">告诉我们你想看的影片,我们会尽快上架。</p>
+        <form onsubmit="return doReq(event)">
+          <input type="hidden" name="_csrf" value="<?= e(Security::csrfToken()) ?>">
+          <div class="afield"><label>影片名称 *</label><input class="ky-input" type="text" name="title" required maxlength="60" placeholder="如: 流浪地球3"></div>
+          <div class="afield"><label>备注(选填)</label><input class="ky-input" type="text" name="note" maxlength="200" placeholder="如: 想看国语版 / 某演员的作品"></div>
+          <button class="btn-main uc2-full" type="submit" id="rgo">提交求片</button>
+        </form>
+      </div>
+      <div class="uc2-card">
+        <h4>📋 我的求片记录</h4>
+        <p class="desc">最近提交的求片与处理进度。</p>
+        <?php if (empty($myreqs)): ?>
+        <p style="color:var(--sub);font-size:13px;padding:26px 0;text-align:center">还没有求片记录,提交后会显示在这里</p>
+        <?php else: foreach ($myreqs as $fr): ?>
+        <div class="fr-item">
+          <div style="min-width:0">
+            <div class="t"><?= e($fr['title']) ?></div>
+            <?php if (trim((string)$fr['note']) !== ''): ?><div class="n"><?= e(mb_substr((string)$fr['note'], 0, 40)) ?></div><?php endif; ?>
+            <div class="n"><?= date('Y-m-d H:i', (int)$fr['created']) ?></div>
+          </div>
+          <span class="fr-tag <?= (int)$fr['status'] === 1 ? 'done' : 'wait' ?>"><?= (int)$fr['status'] === 1 ? '已上架' : '待处理' ?></span>
+        </div>
+        <?php endforeach; endif; ?>
+      </div>
     </div>
     <script>
     async function doReq(ev){

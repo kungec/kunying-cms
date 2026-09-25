@@ -286,7 +286,12 @@ class UserController
         if (!$user) redirect('/user/login');
         $tab = Request::get('tab', 'index');
         $data = [];
-        if ($tab === 'fav') {
+        if ($tab === 'filmreq') {
+            $data['filmreqs'] = Db::fetchAll(
+                "SELECT * FROM ky_film_request WHERE user_id=? ORDER BY id DESC LIMIT 20",
+                [$user['id']]
+            );
+        } elseif ($tab === 'fav') {
             $data['favs'] = Db::fetchAll(
                 "SELECT v.* FROM ky_fav f JOIN ky_vod v ON v.id=f.vod_id WHERE f.user_id=? ORDER BY f.id DESC LIMIT 100",
                 [$user['id']]

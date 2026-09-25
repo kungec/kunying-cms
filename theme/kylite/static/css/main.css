@@ -7,7 +7,7 @@
 :root{
   --bg:#f0f2f7;--bg2:#e8ebf2;--card:#ffffff;--card2:#f0f2f7;--card3:#e4e8f0;
   --txt:#1a1d26;--txt2:#3d4148;--sub:#7a8091;--sub2:#a8aebd;--line:#e2e5ec;--line2:#d0d4de;
-  --pri:#6366f1;--pri2:#4f46e5;--pri-grad:linear-gradient(135deg,#6366f1,#8b5cf6);
+  --gold:#d8a947;--pri:#6366f1;--pri2:#4f46e5;--pri-grad:linear-gradient(135deg,#6366f1,#8b5cf6);
   --pri-soft:rgba(99,102,241,.08);--pri-soft2:rgba(99,102,241,.15);
   --red:#ef4444;--red2:#dc2626;--green:#10b981;--green2:#059669;--orange:#f59e0b;--yellow:#fbbf24;
   --shadow-sm:0 1px 3px rgba(0,0,0,.05);--shadow:0 4px 16px rgba(0,0,0,.07);--shadow-lg:0 12px 32px rgba(0,0,0,.1);--shadow-xl:0 20px 50px rgba(0,0,0,.14);
@@ -154,7 +154,7 @@ input::placeholder,textarea::placeholder{color:var(--sub2)}
 /* ─── 底部 ─── */
 .kfooter{background:var(--card);border-top:1px solid var(--line);padding:32px 24px;text-align:center;color:var(--sub);font-size:12px;line-height:2.2;margin-top:40px}
 .kflink{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 14px;max-width:960px;margin:0 auto 12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
-.kflink-t{font-weight:700;color:var(--tx)}
+.kflink-t{font-weight:700;color:var(--txt)}
 .kflink a{color:var(--sub);text-decoration:none;padding:2px 8px;border-radius:8px;transition:all .2s}
 .kflink a:hover{color:var(--pri);background:rgba(99,102,241,.08)}
 
@@ -508,3 +508,20 @@ body{animation:pageLoad .3s ease}
 
 /* 极验收起条与表单对齐(仅holder宽度,不触碰挑战面板) */
 .ky-verify .geetest_holder{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+
+/* ─── 用户中心 求片/账号设置 卡片 ─── */
+.uc2-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:760px){.uc2-grid{grid-template-columns:1fr}}
+.uc2-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.uc2-card h4{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:15px;color:var(--txt)}
+.uc2-card .desc{font-size:12px;color:var(--sub);margin:0 0 16px}
+.uc2-card .ky-input{width:100%}
+.uc2-card .afield label{display:block;font-size:12px;color:var(--sub);margin-bottom:6px}
+.uc2-full{width:100%;margin-top:4px}
+.fr-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.fr-item:last-child{border-bottom:0;padding-bottom:2px}
+.fr-item .t{font-size:13px;font-weight:600;color:var(--txt);word-break:break-all}
+.fr-item .n{font-size:12px;color:var(--sub);margin-top:2px}
+.fr-tag{flex:none;font-size:11px;padding:3px 12px;border-radius:10px;font-weight:600}
+.fr-tag.wait{background:rgba(216,169,71,.16);color:#b8860b}
+.fr-tag.done{background:rgba(31,157,85,.14);color:#1f9d55}
