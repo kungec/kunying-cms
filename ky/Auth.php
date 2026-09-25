@@ -76,7 +76,13 @@ class Auth
         Security::session();
         session_regenerate_id(true);
         $_SESSION['admin_id'] = (int)$admin['id'];
-        $_SESSION['admin_token'] = bin2hex(random_bytes(16));
+        // 会话令牌绑定当前密码哈希:改密后所有旧会话自动失效
+        $_SESSION['admin_token'] = self::adminSessionToken($admin);
+    }
+
+    private static function adminSessionToken(array $admin): string
+    {
+        return hash_hmac('sha256', (string)$admin['pwd'], 'ky_admin_session');
     }
 
     public static function adminLogout(): void
@@ -90,7 +96,15 @@ class Auth
      */
     public static function requireAdmin(): void
     {
-        if (!self::admin()) {
+        $admin = self::admin();
+        if (!$admin) {
+            if (Request::isAjax()) json_error('登录已失效,请重新登录', 401);
+            redirect('/admin.php?s=/main/login');
+        }
+        // 会话令牌校验:令牌绑定密码哈希,密码变更后旧会话立即失效
+        $expect = self::adminSessionToken($admin);
+        if (!hash_equals($expect, (string)($_SESSION['admin_token'] ?? ''))) {
+            self::adminLogout();
             if (Request::isAjax()) json_error('登录已失效,请重新登录', 401);
             redirect('/admin.php?s=/main/login');
         }
