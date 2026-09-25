@@ -186,7 +186,6 @@ body.drawer-open .drawer-mask{opacity:1;pointer-events:auto}
 .btn-line{display:block;width:100%;text-align:center;padding:11px;border-radius:9px;border:1px solid var(--line);color:var(--txt);margin-top:10px}
 .auth .alt{margin-top:16px;font-size:13px;color:var(--sub);text-align:center}
 .auth .alt a{color:var(--red2)}
-.ky-verify{margin-bottom:14px}
 
 /* 用户中心 */
 .uc{display:grid;grid-template-columns:230px 1fr;gap:18px;margin-top:86px}
@@ -351,15 +350,6 @@ table.ut{width:100%;border-collapse:collapse;font-size:13px}
 @media(max-width:640px){.iqgrid{grid-template-columns:repeat(2,1fr);gap:18px 12px}.iqtitle{font-size:32px}.iqhero{min-height:420px}.iqc .nm{font-size:14px}}
 
 /* ===== 人机验证自适应(极验v4/Turnstile) ===== */
-.ky-verify{width:100%}
-.ky-verify .geetest_holder,.ky-verify .geetest_box,.ky-verify .geetest_widget,.ky-verify .geetest_btn{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
-.ky-verify .geetest_btn{background:#22242d!important;border:1px solid #3a3d49!important;box-shadow:none!important}
-.ky-verify .geetest_btn .geetest_btn_label,.ky-verify .geetest_radar_tip,.ky-verify .geetest_success_radar_tip,.ky-verify .geetest_radar_cls,.ky-verify .geetest_panel_box_title{color:#e9eaee!important;background:transparent!important}
-.ky-verify .geetest_radar{background:transparent!important}
-.ky-verify .geetest_radar .geetest_radar_img,.ky-verify .geetest_radar .geetest_box{background:transparent!important}
-.ky-verify .geetest_widgets,.ky-verify .geetest_panel{background:transparent!important}
-.ky-verify iframe,.ky-verify .geetest_result{max-width:100%!important}
-.ky-verify .cf-turnstile,.ky-verify .cf-turnstile iframe{max-width:100%!important;border-radius:8px;overflow:hidden}
 
 /* ===== XCY 风格导航/搜索抽屉/全屏幻灯/观看历史 ===== */
 .header.xnav{background:linear-gradient(180deg,rgba(10,10,14,.82),rgba(10,10,14,.28) 68%,transparent);backdrop-filter:blur(3px)}
@@ -524,3 +514,6 @@ table.ut{width:100%;border-collapse:collapse;font-size:13px}
 /* ─── 暗色模式悬浮球 ─── */
 #ky-theme-fab{position:fixed;right:20px;bottom:80px;z-index:900;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sub);transition:all .25s}
 #ky-theme-fab:hover{color:var(--pri);border-color:var(--pri);transform:scale(1.1)}
+
+/* 极验收起条与表单对齐(仅holder宽度,不触碰挑战面板) */
+.ky-verify .geetest_holder{width:100%!important;max-width:100%!important;box-sizing:border-box!important}

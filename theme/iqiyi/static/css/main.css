@@ -187,7 +187,6 @@ body.drawer-open .drawer-mask{opacity:1;pointer-events:auto}
 .btn-line{display:block;width:100%;text-align:center;padding:11px;border-radius:9px;border:1px solid var(--line);color:var(--txt);margin-top:10px}
 .auth .alt{margin-top:16px;font-size:13px;color:var(--sub);text-align:center}
 .auth .alt a{color:var(--red2)}
-.ky-verify{margin-bottom:14px}
 
 /* 用户中心 */
 .uc{display:grid;grid-template-columns:230px 1fr;gap:18px;margin-top:86px}
@@ -352,15 +351,6 @@ table.ut{width:100%;border-collapse:collapse;font-size:13px}
 @media(max-width:640px){.iqgrid{grid-template-columns:repeat(2,1fr);gap:18px 12px}.iqtitle{font-size:32px}.iqhero{min-height:420px}.iqc .nm{font-size:14px}}
 
 /* ===== 人机验证自适应(极验v4/Turnstile) ===== */
-.ky-verify{width:100%}
-.ky-verify .geetest_holder,.ky-verify .geetest_box,.ky-verify .geetest_widget,.ky-verify .geetest_btn{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
-.ky-verify .geetest_btn{background:#22242d!important;border:1px solid #3a3d49!important;box-shadow:none!important}
-.ky-verify .geetest_btn .geetest_btn_label,.ky-verify .geetest_radar_tip,.ky-verify .geetest_success_radar_tip,.ky-verify .geetest_radar_cls,.ky-verify .geetest_panel_box_title{color:#e9eaee!important;background:transparent!important}
-.ky-verify .geetest_radar{background:transparent!important}
-.ky-verify .geetest_radar .geetest_radar_img,.ky-verify .geetest_radar .geetest_box{background:transparent!important}
-.ky-verify .geetest_widgets,.ky-verify .geetest_panel{background:transparent!important}
-.ky-verify iframe,.ky-verify .geetest_result{max-width:100%!important}
-.ky-verify .cf-turnstile,.ky-verify .cf-turnstile iframe{max-width:100%!important;border-radius:8px;overflow:hidden}
 .xsg-drawer .sg{top:58px;box-shadow:0 18px 44px rgba(0,0,0,.6)}
 
 /* ─── 观看历史页 ─── */
@@ -377,3 +367,6 @@ table.ut{width:100%;border-collapse:collapse;font-size:13px}
 .ut{width:100%;border-collapse:collapse;font-size:13px}
 .ut th,.ut td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
 .ut th{color:var(--sub);font-weight:600;font-size:12px;white-space:nowrap;background:var(--card2)}
+
+/* 极验收起条与表单对齐(仅holder宽度,不触碰挑战面板) */
+.ky-verify .geetest_holder{width:100%!important;max-width:100%!important;box-sizing:border-box!important}

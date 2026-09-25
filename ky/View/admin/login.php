@@ -26,9 +26,7 @@ input:focus{border-color:#2f6bff}
 .err{display:none;background:#fdecec;color:#c53030;border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:12px}
 
 /* 人机验证自适应(极验v4/Turnstile/图形) */
-.ky-verify{width:100%}
-.ky-verify .geetest_holder,.ky-verify .geetest_box,.ky-verify .geetest_widget,.ky-verify .geetest_btn{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
-.ky-verify iframe,.ky-verify .cf-turnstile,.ky-verify .cf-turnstile iframe{max-width:100%!important}
+.ky-verify .geetest_holder{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
 </style>
 </head>
 <body>

@@ -32,13 +32,14 @@ class Verify
         if ($p === 'geetest') {
             $cid = e(config('geetest_id'));
             $html = '<div class="ky-verify"><div id="' . $id . '"></div></div>'
-                . '<input type="hidden" name="lot_number" id="' . $id . '_lot"><input type="hidden" name="captcha_output" id="' . $id . '_out"><input type="hidden" name="pass_token" id="' . $id . '_tok">'
+                . '<input type="hidden" name="lot_number" id="' . $id . '_lot"><input type="hidden" name="captcha_output" id="' . $id . '_out"><input type="hidden" name="pass_token" id="' . $id . '_tok"><input type="hidden" name="gen_time" id="' . $id . '_gt">'
                 . '<script src="https://static.geetest.com/v4/gt4.js"></script>'
                 . '<script>initGeetest4({captchaId:' . json_encode(config('geetest_id')) . ',product:"float",language:"zho"},function(captcha){'
                 . 'captcha.appendTo("#' . $id . '").onSuccess(function(){var r=captcha.getValidate();'
                 . 'document.getElementById("' . $id . '_lot").value=r.lot_number;'
                 . 'document.getElementById("' . $id . '_out").value=r.captcha_output;'
-                . 'document.getElementById("' . $id . '_tok").value=r.pass_token;});});</script>';
+                . 'document.getElementById("' . $id . '_tok").value=r.pass_token;'
+                . 'document.getElementById("' . $id . '_gt").value=r.gen_time;});});</script>';
             return $html;
         }
         // 图形验证码
@@ -70,14 +71,17 @@ class Verify
             $lot = trim((string)($_POST['lot_number'] ?? ''));
             $out = trim((string)($_POST['captcha_output'] ?? ''));
             $tok = trim((string)($_POST['pass_token'] ?? ''));
+            $gt = trim((string)($_POST['gen_time'] ?? ''));
             if ($lot === '' || $out === '' || $tok === '') return [false, '请先完成人机验证'];
             $key = (string)config('geetest_key');
             $sign = hash_hmac('sha256', $lot, $key);
-            $url = 'https://captcha-openapi.geetest.com/validate?' . http_build_query([
+            // 官方现行端点gcaptcha4.geetest.com(原captcha-openapi域名已NXDOMAIN下线)
+            $url = 'https://gcaptcha4.geetest.com/validate?' . http_build_query([
                 'captcha_id' => config('geetest_id'),
                 'lot_number' => $lot,
                 'captcha_output' => $out,
                 'pass_token' => $tok,
+                'gen_time' => $gt,
                 'sign_token' => $sign,
             ]);
             $data = Http::getJson($url, 10);
