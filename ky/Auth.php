@@ -33,6 +33,8 @@ class Auth
         Security::session();
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int)$user['id'];
+        // 顶栏登录态显示用的明文cookie(缓存页JS修正脚本读取)
+        setcookie('ky_name', (string)$user['name'], 0, '/', '', is_https(), false);
         Db::update('ky_user', [
             'last_login_time' => time(),
             'last_login_ip' => client_ip(),
@@ -43,6 +45,7 @@ class Auth
     {
         Security::session();
         unset($_SESSION['user_id']);
+        setcookie('ky_name', '', time() - 3600, '/');
     }
 
     public static function isVip(): bool

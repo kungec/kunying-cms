@@ -2,9 +2,9 @@
 /** 坤影CMS 默认主题 kylite - 头部 */
 $navData = cache_get('kylite_nav');
 if (!is_array($navData)) {
-    $navTypes = Db::fetchAll("SELECT * FROM ky_type WHERE pid=0 AND status=1 ORDER BY sort ASC, id ASC LIMIT 12");
+    $navTypes = Db::fetchAll("SELECT * FROM ky_type WHERE nav=1 AND status=1 ORDER BY sort ASC, id ASC LIMIT 12");
     $navKids = [];
-    foreach (Db::fetchAll("SELECT * FROM ky_type WHERE pid>0 AND status=1 ORDER BY sort ASC, id ASC") as $nk) $navKids[(int)$nk['pid']][] = $nk;
+    foreach (Db::fetchAll("SELECT * FROM ky_type WHERE nav=2 AND status=1 ORDER BY sort ASC, id ASC") as $nk) $navKids[(int)$nk['pid']][] = $nk;
     $navData = [$navTypes, $navKids];
     cache_set('kylite_nav', $navData, 300);
 } else {
@@ -105,8 +105,13 @@ function hdrSearchSubmit(ev){
       <div class="ksg" id="hdrSg"></div>
     </div>
     <div class="kuser">
+      <?php if ($curUser): ?>
+      <a href="/user/center" class="kuname"><?= e($curUser['name']) ?></a>
+      <a href="/user/logout" title="退出登录">退出</a>
+      <?php else: ?>
       <a href="/user/login">登录</a>
       <?php if (config('register_enable', '1') == '1'): ?><a class="kreg" href="/user/register">注册</a><?php endif; ?>
+      <?php endif; ?>
     </div>
   </div>
 </header>
