@@ -6,16 +6,16 @@ include theme_path('layout/header.php');
 <div class="auth-wrap">
   <form class="auth" onsubmit="return doForgot(event)">
     <h2><span class="i"></span>找回密码<?= e(config('site_name', '坤影影视')) ?></h2>
-    <div class="fi"><label>注册邮箱</label><input class="ky-input" type="email" name="email" required autocomplete="email" placeholder="example@qq.com"></div>
     <div class="fi" style="display:flex;gap:8px">
-      <input class="ky-input" type="text" name="code" required maxlength="6" placeholder="邮箱重置码" style="flex:1;letter-spacing:3px">
-      <button class="btn-line" type="button" id="snd" style="white-space:nowrap;padding:0 14px">发送重置码</button>
+      <input class="ky-input" type="email" name="email" required autocomplete="email" placeholder="example@qq.com" style="flex:1">
+      <button class="btn-main" type="button" style="width:auto;padding:0 16px;margin:0;font-size:13px" id="snd">发送重置码</button>
     </div>
-    <div class="fi"><label>新密码</label><input class="ky-input" type="password" name="password" required minlength="6" autocomplete="new-password"></div>
-    <div class="fi"><label>确认新密码</label><input class="ky-input" type="password" name="repassword" required minlength="6" autocomplete="new-password"></div>
+    <div class="fi"><input class="ky-input" type="text" name="code" required maxlength="6" placeholder="6位邮箱重置码" style="letter-spacing:3px"></div>
+    <div class="fi"><input class="ky-input" type="password" name="password" required minlength="6" autocomplete="new-password" placeholder="设置新密码(至少6位)"></div>
+    <div class="fi"><input class="ky-input" type="password" name="repassword" required minlength="6" autocomplete="new-password" placeholder="再次输入新密码"></div>
     <input type="hidden" name="_csrf" value="<?= e(Security::csrfToken()) ?>">
-    <button class="btn-main" type="submit" id="go">重置密码</button>
-    <a class="btn-line" href="/user/login">想起来了?去登录</a>
+    <button class="btn-main" type="submit" id="go" style="margin-top:6px">重置密码</button>
+    <a class="btn-line" href="/user/login" style="margin-top:6px">想起来了?去登录</a>
   </form>
 </div>
 <script>
