@@ -68,6 +68,7 @@ class ApiController
     {
         $user = Auth::user();
         if (!$user) json_ok();
+        Security::csrfCheck();
         $vid = Request::jsonPost('vod_id', 0, 'i');
         $ep = Request::jsonPost('episode', 1, 'i');
         $pos = (int)Request::jsonPost('position', 0, 'i');
