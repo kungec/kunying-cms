@@ -386,16 +386,6 @@ function ky_xor(string $s, string $k): string {
     for ($i = 0; $i < strlen($s); $i++) $out .= $s[$i] ^ $k[$i % strlen($k)];
     return $out;
 }
-function api_site_enc(string $url): string {
-    return base64_encode(ky_xor($url, (string)config('key', 'kunying')));
-}
-function api_site_dec(string $v): string {
-    if ($v === '') return '';
-    $raw = base64_decode($v, true);
-    if ($raw === false) return $v; // 兼容历史明文
-    $dec = ky_xor($raw, (string)config('key', 'kunying'));
-    return preg_match('#^https?://#i', $dec) ? $dec : $v;
-}
 
 /* ===================== 付费主题加密运行时(未授权无法解密执行) ===================== */
 function ky_theme_run(string $code, string $enc, array $vars = []): void {
@@ -569,6 +559,3 @@ function asset_v(string $rel): string {
 /**
  * 资源URL(自动带文件修改时间版本;$sitePath为站内绝对路径,如 /theme/kylite/static/js/x.js)
  */
-function asset_v_url(string $sitePath): string {
-    return $sitePath . '?v=' . asset_v($sitePath);
-}
