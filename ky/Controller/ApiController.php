@@ -85,6 +85,9 @@ class ApiController
 
     public function image()
     {
+        // 防CPU耗尽:验证码生成每IP限流
+        [$ok] = Security::rateLimit('captcha', 60, 60);
+        if (!$ok) { http_response_code(429); exit; }
         $scene = preg_replace('/[^a-z_]/', '', Request::get('scene', 'default'));
         Captcha::output($scene === '' ? 'default' : $scene);
     }
