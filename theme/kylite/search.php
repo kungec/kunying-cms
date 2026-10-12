@@ -4,7 +4,7 @@ $pageTitle = $wd !== '' ? '搜索:' . $wd : '搜索';
 $searchWd = $wd;
 $sm = 'movie';
 include theme_path('layout/header.php');
-$hotWords = Db::fetchAll("SELECT id, name FROM ky_vod WHERE status=1 ORDER BY total_hits DESC LIMIT 10");
+$hotWords = Db::fetchAll("SELECT id, name FROM ky_vod WHERE status=1 ORDER BY search_hits DESC, RAND() LIMIT 10");
 ?>
 <div class="ksearch-card">
   <form class="ksearch-bar" action="/index.php" method="get">
@@ -46,7 +46,7 @@ $hotWords = Db::fetchAll("SELECT id, name FROM ky_vod WHERE status=1 ORDER BY to
   <div class="ksec">
     <div class="ksec-h"><b>热门推荐</b></div>
     <div class="mgrid">
-      <?php foreach (Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 ORDER BY total_hits DESC LIMIT 18") as $v): ?>
+      <?php foreach (Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 ORDER BY search_hits DESC, total_hits DESC, RAND() LIMIT 18") as $v): ?>
       <a class="mcard" href="/index.php?s=/vod/detail&id=<?= (int)$v['id'] ?>">
         <div class="pic"><img src="<?= e(pic_url($v['pic'])) ?>" loading="lazy" alt="<?= e($v['name']) ?>">
           <?php if ((float)$v['score'] > 0): ?><span class="bd"><?= rtrim(rtrim(number_format((float)$v['score'], 1), '0'), '.') ?></span><?php endif; ?>

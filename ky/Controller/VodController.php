@@ -193,6 +193,11 @@ class VodController
             } else {
                 $total = (int)Db::fetchOne("SELECT COUNT(*) FROM ky_vod WHERE status=1 AND name LIKE ?", ['%' . $wd . '%']);
                 $list = Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 AND name LIKE ? ORDER BY total_hits DESC LIMIT {$pageSize} OFFSET " . (($page - 1) * $pageSize), ['%' . $wd . '%']);
+                // 搜索热度统计:搜索命中影片计数(按影片名搜索次数排名的依据)
+                if ($list && $page === 1) {
+                    $ids = implode(',', array_map('intval', array_column($list, 'id')));
+                    Db::query("UPDATE ky_vod SET search_hits=search_hits+1 WHERE id IN ({$ids})");
+                }
             }
         }
         $types = Db::fetchAll("SELECT * FROM ky_type WHERE pid=0 AND status=1 ORDER BY sort ASC, id ASC");
