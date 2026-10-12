@@ -79,7 +79,7 @@ if (isset($opts['full'])) {
         if (!$chunk) continue;
         $cmd = PHP_BINARY . ' ' . escapeshellarg(__FILE__) . ' --worker --shards=' . escapeshellarg(implode(',', $chunk));
         // stderr指向文件,避免子进程警告写满管道造成死锁/污染JSON输出
-        $devnull = fopen('/dev/null', 'w');
+        $devnull = fopen(PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'w');
         $p = proc_open($cmd, [1 => ['pipe', 'w'], 2 => $devnull], $pipes);
         if (!is_resource($p)) { $sum['errors'] += count($chunk); continue; }
         $out = stream_get_contents($pipes[1]);

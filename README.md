@@ -47,6 +47,8 @@
 
 ## 📦 环境要求
 
+> 🪟 **支持 Windows 部署**(phpstudy/IIS+PHP+MySQL):定时任务、多进程采集、数据库备份全部跨平台兼容,详见 [Windows部署指南](docs/Windows部署指南.md)。
+
 | 项目 | 要求 |
 |---|---|
 | PHP | 7.4+（推荐 8.0-8.2，启用 OPcache 更佳） |
