@@ -172,12 +172,12 @@ body.drawer-open .drawer-mask{opacity:1;pointer-events:auto}
 .vdesc{margin-top:14px;font-size:13px;color:#b9bcc6;line-height:1.9;background:var(--bg2);border-radius:10px;padding:14px}
 
 /* ===== 用户/表单页 ===== */
-.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:90px 16px 40px;background:radial-gradient(1200px 600px at 70% -10%,rgba(229,50,45,.14),transparent),var(--bg)}
-.auth{width:100%;max-width:400px;background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:32px}
-.auth h2{font-size:20px;margin-bottom:22px;display:flex;align-items:center;gap:9px}
+.auth-wrap{display:flex;align-items:center;justify-content:center;padding:26px 16px 30px;background:radial-gradient(1200px 600px at 70% -10%,rgba(229,50,45,.14),transparent),var(--bg)}
+.auth{width:100%;max-width:400px;background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:24px 24px 20px}
+.auth h2{font-size:19px;margin-bottom:16px;display:flex;align-items:center;gap:9px}
 .auth h2 .i{width:26px;height:26px;background:var(--red);border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
 .auth h2 .i::after{content:"";border-left:8px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px}
-.fi{margin-bottom:14px}
+.fi{margin-bottom:11px}
 .fi label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
 .ky-input{width:100%;padding:11px 14px;background:var(--card);border:1px solid var(--line);border-radius:9px;color:var(--txt);outline:none;font-size:14px;transition:border .2s}
 .ky-input:focus{border-color:var(--red)}
@@ -517,3 +517,10 @@ table.ut{width:100%;border-collapse:collapse;font-size:13px}
 
 /* 极验收起条与表单对齐(仅holder宽度,不触碰挑战面板) */
 .ky-verify .geetest_holder{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+
+/* ─── 页面切换加载特效 ─── */
+#ky-pbar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99999;background:linear-gradient(90deg,#e5322d,#ff4d48);box-shadow:0 0 10px rgba(229,50,45,.5);pointer-events:none;transition:width .3s ease,opacity .4s ease}
+@keyframes kypulse{0%{width:4%}55%{width:72%}100%{width:88%}}
+#ky-pbar.start{animation:kypulse 1.1s ease-in-out infinite}
+@keyframes kyfade{from{opacity:0}to{opacity:1}}
+body{animation:kyfade .28s ease}

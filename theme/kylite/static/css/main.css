@@ -215,8 +215,8 @@ input::placeholder,textarea::placeholder{color:var(--sub2)}
 .filter select{padding:6px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:13px;background:var(--card);color:var(--txt)}
 
 /* ─── 认证页 ─── */
-.auth-wrap{min-height:calc(100vh - var(--header-h));display:flex;align-items:center;justify-content:center;padding:40px 16px;background:linear-gradient(160deg,rgba(99,102,241,.06) 0%,var(--bg) 50%,rgba(16,185,129,.05) 100%)}
-.auth{background:var(--card);border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);padding:40px 36px;width:min(420px,100%);border:1px solid var(--line)}
+.auth-wrap{display:flex;align-items:center;justify-content:center;padding:14px 16px 28px;background:linear-gradient(160deg,rgba(99,102,241,.06) 0%,var(--bg) 50%,rgba(16,185,129,.05) 100%)}
+.auth{background:var(--card);border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);padding:26px 26px 22px;width:min(420px,100%);border:1px solid var(--line)}
 .auth .brand{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:28px}
 .auth .brand svg{width:48px;height:48px}
 .auth .brand b{font-size:22px;font-weight:800;color:var(--txt)}
@@ -314,7 +314,7 @@ th{text-align:left;color:var(--sub);font-weight:600;padding:10px;border-bottom:1
 td{padding:10px;border-bottom:1px solid var(--line)}
 
 /* ─── 认证表单v2 ─── */
-.auth .afield{margin-bottom:18px}
+.auth .afield{margin-bottom:13px}
 .auth .afield label{display:block;font-size:13px;color:var(--sub);margin-bottom:7px;font-weight:500}
 .auth .afield input{width:100%;box-sizing:border-box;height:48px;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:0 16px;font-size:14px;color:var(--txt);background:var(--card);outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit}
 .auth .afield input:focus{border-color:var(--pri);box-shadow:0 0 0 4px var(--pri-soft)}
