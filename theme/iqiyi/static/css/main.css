@@ -173,7 +173,7 @@ body.drawer-open .drawer-mask{opacity:1;pointer-events:auto}
 .vdesc{margin-top:14px;font-size:13px;color:#b9bcc6;line-height:1.9;background:var(--bg2);border-radius:10px;padding:14px}
 
 /* ===== 用户/表单页 ===== */
-.auth-wrap{display:flex;align-items:center;justify-content:center;padding:26px 16px 30px;background:radial-gradient(1200px 600px at 70% -10%,rgba(229,50,45,.14),transparent),var(--bg)}
+.auth-wrap{display:flex;align-items:center;justify-content:center;padding:84px 16px 30px;background:radial-gradient(1200px 600px at 70% -10%,rgba(229,50,45,.14),transparent),var(--bg)}
 .auth{width:100%;max-width:400px;background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:24px 24px 20px}
 .auth h2{font-size:19px;margin-bottom:16px;display:flex;align-items:center;gap:9px}
 .auth h2 .i{width:26px;height:26px;background:var(--red);border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
