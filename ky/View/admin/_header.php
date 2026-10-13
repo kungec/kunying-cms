@@ -6,6 +6,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title><?= e($pageTitle) ?> - 坤影CMS管理后台</title>
 <style>
+#ky-pbar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99999;background:linear-gradient(90deg,#e5322d,#ff4d48);box-shadow:0 0 10px rgba(229,50,45,.5);pointer-events:none;transition:width .3s ease,opacity .4s ease}
+@keyframes kypulse{0%{width:4%}55%{width:72%}100%{width:88%}}
+#ky-pbar.start{animation:kypulse 1.1s ease-in-out infinite}
+@keyframes kyfade{from{opacity:0}to{opacity:1}}
+body{animation:kyfade .28s ease}
+
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#f3f5f9;--side:#191b22;--card:#fff;--line:#e6e9f0;--txt:#242a37;--sub:#7b8394;--red:#e5322d;--blue:#2f6bff;--green:#22a55e}
 body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--txt);font-size:14px}

@@ -11,15 +11,12 @@ include theme_path('layout/header.php');
       <span>通过注册邮箱验证重置</span>
     </div>
     <div class="afield"><label>注册邮箱</label><input type="email" name="email" required autocomplete="email" placeholder="example@qq.com"></div>
-    <div class="afield" style="display:flex;gap:8px">
-      <input class="ky-input" type="text" name="code" required maxlength="6" placeholder="邮箱重置码" style="flex:1;letter-spacing:3px">
-      <button class="abtn ghost" type="button" id="snd" style="white-space:nowrap;padding:0 14px">发送重置码</button>
-    </div>
+    <div class="afield row"><label>邮箱重置码</label><div class="arow"><input type="text" name="code" required maxlength="6" placeholder="6位重置码" autocomplete="one-time-code"><button class="abtn sub" type="button" id="snd">发送重置码</button></div></div>
     <div class="afield"><label>新密码</label><input type="password" name="password" required minlength="6" autocomplete="new-password" placeholder="至少6位"></div>
     <div class="afield"><label>确认新密码</label><input type="password" name="repassword" required minlength="6" autocomplete="new-password" placeholder="再输入一次"></div>
     <input type="hidden" name="_csrf" value="<?= e(Security::csrfToken()) ?>">
-    <button class="abtn" type="submit" id="go">重置密码</button>
-    <a class="abtn ghost" href="/user/login">想起来了?去登录</a>
+    <button class="btn-main" type="submit" id="go" style="width:100%">重置密码</button>
+    <a class="btn-line" href="/user/login" style="width:100%;text-align:center;margin-top:10px">想起来了?去登录</a>
   </form>
 </div>
 <script>

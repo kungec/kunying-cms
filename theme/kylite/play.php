@@ -3,6 +3,8 @@
 $pageTitle = $vod['name'];
 $pageDescription = mb_substr(strip_tags((string)$vod['content']), 0, 100);
 include theme_path('layout/header.php');
+// LCP预加载:播放页海报
+if (!empty($vod['pic'])) echo '<link rel="preload" as="image" href="' . e(pic_url((string)$vod['pic'])) . '">' . "\n";
 $episodes = $episodes ?? [];
 $current = $current ?? null;
 $isVipUser = Auth::isVip();

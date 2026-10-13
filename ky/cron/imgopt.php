@@ -8,6 +8,7 @@
  */
 if (PHP_SAPI !== 'cli') { http_response_code(403); exit('Forbidden'); }
 define('KY_SUB_DIR', '');
+ini_set('memory_limit', '512M');
 require dirname(__DIR__) . '/bootstrap.php';
 
 if (!is_file(KY_PATH . '/data/install.lock')) exit("not installed\n");
@@ -40,6 +41,7 @@ while ($done < $limit && $scanned < $count) {
     if ($size < 150000) continue; // <150KB跳过
     $info = @getimagesize($f);
     if (!$info || ($info[2] !== IMAGETYPE_JPEG && $info[2] !== IMAGETYPE_WEBP)) continue;
+    if ((int)$info[0] * (int)$info[1] > 40000000) continue; // 巨型像素图跳过,防GD解压爆内存
     if ((int)$info[0] <= $width && $size < 300000) continue;
     $body = @file_get_contents($f);
     if ($body === false) continue;
