@@ -97,16 +97,33 @@ KunPlayer.prototype._enhance=function(v,box){
     document.head.appendChild(st);
   }
   var wrap=document.createElement('div');wrap.className='ky-plx';
+  // ─── 倍速播放 ───
+  var SPD=[0.5,1,1.25,1.5,2,3];
+  var curSp=parseFloat(localStorage.getItem('ky_spd')||'1');
+  if(SPD.indexOf(curSp)<0)curSp=1;
+  v.playbackRate=curSp;
+  v.addEventListener('loadedmetadata',function(){try{v.playbackRate=curSp}catch(e){}});
+  var spBtn=document.createElement('button');spBtn.className='ky-plx-btn ky-spd-btn';spBtn.textContent=curSp+'x';
+  spBtn.title='播放倍速';
+  spBtn.addEventListener('click',function(e){
+    e.stopPropagation();
+    var i=SPD.indexOf(v.playbackRate);
+    i=(i+1)%SPD.length;curSp=SPD[i];v.playbackRate=curSp;
+    localStorage.setItem('ky_spd',curSp);
+    spBtn.textContent=curSp+'x';
+  });
+  v.addEventListener('ratechange',function(){spBtn.textContent=v.playbackRate+'x'});
   var cast=document.createElement('button');cast.className='ky-plx-btn';cast.textContent='投屏';
+  wrap.appendChild(spBtn);
   wrap.appendChild(cast);
   box.appendChild(wrap);
 
   // 10秒无操作自动隐藏;触摸/点击/移动鼠标重新显示
   var hideT=null;
   function poke(){
-    cast.classList.remove('hide');
+    cast.classList.remove('hide');spBtn.classList.remove('hide');
     if(hideT)clearTimeout(hideT);
-    hideT=setTimeout(function(){ cast.classList.add('hide'); },10000);
+    hideT=setTimeout(function(){ cast.classList.add('hide');spBtn.classList.add('hide'); },10000);
   }
   poke();
   v.addEventListener('touchstart',poke,{passive:true});
