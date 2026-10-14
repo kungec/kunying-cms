@@ -30,6 +30,7 @@ if ($current) {
 }
 // 构建客户端换源/选集数据(不刷新页面即时切换)
 $jsSources = [];
+$hasM3u8 = false; // 任一源为m3u8才需要hls.js(405KB),mp4直链页零开销
 foreach ($sources as $src) {
     $rule = trim((string)($src['parse'] ?? ''));
     $isM3u8Rule = $rule !== '' && stripos($rule, 'm3u8:') === 0;
@@ -37,7 +38,7 @@ foreach ($sources as $src) {
     foreach ($src['episodes'] as $epi) {
         $u = $epi['url'];
         if ($isM3u8Rule) $u = str_replace('{url}', $u, substr($rule, 5));
-        $psrc = preg_match('/\.m3u8(\?|#|$)/i', $u) ? m3u8_proxy_url($u) : $u;
+        if (preg_match('/\.m3u8(\?|#|$)/i', $u)) { $hasM3u8 = true; $psrc = m3u8_proxy_url($u); } else { $psrc = $u; }
         $eps[] = ['name' => $epi['name'], 'url' => $epi['url'], 'psrc' => $psrc];
     }
     $jsSources[] = [
@@ -176,7 +177,9 @@ foreach ($sources as $src) {
     'genre' => (string)$vod['class'],
     'inLanguage' => 'zh-CN',
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+<?php if ($canPlay && $hasM3u8): // mp4直链/不可播页无需hls.js(405KB,压缩后127KB) ?>
 <script defer src="<?= theme_url('static/player/hls.js') ?>?v=<?= asset_v('/theme/kylite/static/player/hls.js') ?>"></script>
+<?php endif; ?>
 <script defer src="<?= theme_url('static/player/kunplayer.js') ?>?v=<?= asset_v('/theme/kylite/static/player/kunplayer.js') ?>"></script>
 <script>
 var kyVod = <?= json_encode([
