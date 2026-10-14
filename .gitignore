@@ -2,10 +2,14 @@
 data/cache/*
 data/upload/*
 data/license/*
+data/backup/*
 upload/vod/*
 !data/cache/.gitkeep
 !data/upload/.gitkeep
 !data/license/.gitkeep
 !upload/vod/.gitkeep
+# 敏感:数据库配置/授权令牌/环境文件绝不入库
+data/config.php
+.env
 .DS_Store
 *.log

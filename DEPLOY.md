@@ -26,6 +26,33 @@ docker compose up -d
 # 数据库: 主机=db 密码=你在.env里设置的MYSQL_ROOT_PASSWORD 库名=kunying
 ```
 生产建议:在容器前加一层反向代理(nginx/caddy)启用HTTPS,不要把8080直接暴露公网。
+TLS示例(caddy自动申请证书,新建docker-compose.tls.yml):
+```yaml
+services:
+  caddy:
+    image: caddy:2
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddydata:/data
+    depends_on: [web]
+    restart: unless-stopped
+volumes:
+  caddydata:
+```
+Caddyfile:
+```
+你的域名.com {
+    reverse_proxy web:80
+}
+```
+部署后 `docker compose -f docker-compose.tls.yml up -d`,并把后台「固定站点域名」设为你的域名。
+
+## 升级后自检
+```bash
+php ky/cron/selftest.php
+```
+检查PHP扩展、数据表结构、加密主题密钥完整性、授权配置、SSRF防护与目录权限,用于升级后或密钥轮换后的快速验收(可挂cron做日常监控)。
 
 ## 环境要求
 - PHP 7.4+ (推荐8.0-8.2),扩展: pdo_mysql curl gd mbstring zip fileinfo openssl

@@ -26,6 +26,7 @@ foreach ((scandir(KY_PATH.'/theme') ?: []) as $d) {
         <div class="fi"><label>网站名称</label><input type="text" name="site_name" value="<?= $c('site_name', '坤影影视') ?>"></div>
         <div class="fi"><label>备案号(页脚显示)</label><input type="text" name="site_icp" value="<?= $c('site_icp') ?>"></div>
       </div>
+      <div class="fi"><label>固定站点域名(防Host头污染,推荐)</label><input type="text" name="site_domain" value="<?= $c('site_domain') ?>" placeholder="留空=自动取当前访问域名"><div class="hint">填写如 example.com(不带https://和路径)。配置后所有外链/支付回调/sitemap都固定用此域名,不随访问者的Host头变化。</div></div>
       <div class="fi"><label>SEO关键词</label><input type="text" name="site_keywords" value="<?= $c('site_keywords') ?>"></div>
       <div class="fi"><label>SEO描述</label><textarea name="site_description"><?= $c('site_description') ?></textarea></div>
       <div class="fi"><label>影视站模式</label><select name="site_mode">

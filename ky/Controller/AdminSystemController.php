@@ -24,6 +24,7 @@ class AdminSystemController
         // 白名单键
         $keys = [
             'site_name', 'site_keywords', 'site_description', 'site_icp', 'site_template', 'site_mode',
+            'site_domain',
             'member_enable', 'register_enable', 'comment_enable', 'comment_audit', 'show_api_notice', 'footer_notice_link',
             'home_slide_enable', 'browser_check_enable', 'rewrite_enable',
             'kp_icon_search', 'kp_icon_history', 'kp_icon_user', 'kp_slide_enable', 'kp_slide_count', 'kp_slide_source',
@@ -56,6 +57,14 @@ class AdminSystemController
             if ($k === 'smtp_port' && !ctype_digit($val)) continue;
             if ($k === 'player_parse' && $val !== '' && !preg_match('#\{url\}#', $val)) continue;
             if ($k === 'site_template' && $val === '') continue;
+            // 站点域名只允许主机名形态,防止把路径/协议注入外链
+            if ($k === 'site_domain') {
+                $val = trim(preg_replace('#^[a-z][a-z0-9+.-]*://#i', '', trim($val)), '/');
+                $val = preg_replace('#[/?#].*$#', '', $val);
+                if ($val !== '' && !preg_match('/^[a-z0-9.\-]{3,120}$/i', $val)) continue;
+                config_set('site_domain', $val);
+                continue;
+            }
             if ($k === 'api_site' && $val === '') continue;
             config_set($k, $val);
         }

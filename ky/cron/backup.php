@@ -48,7 +48,8 @@ foreach ($tables as $t) {
         foreach ($rows as $row) {
             $vals = [];
             foreach ($row as $v) {
-                $vals[] = $v === null ? 'NULL' : "'" . Db::pdo()->quote((string)$v) . "'";
+                // quote() 自带首尾引号,外层不能再包一层(双引号会导致恢复失败)
+                $vals[] = $v === null ? 'NULL' : Db::pdo()->quote((string)$v);
             }
             gzwrite($gz, 'INSERT INTO `' . $table . '` VALUES (' . implode(',', $vals) . ");\n");
             $written++;

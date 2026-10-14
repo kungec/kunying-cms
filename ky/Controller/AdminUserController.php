@@ -53,15 +53,24 @@ class AdminUserController
         if (!$ids) json_error('请先勾选要删除的会员');
         if (count($ids) > 500) json_error('单次最多删除500条');
         $in = implode(',', $ids);
-        Db::query("DELETE FROM ky_user WHERE id IN ({$in})");
-        try { Db::query("DELETE FROM ky_comment WHERE user_id IN ({$in})"); } catch (Throwable $t) {}
-        try { Db::query("DELETE FROM ky_fav WHERE user_id IN ({$in})"); } catch (Throwable $t) {}
-        try { Db::query("DELETE FROM ky_play_record WHERE user_id IN ({$in})"); } catch (Throwable $t) {}
-        try { Db::query("DELETE FROM ky_sign WHERE user_id IN ({$in})"); } catch (Throwable $t) {}
-        try { Db::query("DELETE FROM ky_order WHERE user_id IN ({$in})"); } catch (Throwable $t) {}
-        try { Db::query("DELETE FROM ky_login_fail WHERE account IN (SELECT email FROM ky_user WHERE 1=0)"); } catch (Throwable $t) {}
+        $this->userCascade($in);
         Admin::log('批量删除会员 ' . count($ids) . ' 个(ID:' . $in . ')');
         json_ok(null, '已删除 ' . count($ids) . ' 个会员');
+    }
+
+    /** 会员删除级联:连带清空其内容/交易数据,防悬空 */
+    private function userCascade(string $in): void
+    {
+        $emails = array_column(Db::fetchAll("SELECT email FROM ky_user WHERE id IN ({$in})"), 'email');
+        Db::query("DELETE FROM ky_user WHERE id IN ({$in})");
+        foreach (['ky_comment', 'ky_fav', 'ky_play_record', 'ky_sign', 'ky_order', 'ky_user_vod', 'ky_film_request'] as $tb) {
+            try { Db::query("DELETE FROM {$tb} WHERE user_id IN ({$in})"); } catch (Throwable $t) {}
+        }
+        if ($emails) {
+            $ein = implode(',', array_map(fn($e) => Db::pdo()->quote((string)$e), $emails));
+            try { Db::query("DELETE FROM ky_email_code WHERE email IN ({$ein})"); } catch (Throwable $t) {}
+            try { Db::query("DELETE FROM ky_login_fail WHERE account IN ({$ein})"); } catch (Throwable $t) {}
+        }
     }
 
     /**
@@ -95,7 +104,7 @@ class AdminUserController
     public function userdel()
     {
         $id = Request::post('id', 0, 'i');
-        Db::delete('ky_user', 'id=?', [$id]);
+        $this->userCascade((int)$id);
         Admin::log('删除会员#' . $id);
         json_ok();
     }
