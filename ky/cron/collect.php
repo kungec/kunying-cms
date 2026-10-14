@@ -53,8 +53,15 @@ if ((int)date('G') < 5 && (int)config('maint_last_day', '0') !== $today) {
         foreach (glob(KY_PATH . '/data/cache/pages/*.html') ?: [] as $pcf) {
             if (time() - filemtime($pcf) > 7 * 86400) { @unlink($pcf); $pruned++; }
         }
+        // 播放列表/远程封面代理缓存同样7天修剪(读时按mtime判活,过期文件不清理会永久累积)
+        foreach ([KY_PATH . '/data/cache/m3u8', KY_PATH . '/data/cache/img'] as $pdir) {
+            if (!is_dir($pdir)) continue;
+            foreach (glob($pdir . '/*') ?: [] as $pf) {
+                if (time() - filemtime($pf) > 7 * 86400) { @unlink($pf); $pruned++; }
+            }
+        }
         config_set('maint_last_day', (string)$today);
-        echo "每日维护完成(验证码/日志瘦身,页面缓存清理{$pruned})\n";
+        echo "每日维护完成(验证码/日志瘦身,缓存清理{$pruned})\n";
     } catch (Throwable $e) {
         echo "每日维护失败(明天窗口内重试): " . $e->getMessage() . "\n";
     }

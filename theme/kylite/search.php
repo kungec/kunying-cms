@@ -4,7 +4,13 @@ $pageTitle = $wd !== '' ? '搜索:' . $wd : '搜索';
 $searchWd = $wd;
 $sm = 'movie';
 include theme_path('layout/header.php');
-$hotWords = Db::fetchAll("SELECT id, name FROM ky_vod WHERE status=1 ORDER BY search_hits DESC, RAND() LIMIT 10");
+// 热门搜索:只扫有搜索热度的行(走idx_search_hits,免全表filesort);无人搜索时随机兜底
+$hotWords = Db::fetchAll("SELECT id, name FROM ky_vod WHERE status=1 AND search_hits>0 ORDER BY search_hits DESC, RAND() LIMIT 10");
+if (count($hotWords) < 10) {
+    $have = array_column($hotWords, 'id');
+    $ex = $have ? ' AND id NOT IN (' . implode(',', array_map('intval', $have)) . ')' : '';
+    $hotWords = array_merge($hotWords, Db::fetchAll("SELECT id, name FROM ky_vod WHERE status=1{$ex} ORDER BY RAND() LIMIT " . (10 - count($hotWords))));
+}
 ?>
 <div class="ksearch-card">
   <form class="ksearch-bar" action="/index.php" method="get">
@@ -46,7 +52,15 @@ $hotWords = Db::fetchAll("SELECT id, name FROM ky_vod WHERE status=1 ORDER BY se
   <div class="ksec">
     <div class="ksec-h"><b>热门推荐</b></div>
     <div class="mgrid">
-      <?php foreach (Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 ORDER BY search_hits DESC, total_hits DESC, RAND() LIMIT 18") as $v): ?>
+      <?php
+      // 热门推荐:同热门搜索逻辑(有人搜索按热度,无人搜索随机兜底)
+      $hotRecs = Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 AND search_hits>0 ORDER BY search_hits DESC, RAND() LIMIT 18");
+      if (count($hotRecs) < 18) {
+          $have = array_column($hotRecs, 'id');
+          $ex = $have ? ' AND id NOT IN (' . implode(',', array_map('intval', $have)) . ')' : '';
+          $hotRecs = array_merge($hotRecs, Db::fetchAll("SELECT * FROM ky_vod WHERE status=1{$ex} ORDER BY RAND() LIMIT " . (18 - count($hotRecs))));
+      }
+      foreach ($hotRecs as $v): ?>
       <a class="mcard" href="/index.php?s=/vod/detail&id=<?= (int)$v['id'] ?>">
         <div class="pic"><img src="<?= e(pic_url($v['pic'])) ?>" loading="lazy" alt="<?= e($v['name']) ?>">
           <?php if ((float)$v['score'] > 0): ?><span class="bd"><?= rtrim(rtrim(number_format((float)$v['score'], 1), '0'), '.') ?></span><?php endif; ?>

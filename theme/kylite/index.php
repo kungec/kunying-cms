@@ -4,7 +4,7 @@ $pageTitle = config('site_name', '坤影影视');
 $heroSlides = array_slice(($hot ?: []), 0, 6);
 $heroJson = json_encode(array_map(function($v){
     return ['id'=>(int)$v['id'],'name'=>$v['name'],'pic'=>pic_url($v['pic']),'cat'=>trim(explode(',',$v['class']??'')[0]??'')?:'精选','year'=>(string)$v['year'],'remarks'=>(string)$v['remarks']];
-}, $heroSlides), JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP);
+}, $heroSlides), JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT);
 include theme_path('layout/header.php');
 // LCP预加载:首帧海报(播放器首屏大图)
 if (!empty($heroSlides[0]['pic'])) echo '<link rel="preload" as="image" href="' . e(pic_url((string)$heroSlides[0]['pic'])) . '">' . "\n";
