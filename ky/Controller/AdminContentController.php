@@ -354,7 +354,7 @@ class AdminContentController
             'ftp_host' => 120, 'ftp_user' => 60, 'ftp_pass' => 60,
             'ftp_path' => 100, 'ftp_baseurl' => 200,
             'oss_endpoint' => 150, 'oss_bucket' => 60, 'oss_ak' => 80, 'oss_sk' => 120, 'oss_baseurl' => 200,
-            's3_endpoint' => 150, 's3_bucket' => 60, 's3_ak' => 80, 's3_sk' => 120, 's3_baseurl' => 200,
+            's3_endpoint' => 150, 's3_region' => 30, 's3_bucket' => 60, 's3_ak' => 80, 's3_sk' => 120, 's3_baseurl' => 200,
         ] as $k => $max) {
             if (!isset($_POST[$k])) continue;
             config_set($k, mb_substr(trim((string)Request::post($k, '')), 0, $max));

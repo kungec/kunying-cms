@@ -69,7 +69,9 @@ class Store
     /** 上传内容,返回公网URL;失败返回null */
     public static function put(string $key, string $body): ?string
     {
+        // 防路径穿越:只允许字母数字/日期式子目录/常见图片后缀
         $key = ltrim(str_replace('\\', '/', $key), '/');
+        if ($key === '' || strpos($key, '..') !== false || !preg_match('#^[A-Za-z0-9_\-/.]{1,200}$#', $key)) return null;
         $driver = self::driver();
         try {
             switch ($driver) {
@@ -108,24 +110,30 @@ class Store
         $base = self::baseUrl('ftp');
         if ($host === '' || $user === '' || $base === '') return null;
         $ch = curl_init();
+        // CURLOPT_UPLOAD即STOR语义(勿再叠CUSTOMREQUEST);自动创建日期子目录;按FTP响应码2xx判成功
         curl_setopt_array($ch, [
-            CURLOPT_URL => 'ftp://' . $host . ':' . $port . $path . '/' . $key,
+            CURLOPT_URL => 'ftp://' . $host . ':' . $port . preg_replace('#/{2,}#', '/', $path . '/' . $key),
             CURLOPT_USERPWD => $user . ':' . $pass,
-            CURLOPT_CUSTOMREQUEST => 'STOR',
             CURLOPT_UPLOAD => true,
+            CURLOPT_FTP_CREATE_MISSING_DIRS => true,
             CURLOPT_INFILE => self::memStream($body),
             CURLOPT_INFILESIZE => strlen($body),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 30,
             CURLOPT_CONNECTTIMEOUT => 10,
         ]);
-        $ok = curl_exec($ch) !== false && curl_getinfo($ch, CURLINFO_HTTP_CODE) !== 0;
+        $res = curl_exec($ch);
+        $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         $err = curl_error($ch);
         curl_close($ch);
-        return $ok ? $base . '/' . $key : null;
+        if ($res === false || ($code !== 0 && ($code < 200 || $code >= 300))) {
+            error_log('[KunYing Store] ftp 上传失败 code=' . $code . ' ' . $err);
+            return null;
+        }
+        return $base . '/' . $key;
     }
 
-    /** OSS / S3(v2签名,HMAC-SHA1)PUT */
+    /** OSS用v2(HMAC-SHA1);S3用SigV4(B2/COS/新版MinIO等现代S3兼容服务商已不接受v2) */
     private static function putSigned(string $key, string $body, string $kind)
     {
         if ($kind === 'oss') {
@@ -150,7 +158,38 @@ class Store
         $contentType = 'application/octet-stream';
         $date = gmdate('D, d M Y H:i:s T');
         $md5 = base64_encode(md5($body, true));
-        $sig = base64_encode(hash_hmac('sha1', "PUT\n{$md5}\n{$contentType}\n{$date}\n{$resource}", $sk, true));
+
+        $headers = [
+            'Content-Type: ' . $contentType,
+            'Content-MD5: ' . $md5,
+            'Date: ' . $date,
+        ];
+        if ($kind === 's3') {
+            // AWS SigV4(path-style,负载hash直接参与签名)
+            $host = (string)parse_url($url, PHP_URL_HOST);
+            $region = trim((string)config('s3_region', 'us-east-1'));
+            if ($region === '') $region = 'us-east-1';
+            $amzDate = gmdate('Ymd\THis\Z');
+            $dateStamp = gmdate('Ymd');
+            $payloadHash = hash('sha256', $body);
+            // 规范URI:path-style下为 /bucket/key,逐段rawurlencode
+            $uri = '/' . implode('/', array_map('rawurlencode', explode('/', trim($resource, '/'))));
+            $signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+            $canonical = "PUT\n{$uri}\n\nhost:{$host}\nx-amz-content-sha256:{$payloadHash}\nx-amz-date:{$amzDate}\n\n{$signedHeaders}\n{$payloadHash}";
+            $scope = "{$dateStamp}/{$region}/s3/aws4_request";
+            $kDate = hash_hmac('sha256', $dateStamp, 'AWS4' . $sk, true);
+            $kRegion = hash_hmac('sha256', $region, $kDate, true);
+            $kService = hash_hmac('sha256', 's3', $kRegion, true);
+            $kSign = hash_hmac('sha256', 'aws4_request', $kService, true);
+            $stringToSign = "AWS4-HMAC-SHA256\n{$amzDate}\n{$scope}\n" . hash('sha256', $canonical);
+            $sig = hash_hmac('sha256', $stringToSign, $kSign, false);
+            $headers[] = 'x-amz-date: ' . $amzDate;
+            $headers[] = 'x-amz-content-sha256: ' . $payloadHash;
+            $headers[] = "Authorization: AWS4-HMAC-SHA256 Credential={$ak}/{$scope}, SignedHeaders={$signedHeaders}, Signature={$sig}";
+        } else {
+            $sig = base64_encode(hash_hmac('sha1', "PUT\n{$md5}\n{$contentType}\n{$date}\n{$resource}", $sk, true));
+            $headers[] = 'Authorization: ' . $prefix . ' ' . $ak . ':' . $sig;
+        }
         $ch = curl_init();
         curl_setopt_array($ch, [
             CURLOPT_URL => $url,
@@ -158,12 +197,7 @@ class Store
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 30,
             CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: ' . $contentType,
-                'Content-MD5: ' . $md5,
-                'Date: ' . $date,
-                'Authorization: ' . $prefix . ' ' . $ak . ':' . $sig,
-            ],
+            CURLOPT_HTTPHEADER => $headers,
             CURLOPT_INFILE => self::memStream($body),
             CURLOPT_INFILESIZE => strlen($body),
             CURLOPT_UPLOAD => true,

@@ -92,6 +92,7 @@ foreach ($lastResult as $r) {
       <div class="fi sf-oss"><label>Endpoint</label><input id="s_oss_ep" value="<?= e(config('oss_endpoint', '')) ?>" placeholder="oss-cn-hangzhou.aliyuncs.com"></div>
       <div class="fi sf-oss"><label>Bucket</label><input id="s_oss_bucket" value="<?= e(config('oss_bucket', '')) ?>"></div>
       <div class="fi sf-s3"><label>S3 Endpoint</label><input id="s_s3_ep" value="<?= e(config('s3_endpoint', '')) ?>" placeholder="https://s3.us-west-004.backblazeb2.com"></div>
+      <div class="fi sf-s3"><label>S3 Region</label><input id="s_s3_region" value="<?= e(config('s3_region', '')) ?>" placeholder="us-east-1(SigV4签名区域,可选)"></div>
       <div class="fi sf-s3"><label>Bucket</label><input id="s_s3_bucket" value="<?= e(config('s3_bucket', '')) ?>"></div>
       <div class="fi sf-oss sf-s3"><label>AccessKey</label><input id="s_ak" value="<?= e(config('oss_ak', '') ?: config('s3_ak', '')) ?>"></div>
       <div class="fi sf-oss sf-s3"><label>SecretKey</label><input type="password" id="s_sk" value="<?= e(config('oss_sk', '') ?: config('s3_sk', '')) ?>"></div>
@@ -333,7 +334,7 @@ async function saveGlobal(){
     d.append('oss_baseurl', v('s_baseurl'));
   }
   if (s === 's3') {
-    d.append('s3_endpoint', v('s_s3_ep')); d.append('s3_bucket', v('s_s3_bucket'));
+    d.append('s3_endpoint', v('s_s3_ep')); d.append('s3_region', v('s_s3_region')); d.append('s3_bucket', v('s_s3_bucket'));
     d.append('s3_ak', v('s_ak')); d.append('s3_sk', v('s_sk'));
     d.append('s3_baseurl', v('s_baseurl'));
   }

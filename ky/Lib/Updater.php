@@ -41,12 +41,20 @@ class Updater
 
         $zip = new ZipArchive();
         if ($zip->open($tmpZip) !== true) return [false, '更新包无法解压'];
+        $totalSize = 0;
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $name = (string)$zip->getNameIndex($i);
             if ((strpos($name, '..') !== false) || (strpos($name, '/') === 0)) { $zip->close(); return [false, '更新包含非法路径']; }
-            // 不允许覆盖数据与安装目录
-            if (preg_match('#^(data|install|config)/#', ltrim($name, './'))) { $zip->close(); return [false, '更新包含受保护目录']; }
+            // 保护目录:含根级同名文件也拦(防 copy 落到 data 本体)
+            if (preg_match('#^(data|install|config)(/|$)#', ltrim($name, './'))) { $zip->close(); return [false, '更新包含受保护目录']; }
+            $stat = $zip->statIndex($i);
+            if (is_array($stat)) {
+                $totalSize += (int)($stat['size'] ?? 0);
+                // 符号链接拒装(与Addon解压防护一致)
+                if (((int)($stat['external_attr'] ?? 0) >> 16 & 0xF000) === 0xA000) { $zip->close(); return [false, '更新包含符号链接']; }
+            }
         }
+        if ($totalSize > 300 * 1048576) { $zip->close(); return [false, '更新包解压后超限']; }
         $tmpDir = KY_PATH . '/data/cache/update_' . rand_str(6);
         if (!mkdir($tmpDir, 0755, true)) { $zip->close(); return [false, '创建临时目录失败']; }
         $zip->extractTo($tmpDir);
@@ -67,7 +75,7 @@ class Updater
         $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($src, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::LEAVES_ONLY);
         foreach ($it as $file) {
             $rel = ltrim(substr((string)$file, strlen($src)), '/\\');
-            if ($rel === '' || preg_match('#^(data|install)/#', $rel)) continue;
+            if ($rel === '' || preg_match('#^(data|install)(/|$)#', $rel)) continue;
             $target = KY_PATH . '/' . str_replace('\\', '/', $rel);
             $dir = dirname($target);
             if (!is_dir($dir)) mkdir($dir, 0755, true);
@@ -91,6 +99,10 @@ class Updater
         config_set('sys_version', $version);
         Addon::rrmdir($tmpDir);
         @unlink($tmpZip);
+        // 历次升级备份只保留最近3份,防data/cache累积
+        $bks = glob(KY_PATH . '/data/cache/backup_*') ?: [];
+        sort($bks);
+        while (count($bks) > 3) Addon::rrmdir(array_shift($bks));
         return [true, "更新完成,共更新 {$copied} 个文件 " . ($upgradeLog !== '' ? '| ' . $upgradeLog : '')];
     }
 }
