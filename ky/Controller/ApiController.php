@@ -26,8 +26,10 @@ class ApiController
         }
         $data = Pay::verifyNotify($type);
         if (!$data || strcasecmp((string)$data['out_trade_no'], $ono) !== 0) { echo 'fail'; exit; }
-        PayController::complete((string)$data['out_trade_no'], (string)$data['trade_no'], isset($data['money']) ? (float)$data['money'] : null);
-        echo 'success'; exit;
+        // 入账失败(金额不符/商品异常/瞬态错误)回fail,让支付网关按退避重试,瞬态故障可自愈
+        $ok = PayController::complete((string)$data['out_trade_no'], (string)$data['trade_no'], isset($data['money']) ? (float)$data['money'] : null);
+        echo $ok ? 'success' : 'fail';
+        exit;
     }
 
     /* ===================== 评论 ===================== */

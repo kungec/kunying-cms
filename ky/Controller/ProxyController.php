@@ -80,6 +80,9 @@ class ProxyController
 
         for ($hop = 0; $hop <= 3; $hop++) {
             if (!Http::isPublicHttpUrl($u)) { http_response_code(403); exit('host not allowed'); }
+            // DNS pin:连接钉在已校验公网IP,防校验后重绑定到内网
+            $pin = Http::resolvePin($u);
+            if ($pin === null) { http_response_code(403); exit('host not allowed'); }
             $loc = null;          // 3xx时的Location(已还原绝对地址)
             $ok = false;          // 已进入2xx响应体
             $ch = curl_init();
@@ -95,6 +98,7 @@ class ProxyController
                 CURLOPT_REFERER => '',
                 CURLOPT_BUFFERSIZE => 262144,
             ]);
+            if ($pin) curl_setopt($ch, CURLOPT_RESOLVE, $pin);
             curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($ch, $line) use (&$loc, &$ok) {
                 $t = trim($line);
                 if (preg_match('#^HTTP/\S+\s+(\d{3})#', $t, $m)) $ok = ((int)$m[1] >= 200 && (int)$m[1] < 300);

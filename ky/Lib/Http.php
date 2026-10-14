@@ -83,6 +83,9 @@ class Http
         $verify = function_exists('config') ? config('http_verify_ssl', '1') === '1' : true;
         for ($i = 0; $i <= $maxRedirects; $i++) {
             if (!self::isPublicHttpUrl($url)) return false;
+            // DNS pin:连接钉在已校验的公网IP上,防重绑定TOCTOU(每一跳重新解析校验)
+            $pin = self::resolvePin($url);
+            if ($pin === null) return false;
             $ch = curl_init($url);
             curl_setopt_array($ch, [
                 CURLOPT_RETURNTRANSFER => true,
@@ -95,6 +98,7 @@ class Http
                 CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; KunYingCMS/' . KY_VERSION . ')',
                 CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
             ]);
+            if ($pin) curl_setopt($ch, CURLOPT_RESOLVE, $pin);
             if (!empty($headers)) curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             $res = curl_exec($ch);
             if ($res === false) { curl_close($ch); return false; }
@@ -140,5 +144,24 @@ class Http
         $ip = gethostbyname($host);
         if ($ip === $host) return false;
         return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+    }
+
+    /**
+     * DNS固定解析pin:主机解析→公网校验→CURLOPT_RESOLVE把连接钉在已校验IP上,
+     * 关闭"校验时公网、连接时被DNS重绑定到内网"的TOCTOU窗口。
+     * 返回CURLOPT_RESOLVE数组;主机本身就是IP字面量无需pin(调用前已校验);解析失败返回null。
+     */
+    public static function resolvePin(string $url): ?array
+    {
+        $p = parse_url($url);
+        $host = strtolower((string)($p['host'] ?? ''));
+        if ($host === '') return null;
+        if (filter_var($host, FILTER_VALIDATE_IP)) return []; // IP直连,无需pin
+        $port = (int)($p['port'] ?? (strtolower($p['scheme'] ?? '') === 'https' ? 443 : 80));
+        $ip = gethostbyname($host);
+        if ($ip === $host || !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            return null; // 解析失败或解析到内网/保留段
+        }
+        return ["{$host}:{$port}:{$ip}"];
     }
 }

@@ -106,6 +106,14 @@ class Collector
             $hops = [];
             foreach ($batch as $i => $u) {
                 $ch = curl_init();
+                // DNS pin:连接钉在入队时校验过的公网IP,防重绑定TOCTOU
+                $pin = Http::resolvePin($u);
+                if ($pin === null) {
+                    $out[$u] = null;
+                    $hops[$u] = 99; // 标记跳过:完成循环不再处理
+                    curl_close($ch);
+                    continue;
+                }
                 curl_setopt_array($ch, [
                     CURLOPT_URL => str_replace(' ', '%20', $u),
                     CURLOPT_RETURNTRANSFER => true,
@@ -117,6 +125,7 @@ class Collector
                     CURLOPT_SSL_VERIFYPEER => config('http_verify_ssl', '1') == '1',
                     CURLOPT_USERAGENT => 'Mozilla/5.0 (KunYing Collector)',
                 ]);
+                if ($pin) curl_setopt($ch, CURLOPT_RESOLVE, $pin);
                 curl_multi_add_handle($mh, $ch);
                 $chs[$i] = $ch;
             }
@@ -125,6 +134,7 @@ class Collector
                 if ($active) curl_multi_select($mh, 0.2);
             } while ($active && $status === CURLM_OK);
             foreach ($batch as $i => $u) {
+                if (($hops[$u] ?? 0) === 99) continue; // pin失败已跳过
                 $body = curl_multi_getcontent($chs[$i]);
                 $code = (int)curl_getinfo($chs[$i], CURLINFO_HTTP_CODE);
                 // CURLINFO_REDIRECT_URL:未开启自动跟随时curl仍解析出Location(含相对地址还原)
@@ -139,6 +149,8 @@ class Collector
                         $redir = (strpos($redir, '/') === 0) ? $origin . $redir : $origin . rtrim($pp['path'] ?? '/', '/') . '/' . ltrim($redir, '/');
                     }
                     if (Http::isPublicHttpUrl($redir)) {
+                        // 跳转目标同样须能解析到公网IP才重新入队(入队时resolvePin再钉一次)
+                        if (Http::resolvePin($redir) === null) { $out[$u] = null; continue; }
                         $hops[$redir] = ($hops[$u] ?? 0) + 1;
                         $queue[] = $redir;
                         continue;
