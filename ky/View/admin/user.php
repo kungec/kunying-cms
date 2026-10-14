@@ -22,7 +22,9 @@
       <td><?= $u['vip_expire'] > time() ? '<span class="tag r">' . date('Y-m-d', (int)$u['vip_expire']) . '</span>' : '<span class="tag gr">非VIP</span>' ?></td>
       <td><span class="tag <?= $u['status'] ? 'g' : 'r' ?>"><?= $u['status'] ? '正常' : '禁用' ?></span></td>
       <td style="font-size:12px;color:var(--sub)"><?= date('m-d H:i', (int)$u['reg_time']) ?><br><?= e($u['reg_ip']) ?></td>
-      <td><button class="btn plain sm" onclick='editU(<?= json_encode($u, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR) ?>)'>编辑</button>
+      <td><?php // 只输出编辑所需字段:整行含pwd哈希,且昵称可含引号,原样注入onclick属性会破坏HTML
+        $euJson = json_encode(['id'=>(int)$u['id'],'name'=>(string)$u['name'],'points'=>(int)$u['points'],'vip_expire'=>(int)$u['vip_expire'],'status'=>(int)$u['status']], JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP); ?>
+          <button class="btn plain sm" onclick='editU(<?= e($euJson) ?>)'>编辑</button>
           <button class="btn plain sm" onclick="delU(<?= (int)$u['id'] ?>)">删除</button></td>
     </tr>
     <?php endforeach; ?>

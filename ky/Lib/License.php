@@ -24,9 +24,11 @@ class License
                 for ($i = 0; $i < strlen($raw); $i++) $out .= $raw[$i] ^ $k[$i % strlen($k)];
                 return $out;
             };
+            // 站点令牌不入公开仓库(公开仓库曾内嵌某站点令牌,已轮换作废):
+            // 正式发行版在打包时内嵌该客户专属令牌密文;自建站点可用后台配置 lic_token(存DB不进代码)
             self::$conn = [
                 'base' => rtrim($dec('Iw04GRAZHR9TRhEXMgwmAAINSklI'), '/'),
-                'token' => $dec('ACAfRFMbB3ZwAE0KZj19XyEWdAZ2'),
+                'token' => '',
             ];
         }
         return self::$conn;
@@ -39,7 +41,9 @@ class License
 
     public static function token(): string
     {
-        return self::conn()['token'];
+        // 优先用数据库配置的站点令牌(每站独立,授权站后台可重置),内置密文仅作发行版兜底
+        $cfg = function_exists('config') ? trim((string)config('lic_token', '')) : '';
+        return $cfg !== '' ? $cfg : self::conn()['token'];
     }
 
     /**

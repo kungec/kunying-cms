@@ -1,7 +1,10 @@
 version: "3.8"
 # 坤影CMS Docker一键部署
-# 用法: docker compose up -d  然后访问 http://服务器IP:8080 进入安装向导
-# 数据库地址填 db,数据库名 kunying,账号 root,密码 kunying_root_2026
+# 用法:
+#   1. cp .env.example .env 并修改数据库密码
+#   2. docker compose up -d  然后访问 http://服务器IP:8080 进入安装向导
+#   3. 安装向导中数据库地址填 db,数据库名 kunying,账号 root,密码=你在.env中设置的值
+# 生产建议:在容器外再加一层反向代理启用HTTPS,不要将8080直接暴露公网
 services:
   web:
     build: .
@@ -10,8 +13,6 @@ services:
       - "8080:80"
     volumes:
       - kydata:/var/www/html/data
-      - kytheme:/var/www/html/theme
-      - kyaddon:/var/www/html/addon
       - kyupload:/var/www/html/upload
     depends_on:
       - db
@@ -21,7 +22,8 @@ services:
     image: mariadb:10.11
     container_name: kunying-db
     environment:
-      MYSQL_ROOT_PASSWORD: kunying_root_2026
+      # 密码必须通过.env提供,不在仓库中固化默认值
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请先复制.env.example为.env并设置MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: kunying
       MYSQL_CHARSET: utf8mb4
     volumes:
@@ -32,6 +34,4 @@ services:
 volumes:
   kyupload:
   kydata:
-  kytheme:
-  kyaddon:
   kydb:

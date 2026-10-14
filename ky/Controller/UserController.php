@@ -47,6 +47,7 @@ class UserController
             $regLimit = (int)Db::fetchOne("SELECT COUNT(*) FROM ky_user WHERE reg_ip=? AND reg_time>?", [$ip, time() - 86400]);
             if ($regLimit >= 5) json_error('当前IP今日注册次数已达上限');
 
+            if ($name !== '' && preg_match('/[<>"\'\\\/]/u', $name)) json_error('昵称含非法字符');
             if ($name === '' || mb_strlen($name) > 20) $name = '用户' . rand_str(4, '0123456789');
             Db::update('ky_email_code', ['used' => 1], 'id=?', [$row['id']]);
             $uid = Db::insert('ky_user', [
@@ -135,7 +136,8 @@ class UserController
 
     public function logout()
     {
-        Auth::logout();
+        // GET登出须携带会话绑定令牌(防跨站图片/外链强制登出)
+        if (hash_equals(Auth::logoutToken(), (string)Request::get('t', ''))) Auth::logout();
         redirect('/');
     }
 
@@ -304,7 +306,7 @@ class UserController
         } elseif ($tab === 'orders') {
             $data['orders'] = Db::fetchAll("SELECT * FROM ky_order WHERE user_id=? ORDER BY id DESC LIMIT 50", [$user['id']]);
         }
-        View::display('user/center', ['tab' => $tab, 'udata' => $data]);
+        View::display('user/center', ['tab' => $tab, 'udata' => $data + ['user' => ['name' => (string)$user['name'], 'email' => (string)$user['email']]]]);
     }
 
     /**
@@ -314,13 +316,22 @@ class UserController
     {
         $user = Auth::user();
         if (!$user) json_error('请先登录');
-        if (Request::isPost()) Security::csrfCheck();
+        // 签到加积分必须POST+CSRF,防GET伪造(外链/图片标签即可触发)
+        if (!Request::isPost()) json_error('非法请求');
+        Security::csrfCheck();
         $day = (int)date('Ymd');
         $points = max(1, (int)config('points_sign', '5'));
-        // 原子签到:sign_day守卫防并发重复加积分,points走SQL自增避免旧值覆盖
-        $stmt = Db::query("UPDATE ky_user SET points=points+{$points}, sign_day={$day} WHERE id=" . (int)$user['id'] . " AND sign_day<>{$day}");
-        if ((int)$stmt->rowCount() !== 1) json_error('今天已签到');
-        Db::insert('ky_sign', ['user_id' => $user['id'], 'day' => $day, 'points' => $points]);
+        // 原子签到:sign_day守卫防并发重复加积分,points走SQL自增避免旧值覆盖;两步同事务
+        Db::begin();
+        try {
+            $stmt = Db::query("UPDATE ky_user SET points=points+{$points}, sign_day={$day} WHERE id=" . (int)$user['id'] . " AND sign_day<>{$day}");
+            if ((int)$stmt->rowCount() !== 1) throw new RuntimeException('今天已签到');
+            Db::insert('ky_sign', ['user_id' => $user['id'], 'day' => $day, 'points' => $points]);
+            Db::commit();
+        } catch (Throwable $t) {
+            Db::rollback();
+            json_error($t->getMessage() === '今天已签到' ? '今天已签到' : '签到失败,请稍后再试');
+        }
         json_ok(['points' => $points], '签到成功,积分+' . $points);
     }
 }

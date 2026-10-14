@@ -88,11 +88,10 @@ class IndexController
             foreach (Db::fetchAll("SELECT id,updatetime FROM ky_vod WHERE status=1 ORDER BY updatetime DESC LIMIT 5000") as $v) {
                 $urls[] = $u('/index.php?s=/vod/detail&id=' . (int)$v['id']);
             }
-            $xml = '<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+            $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+                 . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
             foreach ($urls as $link) {
-                $xml .= '<url><loc>' . htmlspecialchars($link, ENT_QUOTES) . '</loc></url>
-';
+                $xml .= '<url><loc>' . htmlspecialchars($link, ENT_QUOTES) . '</loc></url>' . "\n";
             }
             $xml .= '</urlset>';
             cache_set($ck, $xml, 3600);

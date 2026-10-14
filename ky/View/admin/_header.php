@@ -131,7 +131,7 @@ textarea{min-height:80px;resize:vertical}
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M9 6V4h6v2M6.5 6l1 14h9l1-14"/></svg>
       <span>清理缓存</span>
     </a>
-    <a class="op-btn exit" href="/admin.php?s=/main/logout">
+    <a class="op-btn exit" href="/admin.php?s=/main/logout&t=<?= e(Auth::logoutToken()) ?>">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l-5-5 5-5M5 12h10"/></svg>
       <span>退出</span>
     </a>

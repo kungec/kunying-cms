@@ -40,7 +40,8 @@ class AdminMainController
 
     public function logout()
     {
-        Auth::adminLogout();
+        // 登出须携带会话绑定令牌,防跨站GET强制登出管理员
+        if (hash_equals(Auth::logoutToken(), (string)Request::get('t', ''))) Auth::adminLogout();
         redirect('/admin.php?s=/main/login');
     }
 

@@ -4,8 +4,8 @@
  * KunYing CMS
  */
 define('KY_PATH', __DIR__ . '/..');
-define('KY_VERSION', '1.0.33');
-define('KY_RELEASE', 20260924);
+define('KY_VERSION', '1.0.41');
+define('KY_RELEASE', 20261013);
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_WARNING);
 ini_set('display_errors', '0');

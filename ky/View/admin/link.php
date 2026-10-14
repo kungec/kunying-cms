@@ -9,7 +9,7 @@
       <td style="font-size:12px;color:var(--sub)"><?= e($s['url']) ?></td>
       <td><?= (int)$s['sort'] ?></td>
       <td><span class="tag <?= $s['status'] ? 'g' : 'gr' ?>"><?= $s['status'] ? '显示' : '隐藏' ?></span></td>
-      <td><button class="btn plain sm" onclick='showForm(<?= json_encode($s, JSON_UNESCAPED_UNICODE) ?>)'>编辑</button>
+      <td><button class="btn plain sm" onclick='showForm(<?= e(json_encode($s, JSON_UNESCAPED_UNICODE&JSON_HEX_TAG&JSON_HEX_APOS&JSON_HEX_QUOT&JSON_HEX_AMP)) ?>)'>编辑</button>
           <button class="btn plain sm" onclick="delS(<?= (int)$s['id'] ?>)">删除</button></td>
     </tr>
     <?php endforeach; ?>

@@ -23,7 +23,7 @@ $tabsMap = ['index' => '我的账户', 'fav' => '我的收藏', 'record' => '播
   <a class="<?= $tab === $k ? 'on' : '' ?>" href="/user/center?tab=<?= $k ?>"><?= $n ?></a>
   <?php endforeach; ?>
   <a href="/pay">💎 充值中心</a>
-  <a href="/user/logout" style="color:#e5322d">退出登录</a>
+  <a href="/user/logout?t=<?= e(Auth::logoutToken()) ?>" style="color:#e5322d">退出登录</a>
 </div>
 <div class="uc-card">
   <div class="uc-main">

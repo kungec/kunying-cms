@@ -102,15 +102,16 @@ class Collector
             $batch = array_splice($queue, 0, max(1, $concurrency));
             $mh = curl_multi_init();
             $chs = [];
+            // 重定向不交给curl自动跟随:302目标可能转向内网,须逐跳过SSRF校验后重新入队
+            $hops = [];
             foreach ($batch as $i => $u) {
                 $ch = curl_init();
                 curl_setopt_array($ch, [
                     CURLOPT_URL => str_replace(' ', '%20', $u),
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_FOLLOWLOCATION => true,
-                    CURLOPT_MAXREDIRS => 3,
+                    CURLOPT_FOLLOWLOCATION => false,
                     CURLOPT_PROTOCOLS => $protocols,
-                    CURLOPT_REDIR_PROTOCOLS => $protocols,
+                    CURLOPT_REDIR_PROTOCOLS => 0,
                     CURLOPT_TIMEOUT => 15,
                     CURLOPT_CONNECTTIMEOUT => 8,
                     CURLOPT_SSL_VERIFYPEER => config('http_verify_ssl', '1') == '1',
@@ -126,9 +127,26 @@ class Collector
             foreach ($batch as $i => $u) {
                 $body = curl_multi_getcontent($chs[$i]);
                 $code = (int)curl_getinfo($chs[$i], CURLINFO_HTTP_CODE);
-                $out[$u] = ($body !== false && $code >= 200 && $code < 300) ? $body : null;
+                // CURLINFO_REDIRECT_URL:未开启自动跟随时curl仍解析出Location(含相对地址还原)
+                $redir = curl_getinfo($chs[$i], CURLINFO_REDIRECT_URL);
                 curl_multi_remove_handle($mh, $chs[$i]);
                 curl_close($chs[$i]);
+                if ($redir !== '' && $redir !== null && (int)($hops[$u] ?? 0) < 3) {
+                    // 相对Location还原为绝对地址
+                    if (!preg_match('#^https?://#i', $redir)) {
+                        $pp = parse_url($u);
+                        $origin = ($pp['scheme'] ?? 'https') . '://' . ($pp['host'] ?? '') . (isset($pp['port']) ? ':' . $pp['port'] : '');
+                        $redir = (strpos($redir, '/') === 0) ? $origin . $redir : $origin . rtrim($pp['path'] ?? '/', '/') . '/' . ltrim($redir, '/');
+                    }
+                    if (Http::isPublicHttpUrl($redir)) {
+                        $hops[$redir] = ($hops[$u] ?? 0) + 1;
+                        $queue[] = $redir;
+                        continue;
+                    }
+                    $out[$u] = null;
+                    continue;
+                }
+                $out[$u] = ($body !== false && $code >= 200 && $code < 300) ? $body : null;
             }
             curl_multi_close($mh);
         }

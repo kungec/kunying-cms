@@ -21,6 +21,7 @@ class PayController
      */
     public function create()
     {
+        if (config('member_enable', '1') != '1') json_error('会员系统已关闭');
         $user = Auth::user();
         if (!$user) json_error('请先登录');
         if (Request::isPost()) Security::csrfCheck();
@@ -49,7 +50,9 @@ class PayController
                 'order_no' => $orderNo,
                 'money' => (float)$goods['price'],
                 'title' => $goods['name'],
-                'notify_url' => site_url('index.php?s=/api/notify/' . $payType . '/' . $orderNo),
+                // 回调地址必须用显式查询参数:路径段形式(s=/api/notify/epay/NO123)会被路由解析成
+                // $_GET['epay']=订单号,notify()读不到type/ono,异步通知永远fail
+                'notify_url' => site_url('index.php?s=/api/notify&type=' . rawurlencode($payType) . '&ono=' . rawurlencode($orderNo)),
                 'return_url' => site_url('index.php?s=/pay/result&ono=' . $orderNo),
             ]);
         } catch (Throwable $t) {
@@ -149,6 +152,9 @@ class PayController
                 if ($goods['points'] > 0) {
                     Db::update('ky_user', ['points' => $user['points'] + $goods['points']], 'id=?', [$user['id']]);
                 }
+            } else {
+                // 商品在下单后被删:款已收,订单照常完成,但须留痕供人工补发
+                Admin::log('订单' . $orderNo . '对应的商品已删除,未自动发货,请人工处理');
             }
             Db::commit();
             return true;
@@ -175,6 +181,7 @@ class PayController
      */
     public function buyvod()
     {
+        if (config('member_enable', '1') != '1') json_error('会员系统已关闭');
         $user = Auth::user();
         if (!$user) json_error('请先登录');
         if (Request::isPost()) Security::csrfCheck();

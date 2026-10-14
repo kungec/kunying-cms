@@ -104,9 +104,10 @@ class AdminSystemController
         if (!$admin || !password_verify($old, $admin['pwd'])) json_error('旧密码错误');
         if (strlen($new) < 8) json_error('新密码至少8位');
         if ($new !== $re) json_error('两次新密码不一致');
-        Db::update('ky_admin', ['pwd' => password_hash($new, PASSWORD_DEFAULT)], 'id=?', [$admin['id']]);
-        // 刷新当前会话令牌,本会话保持登录,其他旧会话失效
-        $_SESSION['admin_token'] = Auth::adminSessionToken(['pwd' => password_hash($new, PASSWORD_DEFAULT)]);
+        $hash = password_hash($new, PASSWORD_DEFAULT);
+        Db::update('ky_admin', ['pwd' => $hash], 'id=?', [$admin['id']]);
+        // 刷新当前会话令牌(必须用与入库相同的哈希,否则令牌校验不过),其他旧会话失效
+        $_SESSION['admin_token'] = Auth::adminSessionToken(['pwd' => $hash]);
         Admin::log('修改管理员密码');
         json_ok(null, '密码已修改');
     }

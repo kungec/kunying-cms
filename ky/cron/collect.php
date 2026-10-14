@@ -33,26 +33,31 @@ if (isset($opts['worker'])) {
 }
 
 // 每日维护(0-5点窗口内每天执行一次):图片清理+数据表瘦身
+// 标记在维护成功后才写:半路失败时当天后续cron触发可重试
 $today = (int)date('Ymd');
 if ((int)date('G') < 5 && (int)config('maint_last_day', '0') !== $today) {
-    config_set('maint_last_day', (string)$today);
-    if (config('img_auto_clean_enable', '0') == '1') {
-        $n = img_clean_orphans();
-        config_set('img_clean_last_result', date('Y-m-d H:i') . " 自动清理{$n}张");
-        config_set('img_clean_last_day', (string)$today);
-        echo "自动清理未引用图片: {$n}张\n";
+    try {
+        if (config('img_auto_clean_enable', '0') == '1') {
+            $n = img_clean_orphans();
+            config_set('img_clean_last_result', date('Y-m-d H:i') . " 自动清理{$n}张");
+            config_set('img_clean_last_day', (string)$today);
+            echo "自动清理未引用图片: {$n}张\n";
+        }
+        $cut = time() - 86400;
+        Db::query("DELETE FROM ky_email_code WHERE expire < $cut OR (used=1 AND created < $cut)");
+        Db::query("DELETE FROM ky_login_fail WHERE updated_at < " . (time() - 90 * 86400));
+        $minLog = (int)Db::fetchOne("SELECT id FROM ky_admin_log ORDER BY id DESC LIMIT 1 OFFSET 2000");
+        if ($minLog > 0) Db::query("DELETE FROM ky_admin_log WHERE id < $minLog");
+        // 页面缓存修剪:详情页按源/集数存在变体,7天前的缓存文件定期清理防累积
+        $pruned = 0;
+        foreach (glob(KY_PATH . '/data/cache/pages/*.html') ?: [] as $pcf) {
+            if (time() - filemtime($pcf) > 7 * 86400) { @unlink($pcf); $pruned++; }
+        }
+        config_set('maint_last_day', (string)$today);
+        echo "每日维护完成(验证码/日志瘦身,页面缓存清理{$pruned})\n";
+    } catch (Throwable $e) {
+        echo "每日维护失败(明天窗口内重试): " . $e->getMessage() . "\n";
     }
-    $cut = time() - 86400;
-    Db::query("DELETE FROM ky_email_code WHERE expire < $cut OR (used=1 AND created < $cut)");
-    Db::query("DELETE FROM ky_login_fail WHERE updated_at < " . (time() - 90 * 86400));
-    $minLog = (int)Db::fetchOne("SELECT id FROM ky_admin_log ORDER BY id DESC LIMIT 1 OFFSET 2000");
-    if ($minLog > 0) Db::query("DELETE FROM ky_admin_log WHERE id < $minLog");
-    // 页面缓存修剪:详情页按源/集数存在变体,7天前的缓存文件定期清理防累积
-    $pruned = 0;
-    foreach (glob(KY_PATH . '/data/cache/pages/*.html') ?: [] as $pcf) {
-        if (time() - filemtime($pcf) > 7 * 86400) { @unlink($pcf); $pruned++; }
-    }
-    echo "每日维护完成(验证码/日志瘦身,页面缓存清理{$pruned})\n";
 }
 
 // 磁盘看门狗:剩余<3GB自动暂停采集(采集是磁盘消耗大头),防止磁盘写满导致全站故障

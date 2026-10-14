@@ -70,7 +70,7 @@ class ProxyController
         echo $rewritten;
     }
 
-    /** 视频分片:真流式透传(边收边发,客户端断开即中止上游) */
+    /** 视频分片:真流式透传(边收边发,客户端断开即中止上游);重定向逐跳SSRF校验 */
     private function segment(string $u): void
     {
         header('Content-Type: video/mp2t');
@@ -78,30 +78,49 @@ class ProxyController
         header('Cache-Control: public, max-age=86400');
         header('Access-Control-Allow-Origin: *');
 
-        $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_URL => str_replace(' ', '%20', $u),
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 3,
-            CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
-            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
-            CURLOPT_TIMEOUT => 60,
-            CURLOPT_CONNECTTIMEOUT => 8,
-            CURLOPT_SSL_VERIFYPEER => config('http_verify_ssl', '1') == '1',
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (KunYing Proxy)',
-            CURLOPT_REFERER => '',
-            CURLOPT_BUFFERSIZE => 262144,
-        ]);
-        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) {
-            static $sent = 0;
-            echo $chunk;
-            $sent += strlen($chunk);
-            if ($sent >= 262144) { $sent = 0; flush(); }
-            if (connection_aborted()) return -1; // 观众已离开/seek:中止上游下载
-            return strlen($chunk);
-        });
-        curl_exec($ch);
-        curl_close($ch);
+        for ($hop = 0; $hop <= 3; $hop++) {
+            if (!Http::isPublicHttpUrl($u)) { http_response_code(403); exit('host not allowed'); }
+            $loc = null;          // 3xx时的Location(已还原绝对地址)
+            $ok = false;          // 已进入2xx响应体
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => str_replace(' ', '%20', $u),
+                CURLOPT_FOLLOWLOCATION => false,
+                CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+                CURLOPT_REDIR_PROTOCOLS => 0,
+                CURLOPT_TIMEOUT => 60,
+                CURLOPT_CONNECTTIMEOUT => 8,
+                CURLOPT_SSL_VERIFYPEER => config('http_verify_ssl', '1') == '1',
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (KunYing Proxy)',
+                CURLOPT_REFERER => '',
+                CURLOPT_BUFFERSIZE => 262144,
+            ]);
+            curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($ch, $line) use (&$loc, &$ok) {
+                $t = trim($line);
+                if (preg_match('#^HTTP/\S+\s+(\d{3})#', $t, $m)) $ok = ((int)$m[1] >= 200 && (int)$m[1] < 300);
+                if (stripos($t, 'Location:') === 0 && $ok === false) {
+                    $pp = parse_url((string)curl_getinfo($ch, CURLINFO_EFFECTIVE_URL));
+                    $origin = ($pp['scheme'] ?? 'https') . '://' . ($pp['host'] ?? '') . (isset($pp['port']) ? ':' . $pp['port'] : '');
+                    $l = trim(substr($t, 9));
+                    $loc = preg_match('#^https?://#i', $l) ? $l
+                        : ((strpos($l, '/') === 0 ? $origin : $origin . rtrim($pp['path'] ?? '/', '/') . '/') . $l);
+                }
+                return strlen($line);
+            });
+            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use (&$ok) {
+                if (!$ok) return strlen($chunk); // 3xx响应体丢弃,此时尚未向客户端发送任何内容
+                static $sent = 0;
+                echo $chunk;
+                $sent += strlen($chunk);
+                if ($sent >= 262144) { $sent = 0; flush(); }
+                if (connection_aborted()) return -1; // 观众已离开/seek:中止上游下载
+                return strlen($chunk);
+            });
+            curl_exec($ch);
+            curl_close($ch);
+            if ($loc === null) break; // 非3xx:已流式送达或失败,结束
+            $u = $loc;                // 3xx:下一跳重新过公网校验
+        }
     }
 
     /**

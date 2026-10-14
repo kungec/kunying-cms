@@ -47,6 +47,7 @@ class AdminContentController
         try { Db::query("DELETE FROM ky_comment WHERE vod_id IN ({$in})"); } catch (Throwable $t) {}
         try { Db::query("DELETE FROM ky_fav WHERE vod_id IN ({$in})"); } catch (Throwable $t) {}
         try { Db::query("DELETE FROM ky_play_record WHERE vod_id IN ({$in})"); } catch (Throwable $t) {}
+        try { Db::query("DELETE FROM ky_user_vod WHERE vod_id IN ({$in})"); } catch (Throwable $t) {}
         Admin::log('批量删除影片 ' . count($ids) . ' 部(ID:' . $in . ')');
         json_ok(null, '已删除 ' . count($ids) . ' 部影片');
     }
@@ -98,8 +99,13 @@ class AdminContentController
         $ids = array_map('intval', (array)$ids);
         $ids = array_filter($ids, fn($v) => $v > 0);
         if (empty($ids)) json_error('未选择');
-        Db::query("DELETE FROM ky_vod WHERE id IN (" . implode(',', $ids) . ")");
-        Admin::log('删除影片#' . implode(',', $ids));
+        $in = implode(',', $ids);
+        // 连带清理关联数据,防悬空(与批量删除voddels保持一致)
+        Db::query("DELETE FROM ky_vod WHERE id IN ({$in})");
+        foreach (['ky_comment', 'ky_fav', 'ky_play_record', 'ky_user_vod'] as $tb) {
+            try { Db::query("DELETE FROM {$tb} WHERE vod_id IN ({$in})"); } catch (Throwable $t) {}
+        }
+        Admin::log('删除影片#' . $in);
         json_ok();
     }
 
@@ -124,7 +130,9 @@ class AdminContentController
             $pp = Db::fetch("SELECT nav, pid FROM ky_type WHERE id=?", [$pid]);
             if (!$pp) json_error('所属主分类不存在');
             if ((int)$pp['nav'] !== 1 || (int)$pp['pid'] !== 0) json_error('所属分类必须是主分类');
+            if ($pid === $id) json_error('不能以自己作为所属主分类');
         }
+        if ($nav !== 2) $pid = 0; // 仅副分类可有父级,防悬空pid/自引用
         $data = [
             'pid' => $pid,
             'name' => mb_substr(trim(Request::post('name')), 0, 30),
@@ -147,6 +155,8 @@ class AdminContentController
     {
         $id = Request::post('id', 0, 'i');
         if ((int)Db::fetchOne("SELECT COUNT(*) FROM ky_vod WHERE type_id=?", [$id]) > 0) json_error('该分类下有影片,请先转移');
+        // 有子分类时禁止删,防悬空pid(子分类变孤儿,导航渲染异常)
+        if ((int)Db::fetchOne("SELECT COUNT(*) FROM ky_type WHERE pid=?", [$id]) > 0) json_error('该分类下有子分类,请先删除或转移子分类');
         Db::delete('ky_type', 'id=?', [$id]);
         cache_del('kylite_nav');
         Admin::log('删除分类#' . $id);

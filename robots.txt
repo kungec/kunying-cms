@@ -6,7 +6,5 @@ Disallow: /pay
 Disallow: /index.php?s=/user
 Disallow: /index.php?s=/pay
 
-Sitemap: https://ys.yujia.xyz/index.php?s=/index/sitemap
-
-# RSS订阅
-# https://ys.yujia.xyz/index.php?s=/index/rss
+# Sitemap: 部署后请将下行替换为你的域名并取消注释
+# Sitemap: https://你的域名/index.php?s=/index/sitemap

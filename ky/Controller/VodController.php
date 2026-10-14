@@ -163,7 +163,8 @@ class VodController
         Db::query(
             "INSERT INTO ky_play_record (user_id,vod_id,episode,position,updated) VALUES (?,?,?,?,?)
              ON DUPLICATE KEY UPDATE episode=VALUES(episode),updated=VALUES(updated)",
-            [$uid, $vodId, $ep, time()]
+            // position是续播秒数(由progress接口更新),此处仅标记看过的集数
+            [$uid, $vodId, $ep, 0, time()]
         );
     }
 

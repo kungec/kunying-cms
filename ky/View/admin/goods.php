@@ -11,7 +11,7 @@
       <td><?= (int)$g['days'] ?: '-' ?></td>
       <td><?= (int)$g['sort'] ?></td>
       <td><span class="tag <?= $g['status'] ? 'g' : 'gr' ?>"><?= $g['status'] ? '上架' : '下架' ?></span></td>
-      <td><button class="btn plain sm" onclick='showForm(<?= json_encode($g, JSON_UNESCAPED_UNICODE) ?>)'>编辑</button>
+      <td><button class="btn plain sm" onclick='showForm(<?= e(json_encode($g, JSON_UNESCAPED_UNICODE&JSON_HEX_TAG&JSON_HEX_APOS&JSON_HEX_QUOT&JSON_HEX_AMP)) ?>)'>编辑</button>
           <button class="btn plain sm" onclick="delG(<?= (int)$g['id'] ?>)">删除</button></td>
     </tr>
     <?php endforeach; ?>

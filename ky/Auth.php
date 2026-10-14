@@ -80,7 +80,7 @@ class Auth
         $_SESSION['admin_token'] = self::adminSessionToken($admin);
     }
 
-    private static function adminSessionToken(array $admin): string
+    public static function adminSessionToken(array $admin): string
     {
         return hash_hmac('sha256', (string)$admin['pwd'], 'ky_admin_session');
     }
@@ -89,6 +89,15 @@ class Auth
     {
         Security::session();
         unset($_SESSION['admin_id'], $_SESSION['admin_token']);
+    }
+
+    /**
+     * 会话绑定登出令牌:登出链接携带,防跨站GET强制登出
+     */
+    public static function logoutToken(): string
+    {
+        Security::session();
+        return hash_hmac('sha256', (string)session_id(), 'ky_logout');
     }
 
     /**

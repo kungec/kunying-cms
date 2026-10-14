@@ -107,7 +107,7 @@ function hdrSearchSubmit(ev){
     <div class="kuser">
       <?php if ($curUser): ?>
       <a href="/user/center" class="kuname"><?= e($curUser['name']) ?></a>
-      <a href="/user/logout" title="退出登录">退出</a>
+      <a href="/user/logout?t=<?= e(Auth::logoutToken()) ?>" title="退出登录">退出</a>
       <?php else: ?>
       <a href="/user/login">登录</a>
       <?php if (config('register_enable', '1') == '1'): ?><a class="kreg" href="/user/register">注册</a><?php endif; ?>
@@ -135,7 +135,7 @@ function hdrSearchSubmit(ev){
   <a class="kd-i" href="/user/center">👤 会员中心</a>
   <a class="kd-i" href="/user/history">🕐 观看历史</a>
   <a class="kd-i" href="/pay">💎 会员充值</a>
-  <a class="kd-i" href="/user/logout">🚪 退出登录</a>
+  <a class="kd-i" href="/user/logout?t=<?= e(Auth::logoutToken()) ?>">🚪 退出登录</a>
   <?php else: ?>
   <a class="kd-i" href="/user/login">👤 登录</a>
   <?php if (config('register_enable', '1') == '1'): ?><a class="kd-i" href="/user/register">✍️ 注册账号</a><?php endif; ?>

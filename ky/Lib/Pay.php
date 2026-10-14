@@ -172,9 +172,11 @@ class Pay
         foreach ($data['data'] as $tx) {
             if (($tx['to'] ?? '') !== $addr) continue;
             if (($tx['token_info']['address'] ?? '') !== self::TRC20_CONTRACT) continue;
+            // 只认已确认交易(trongrid已确认才返回,字段存在时显式校验,防未确认回滚)
+            if (array_key_exists('confirmed', $tx) && !$tx['confirmed']) continue;
             $amount = ((float)$tx['value']) / 1000000;
             if (abs($amount - $expected) < 0.001) {
-                // 确认该txid未被其他订单占用
+                // 确认该txid未被其他订单占用(complete层的trade_no唯一索引兜底并发竞态)
                 $used = Db::fetchOne("SELECT COUNT(*) FROM ky_order WHERE trade_no=? AND order_no<>?", [(string)$tx['transaction_id'], $order['order_no']]);
                 if ((int)$used === 0) {
                     return (string)$tx['transaction_id'];
@@ -346,7 +348,8 @@ class Pay
             'out_trade_no' => $order['order_no'],
             'total_amount' => number_format((float)$order['money'], 2, '.', ''),
             'subject' => mb_substr($order['title'], 0, 120),
-            'product_code' => $mobile ? 'FAST_INSTANT_TRADE_PAY' : 'QUICK_WAP_WAY',
+            // 官方要求:手机网站支付(wap.pay)用QUICK_WAP_WAY,电脑网站支付(page.pay)用FAST_INSTANT_TRADE_PAY
+            'product_code' => $mobile ? 'QUICK_WAP_WAY' : 'FAST_INSTANT_TRADE_PAY',
         ], JSON_UNESCAPED_UNICODE);
         $sign = self::aliSignBody($params, $conf['private_key']);
         if ($sign === null) throw new RuntimeException('支付宝私钥无效');

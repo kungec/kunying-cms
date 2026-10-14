@@ -183,6 +183,13 @@ function is_https(): bool {
 }
 
 function site_url(string $path = ''): string {
+    // 后台配置 site_domain(仅主机名)后固定域名,防Host头污染支付回调/外链;未配置回退HTTP_HOST
+    $cfgDomain = trim((string)config('site_domain', ''));
+    if ($cfgDomain !== '') {
+        $cfgDomain = preg_replace('#^[a-z][a-z0-9+.-]*://#i', '', $cfgDomain);
+        $cfgDomain = rtrim(preg_replace('#[/?#].*$#', '', $cfgDomain), '/');
+        return (is_https() ? 'https' : 'http') . '://' . $cfgDomain . '/' . ltrim($path, '/');
+    }
     $scheme = is_https() ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     return $scheme . '://' . $host . '/' . ltrim($path, '/');

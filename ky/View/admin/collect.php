@@ -118,7 +118,7 @@ foreach ($lastResult as $r) {
       <td>
         <a class="btn sm" href="/admin.php?s=/content/collectenter&id=<?= (int)$a['id'] ?>" style="text-decoration:none">进入采集</a>
         <button class="btn plain sm" onclick="startRun(<?= (int)$a['id'] ?>,'<?= e($a['name']) ?>')">快速采集</button>
-        <button class="btn plain sm" onclick='showApi(<?= json_encode($a, JSON_UNESCAPED_UNICODE) ?>)'>编辑</button>
+        <button class="btn plain sm" onclick='showApi(<?= e(json_encode($a, JSON_UNESCAPED_UNICODE&JSON_HEX_TAG&JSON_HEX_APOS&JSON_HEX_QUOT&JSON_HEX_AMP)) ?>)'>编辑</button>
         <button class="btn plain sm" onclick="delApi(<?= (int)$a['id'] ?>)">删除</button>
       </td>
     </tr>

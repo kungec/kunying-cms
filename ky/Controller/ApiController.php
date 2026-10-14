@@ -10,6 +10,13 @@ class ApiController
     {
         $type = preg_replace('/[^a-z0-9]/', '', Request::get('type'));
         $ono = preg_replace('/[^A-Za-z0-9]/', '', Request::get('ono'));
+        // 兼容历史路径段形式(s=/api/notify/epay/NO123会被路由解析成$_GET['epay']=订单号)
+        if ($type === '' || $ono === '') {
+            foreach (['codepay', 'epay', 'wxpay', 'alipay', 'alipayf2f', 'usdt'] as $pt) {
+                $v = (string)Request::get($pt);
+                if ($v !== '') { if ($type === '') $type = $pt; if ($ono === '') $ono = preg_replace('/[^A-Za-z0-9]/', '', $v); break; }
+            }
+        }
         if ($type === '' || $ono === '') { echo 'fail'; exit; }
 
         if ($type === 'usdt') {
@@ -104,8 +111,11 @@ class ApiController
             if ($hit !== null) { guest_cache_headers(300); header('Content-Type: application/json; charset=utf-8'); echo $hit; exit; }
         }
         $mode = Request::get('mode', 'home') === 'type' ? 'type' : 'home';
-        $page = max(1, Request::get('page', 2, 'i'));
+        $page = min(200, max(1, Request::get('page', 2, 'i'))); // 封顶防超大OFFSET拖库
         $pageSize = 24;
+        // 未命中缓存的回源查询限流(命中缓存不计数):防脚本刷翻页打爆DB/缓存目录
+        [$rlOk] = Security::rateLimit('more', 90, 60);
+        if (!$rlOk) json_error('请求太频繁,请稍后再试');
         $cond = 'status=1';
         $params = [];
         if ($mode === 'type') {

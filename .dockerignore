@@ -1,0 +1,14 @@
+# 构建镜像时排除运行时数据与仓库文件,防密钥/备份被打进镜像层
+.git
+.github
+data
+docs
+upload
+.env
+.env.*
+!.env.example
+*.md
+web.config
+docker-compose.yml
+.DS_Store
+*.log

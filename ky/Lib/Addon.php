@@ -26,12 +26,26 @@ class Addon
         $zip = new ZipArchive();
         if ($zip->open($zipPath) !== true) throw new RuntimeException('安装包解压失败');
         // 安全检查:禁止压缩包内含路径穿越与php非法位置由目录规则限制
+        $totalSize = 0; $fileCount = 0;
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $name = (string)$zip->getNameIndex($i);
             if ($name === '' || (strpos($name, '..') !== false) || (strpos($name, '/') === 0) || preg_match('#^[a-zA-Z]:#', $name)) {
                 $zip->close();
                 throw new RuntimeException('安装包含非法路径:' . $name);
             }
+            // 压缩炸弹/资源耗尽防护:解压总量与文件数封顶,符号链接拒装
+            $stat = $zip->statIndex($i);
+            if (!is_array($stat)) continue;
+            $totalSize += (int)($stat['size'] ?? 0);
+            if ($stat['name'] !== '' && substr($stat['name'], -1) !== '/') $fileCount++;
+            if (((int)($stat['external_attr'] ?? 0) >> 16 & 0xF000) === 0xA000) {
+                $zip->close();
+                throw new RuntimeException('安装包含符号链接,已拒绝安装');
+            }
+        }
+        if ($totalSize > 200 * 1048576 || $fileCount > 5000) {
+            $zip->close();
+            throw new RuntimeException('安装包解压后超过限制(≤200MB/5000文件)');
         }
         $manifestRaw = $zip->getFromName('manifest.json');
         $base = ''; // 包内基础路径(支持单层目录包裹的包)

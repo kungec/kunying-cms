@@ -11,7 +11,7 @@
       <td><?= (int)$t['sort'] ?></td>
       <td><span class="tag <?= ($t['nav'] ?? 1) == 1 ? 'g' : (($t['nav'] ?? 1) == 2 ? 'b' : 'gr') ?>"><?= ($t['nav'] ?? 1) == 1 ? '主分类' : (($t['nav'] ?? 1) == 2 ? '副分类' : '不显示') ?></span></td>
       <td><span class="tag <?= !empty($t['show_home']) ? 'g' : 'gr' ?>"><?= !empty($t['show_home']) ? '是' : '否' ?></span></td>
-      <td><button class="btn plain sm" onclick='showForm(<?= json_encode($t, JSON_UNESCAPED_UNICODE) ?>)'>编辑</button>
+      <td><button class="btn plain sm" onclick='showForm(<?= e(json_encode($t, JSON_UNESCAPED_UNICODE&JSON_HEX_TAG&JSON_HEX_APOS&JSON_HEX_QUOT&JSON_HEX_AMP)) ?>)'>编辑</button>
           <button class="btn plain sm" onclick="delType(<?= (int)$t['id'] ?>)">删除</button></td>
     </tr>
     <?php endforeach; ?>

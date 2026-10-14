@@ -175,7 +175,7 @@ foreach ($sources as $src) {
     'uploadDate' => date('c', (int)$vod['updatetime']),
     'genre' => (string)$vod['class'],
     'inLanguage' => 'zh-CN',
-], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script defer src="<?= theme_url('static/player/hls.js') ?>?v=<?= asset_v('/theme/kylite/static/player/hls.js') ?>"></script>
 <script defer src="<?= theme_url('static/player/kunplayer.js') ?>?v=<?= asset_v('/theme/kylite/static/player/kunplayer.js') ?>"></script>
 <script>
@@ -185,7 +185,9 @@ var kyVod = <?= json_encode([
     'epRemarks' => $vod['remarks'],
     'canPlay' => (bool)$canPlay,
     'poster' => pic_url($vod['pic']),
-    'csrf' => Security::csrfToken(),
+    // 登录态才下发CSRF:本页对访客做公共缓存,缓存页带token会跨会话串用
+    'uid' => Auth::userId(),
+    'csrf' => Auth::isLogin() ? Security::csrfToken() : '',
     'sources' => $jsSources,
 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 var curSid = <?= (int)$sid ?>, curEp = <?= (int)$ep ?>, player = null, streamErrs = 0;
@@ -224,7 +226,7 @@ function buildPlayer(autoplay){
     autoplay: !!autoplay,
     onNext: function(){ var n = src.episodes[curEp]; if (n) playEpisode(curEp+1); },
     onProgress: function(pos){
-      fetch('/index.php?s=/api/progress',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({vod_id:kyVod.id,episode:curEp,position:pos,_csrf:kyVod.csrf})}).catch(function(){});
+      if (kyVod.csrf) fetch('/index.php?s=/api/progress',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({vod_id:kyVod.id,episode:curEp,position:pos,_csrf:kyVod.csrf})}).catch(function(){});
       try {
         var arr = JSON.parse(localStorage.getItem('ky_watch_hist') || '[]').filter(function(x){ return x.id !== kyVod.id; });
         arr.unshift({ id: kyVod.id, name: kyVod.name, pic: kyVod.poster, remarks: (src.episodes[curEp-1] && curEp > 1) ? '第' + curEp + '集' : (kyVod.epRemarks || ''), ep: curEp, time: Date.now() });
@@ -267,13 +269,15 @@ document.addEventListener('DOMContentLoaded', function(){ buildPlayer(kyAuto); }
 <?php endif; ?>
 <script>
 function toggleFav(id,el){
-  var d=new FormData();d.append('vod_id',id);d.append('_csrf','<?= e(Security::csrfToken()) ?>');
+  if (!kyVod.uid) return kyToast('请先登录后再收藏', false);
+  var d=new FormData();d.append('vod_id',id);d.append('_csrf',kyVod.csrf);
   kyPost('/index.php?s=/api/fav',d).then(function(j){
     kyToast(j.msg,j.code===1);
     if(j.code===1&&el)el.querySelector('.ic').textContent=j.data.fav?'★':'☆';
   });
 }
 function postComment(id){
+  if (!kyVod.uid) return kyToast('请先登录后再评论', false);
   var inp=document.getElementById('cmtInput'),t=inp.value.trim();
   if(!t)return kyToast('请输入评论内容',false);
   fetch('/index.php?s=/api/comment',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({vod_id:id,content:t,_csrf:kyVod.csrf})}).then(function(r){return r.json()}).then(function(j){
@@ -282,7 +286,8 @@ function postComment(id){
   });
 }
 function buyVod(id){
-  var d=new FormData();d.append('id',id);d.append('_csrf','<?= e(Security::csrfToken()) ?>');
+  if (!kyVod.uid) return kyToast('请先登录后再购买', false);
+  var d=new FormData();d.append('id',id);d.append('_csrf',kyVod.csrf);
   kyPost('/index.php?s=/pay/buyvod',d).then(function(j){
     kyToast(j.msg,j.code===1);
     if(j.code===1)setTimeout(function(){location.reload()},800);
