@@ -192,8 +192,21 @@ class VodController
             if (!preg_match('/^[\x{4e00}-\x{9fa5}A-Za-z0-9_\- \x{0080}-\x{FFFF}]{1,60}$/u', $wd)) {
                 $wd = '';
             } else {
-                $total = (int)Db::fetchOne("SELECT COUNT(*) FROM ky_vod WHERE status=1 AND name LIKE ?", ['%' . $wd . '%']);
-                $list = Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 AND name LIKE ? ORDER BY total_hits DESC LIMIT {$pageSize} OFFSET " . (($page - 1) * $pageSize), ['%' . $wd . '%']);
+                // 全文索引优先(ngram,MySQL8):LIKE '%..%'全表扫在并发下堆积;FT缺失/零命中回退LIKE
+                $useFt = mb_strlen($wd) >= 2;
+                if ($useFt) {
+                    try {
+                        $total = (int)Db::fetchOne("SELECT COUNT(*) FROM ky_vod WHERE status=1 AND MATCH(name) AGAINST(? IN BOOLEAN MODE)", [$wd]);
+                        $list = $total > 0 ? Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 AND MATCH(name) AGAINST(? IN BOOLEAN MODE) ORDER BY total_hits DESC LIMIT {$pageSize} OFFSET " . (($page - 1) * $pageSize), [$wd]) : [];
+                    } catch (Throwable $t) {
+                        $useFt = false; // 无ft_name索引(如MariaDB) → 回退
+                    }
+                }
+                // 零结果即真无匹配(ngram二元组覆盖等价于LIKE),不回退;仅索引缺失(异常)时回退LIKE
+                if (!$useFt) {
+                    $total = (int)Db::fetchOne("SELECT COUNT(*) FROM ky_vod WHERE status=1 AND name LIKE ?", ['%' . $wd . '%']);
+                    $list = Db::fetchAll("SELECT * FROM ky_vod WHERE status=1 AND name LIKE ? ORDER BY total_hits DESC LIMIT {$pageSize} OFFSET " . (($page - 1) * $pageSize), ['%' . $wd . '%']);
+                }
                 // 搜索热度统计:搜索命中影片计数(按影片名搜索次数排名的依据)
                 if ($list && $page === 1) {
                     $ids = implode(',', array_map('intval', array_column($list, 'id')));

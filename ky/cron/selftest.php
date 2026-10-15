@@ -86,6 +86,16 @@ foreach (['data/cache', 'data/cache/pages', 'data/backup', 'upload'] as $d) {
     check("目录可写 {$d}", is_dir($p) && is_writable($p));
 }
 
+/* ---------- 错误日志管道 ---------- */
+$elogPath = KY_PATH . '/data/log/php_error.log';
+$elogErr = 0;
+if (is_file($elogPath)) {
+    foreach (file($elogPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $eline) {
+        if (strpos($eline, '[' . date('d-M-Y')) !== false) $elogErr++;
+    }
+}
+check('PHP错误日志管道已接通(今日无错误)', is_file($elogPath) && $elogErr === 0, $elogErr > 0 ? "今日{$elogErr}条错误,见data/log/php_error.log" : (is_file($elogPath) ? '' : '尚未生成(无错误即不建文件)'));
+
 /* ---------- 数据健康(检测项来自2026-10-15数据质量扫描) ---------- */
 $emptyLive = (int)Db::fetchOne("SELECT COUNT(*) FROM ky_vod WHERE status=1 AND (play_url='' OR play_url IS NULL)");
 check('在架影片无空播放源(防用户点开空页)', $emptyLive === 0, $emptyLive > 0 ? "{$emptyLive}部应下架或等采集复活" : '');

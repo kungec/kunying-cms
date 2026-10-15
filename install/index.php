@@ -114,6 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 3) {
             $pdo->exec($sql);
         }
 
+        // 全文搜索索引(MySQL8 ngram;MariaDB不支持时静默跳过,程序自动回退LIKE)
+        try { $pdo->exec("ALTER TABLE ky_vod ADD FULLTEXT INDEX ft_name (name) WITH PARSER ngram"); } catch (Throwable $t) {}
+
         // 管理员
         $st = $pdo->prepare("INSERT INTO ky_admin (username,pwd,created) VALUES (?,?,?)");
         $st->execute([$adminUser, password_hash($adminPass, PASSWORD_DEFAULT), time()]);

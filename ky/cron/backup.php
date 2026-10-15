@@ -65,6 +65,12 @@ $size = round(filesize($file) / 1048576, 1);
 $sec = round(microtime(true) - $t0, 1);
 echo "备份完成: {$file}\n数据行: {$written} 大小: {$size}MB 用时: {$sec}秒\n";
 
+// 异地容灾:配置了云存储(ftp/oss/s3)时自动上传一份,本盘损坏时备份不陪葬
+if (class_exists('Store') && method_exists('Store', 'driver') && Store::driver() !== 'local') {
+    $remote = Store::put('backup/' . basename($file), (string)file_get_contents($file));
+    echo $remote !== null ? "异地备份成功: {$remote}\n" : "异地备份失败(检查云存储配置/连通性),本地份仍在\n";
+}
+
 // 轮转:只保留最近N份
 $files = glob($outDir . '/db_*.sql.gz') ?: [];
 sort($files);

@@ -84,6 +84,16 @@ if ((int)date('G') < 5 && (int)config('maint_last_day', '0') !== $today) {
             config_set('norm_algo', '2');
             echo "name_norm归一迁移完成: {$migrated}行\n";
         }
+        // PHP错误日志:1MB轮转保留上一份(排障有据,防无限增长)
+        $elog = KY_PATH . '/data/log/php_error.log';
+        if (is_file($elog)) {
+            if (filesize($elog) > 1048576) @rename($elog, $elog . '.' . date('Ymd'));
+            $err24 = 0;
+            foreach (file($elog, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $eline) {
+                if (strpos($eline, '[' . date('d-M-Y', time() - 86400)) !== false || strpos($eline, '[' . date('d-M-Y')) !== false) $err24++;
+            }
+            if ($err24 > 0) echo "近24h PHP错误: {$err24}条(data/log/php_error.log)\n";
+        }
         config_set('maint_last_day', (string)$today);
         echo "每日维护完成(验证码/日志瘦身,缓存清理{$pruned}+" . ($cgc ?? 0) . "过期KV)\n";
     } catch (Throwable $e) {

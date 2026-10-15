@@ -4,12 +4,15 @@
  * KunYing CMS
  */
 define('KY_PATH', __DIR__ . '/..');
-define('KY_VERSION', '1.0.49');
+define('KY_VERSION', '1.0.50');
 define('KY_RELEASE', 20261015);
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_WARNING);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
+// 错误日志落盘到应用目录(未配置error_log时错误无处可寻,静默失败无从排查)
+foreach ([KY_PATH . '/data/log'] as $d) if (!is_dir($d)) @mkdir($d, 0755, true);
+ini_set('error_log', KY_PATH . '/data/log/php_error.log');
 date_default_timezone_set('Asia/Shanghai');
 
 // 关键安全响应头
