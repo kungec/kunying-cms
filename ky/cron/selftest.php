@@ -86,6 +86,28 @@ foreach (['data/cache', 'data/cache/pages', 'data/backup', 'upload'] as $d) {
     check("目录可写 {$d}", is_dir($p) && is_writable($p));
 }
 
+/* ---------- 数据健康(检测项来自2026-10-15数据质量扫描) ---------- */
+$emptyLive = (int)Db::fetchOne("SELECT COUNT(*) FROM ky_vod WHERE status=1 AND (play_url='' OR play_url IS NULL)");
+check('在架影片无空播放源(防用户点开空页)', $emptyLive === 0, $emptyLive > 0 ? "{$emptyLive}部应下架或等采集复活" : '');
+$collisions = (int)Db::fetchOne("SELECT COUNT(*) FROM (SELECT 1 FROM ky_vod GROUP BY name_norm HAVING COUNT(*)>1) t");
+check('同名归一碰撞组已清零', $collisions === 0, $collisions > 0 ? "{$collisions}组待后台同名合并处理" : '');
+check('归一算法版本已迁移(norm_algo=2)', (string)config('norm_algo', '') === '2');
+$orphans = 0;
+foreach (['ky_comment', 'ky_fav', 'ky_play_record', 'ky_user_vod'] as $tb) {
+    try { $orphans += (int)Db::fetchOne("SELECT COUNT(*) FROM {$tb} c LEFT JOIN ky_vod v ON v.id=c.vod_id WHERE v.id IS NULL"); } catch (Throwable $t) {}
+}
+check('无孤儿关联数据(评论/收藏/记录/购买)', $orphans === 0, $orphans > 0 ? "{$orphans}条" : '');
+
+/* ---------- 备份新鲜度(INFO级,部署环境差异大) ---------- */
+$bks = glob(KY_PATH . '/data/backup/db_*.sql.gz') ?: [];
+if ($bks) {
+    $latest = max(array_map('filemtime', $bks));
+    $ageH = round((time() - $latest) / 3600);
+    echo $ageH > 48 ? "[WARN] 应用层备份已{$ageH}小时未产出\n" : "[INFO] 应用层备份新鲜({$ageH}小时前)\n";
+} else {
+    echo "[INFO] data/backup无应用层备份(请确认部署层备份机制,如宝塔计划任务/MySQL转储)\n";
+}
+
 /* ---------- 支付配置提示(不判定失败) ---------- */
 $payOn = false;
 foreach (['epay_gateway', 'codepay_gateway', 'usdt_address'] as $k) {

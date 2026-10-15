@@ -248,7 +248,7 @@ class Collector
         $remarks = mb_substr(trim((string)($item['vod_remarks'] ?? '')), 0, 60);
 
         // 同来源已有影片
-        $exists = Db::fetch("SELECT id, play_from, play_url, pic, remarks FROM ky_vod WHERE api_id=? AND api_vid=?", [$apiId, $apiVid]);
+        $exists = Db::fetch("SELECT id, play_from, play_url, pic, remarks, status FROM ky_vod WHERE api_id=? AND api_vid=?", [$apiId, $apiVid]);
 
         // 封面去重:影片已有封面绝不重复采集,只有新影片/无封面影片才会下载
         $queuedPic = null;
@@ -283,6 +283,8 @@ class Collector
         if ($exists) {
             [$mFrom, $mUrl] = self::mergeSources((string)$exists['play_from'], (string)$exists['play_url'], $playFrom, $playUrl);
             $upd = ['play_from' => $mFrom, 'play_url' => $mUrl, 'updatetime' => time()];
+            // 采到剧集的空源行自动复活(配合insert时空源默认隐藏)
+            if ((string)$exists['play_url'] === '' && $mUrl !== '' && (int)$exists['status'] === 0) $upd['status'] = 1;
             if ($remarks !== '' && $remarks !== (string)$exists['remarks']) $upd['remarks'] = $remarks;
             Db::update('ky_vod', $upd, 'id=?', [$exists['id']]);
             if ($queuedPic !== null) self::$pendingPics[$queuedPic][] = (int)$exists['id'];
@@ -336,6 +338,8 @@ class Collector
             'pic' => $pic,
             'play_from' => $playFrom,
             'play_url' => $playUrl,
+            // 无剧集的元数据条目先隐藏:资源站后续提供剧集时由更新分支自动复活,避免用户点开空播放页
+            'status' => $playUrl !== '' ? 1 : 0,
             'total_hits' => (int)($item['vod_hits'] ?? 0),
             'api_id' => $apiId,
             'api_vid' => $apiVid,
@@ -390,12 +394,7 @@ class Collector
         $segs = [];
         foreach (preg_split('/\s+/', trim($n)) as $seg) {
             if ($seg === '') continue;
-            // "Part 2/part2"段:剥除并提取季数(允许段内空格)
-            if (preg_match('/part\s*([0-9]+)/iu', $seg, $pm)) {
-                if ($season === '') $season = $pm[1];
-                $seg = preg_replace('/part\s*[0-9]+/iu', '', $seg);
-            }
-            // "第X季/X季"(X含中文数字)
+            // "第X季/X季"(X含中文数字)优先于Part:"第四季Part3"的Part3是季内部分,不得抢先认季
             if (preg_match('/第([0-9一二三四五六七八九十]+)季/u', $seg, $m)) {
                 if ($season === '') $season = self::cnNum($m[1]);
                 $seg = preg_replace('/第[0-9一二三四五六七八九十]+季/u', '', $seg);
@@ -403,11 +402,19 @@ class Collector
                 if ($season === '') $season = $m[1];
                 $seg = preg_replace('/[0-9]+季/u', '', $seg);
             }
-            // 含汉字段的段尾1-2位数字(如"无职转生3")同样认作季标:"惊魂记2/三体3/龙珠Ⅱ"类
-            // 不剥年份(4位)与纯数字段(007/2012)
-            if (preg_match('/\p{Han}/u', $seg) && preg_match('/^(.*[^\d])([0-9]{1,2})$/u', $seg, $m)) {
-                if ($season === '') $season = $m[2];
-                $seg = $m[1];
+            // "Part 2/part2"段:始终剥除;仅在尚无季标时其数字才认作季数
+            if (preg_match('/part\s*([0-9]+)/iu', $seg, $pm)) {
+                if ($season === '') $season = $pm[1];
+                $seg = preg_replace('/part\s*[0-9]+/iu', '', $seg);
+            }
+            // 含汉字段的段尾1-2位数字(如"无职转生3")认作季标:数字须紧跟汉字
+            // (排除"BIG3"类品牌数字)且值1~30("高达00"的00是品牌不是季);4位年份与纯数字段不剥
+            if (preg_match('/^(.+\p{Han})([0-9]{1,2})$/u', $seg, $m)) {
+                $sn = (int)$m[2];
+                if ($sn >= 1 && $sn <= 30) {
+                    if ($season === '') $season = (string)$sn;
+                    $seg = $m[1];
+                }
             }
             $seg = trim($seg);
             if ($seg !== '') $segs[] = $seg;
