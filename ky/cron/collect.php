@@ -53,6 +53,15 @@ if ((int)date('G') < 5 && (int)config('maint_last_day', '0') !== $today) {
         foreach (glob(KY_PATH . '/data/cache/pages/*.html') ?: [] as $pcf) {
             if (time() - filemtime($pcf) > 7 * 86400) { @unlink($pcf); $pruned++; }
         }
+        // 通用文件缓存GC:散落md5.php条目只在被读取时清过期,无人读的永生——每日全量清一次
+        // (文件头40字节内即expire字段,限读160字节;expire=0的永久条目不动)
+        $now = time(); $cgc = 0;
+        foreach (glob(KY_PATH . '/data/cache/*.php') ?: [] as $cf) {
+            $head = @file_get_contents($cf, false, null, 0, 160);
+            if ($head !== false && preg_match('/s:6:"expire";i:(\d+)/', $head, $cm)) {
+                if ((int)$cm[1] > 0 && (int)$cm[1] < $now) { @unlink($cf); $cgc++; }
+            }
+        }
         // 播放列表/远程封面代理缓存同样7天修剪(读时按mtime判活,过期文件不清理会永久累积)
         foreach ([KY_PATH . '/data/cache/m3u8', KY_PATH . '/data/cache/img'] as $pdir) {
             if (!is_dir($pdir)) continue;
@@ -76,7 +85,7 @@ if ((int)date('G') < 5 && (int)config('maint_last_day', '0') !== $today) {
             echo "name_norm归一迁移完成: {$migrated}行\n";
         }
         config_set('maint_last_day', (string)$today);
-        echo "每日维护完成(验证码/日志瘦身,缓存清理{$pruned})\n";
+        echo "每日维护完成(验证码/日志瘦身,缓存清理{$pruned}+" . ($cgc ?? 0) . "过期KV)\n";
     } catch (Throwable $e) {
         echo "每日维护失败(明天窗口内重试): " . $e->getMessage() . "\n";
     }
