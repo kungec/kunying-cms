@@ -90,6 +90,13 @@ schtasks /create /tn "KunYingBackup" /sc daily /st 03:20 /tr "D:\php\php.exe D:\
 **Q: 验证码图片不显示?**
 GD扩展未启用,phpstudy → PHP设置 → 勾选 gd。
 
+**Q: 能看到验证码,但输入后总提示"验证码错误"?**
+把程序根目录的 `diagnose_captcha.php` 用浏览器打开(如 http://你的域名/diagnose_captcha.php),它会逐项检测整条验证码链路并给出对应修复:
+- GD画图 FAIL → GD扩展异常,重装/换PHP版本
+- 跨请求会话持久化 FAIL → 浏览器没回传会话Cookie(用IP访问时Cookie域不匹配/HTTPS证书无效),或php.ini的session.save_path指向不可写目录
+- 验证码接口生成图片 FAIL → 看程序目录 data\log\php_error.log 里的报错
+诊断完成后删除该文件。
+
 **Q: 页面报 ZipArchive 不存在?**
 zip扩展未启用,勾选 zip。
 

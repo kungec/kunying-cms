@@ -19,31 +19,43 @@ class Captcha
         }
         $_SESSION['_captcha_' . $scene] = strtolower($code);
         $_SESSION['_captcha_time_' . $scene] = time();
+        // 会话先落盘再画图:即使GD异常中断,验证码答案也已持久化,不会静默全错
+        session_write_close();
 
         $w = 130; $h = 42;
-        $img = imagecreatetruecolor($w, $h);
-        $bg = imagecolorallocate($img, 245, 246, 248);
-        imagefilledrectangle($img, 0, 0, $w, $h, $bg);
-        // 干扰线
-        for ($i = 0; $i < 4; $i++) {
-            $c = imagecolorallocate($img, random_int(160, 220), random_int(160, 220), random_int(160, 220));
-            imageline($img, random_int(0, $w), random_int(0, $h), random_int(0, $w), random_int(0, $h), $c);
+        try {
+            $img = imagecreatetruecolor($w, $h);
+            $bg = imagecolorallocate($img, 245, 246, 248);
+            imagefilledrectangle($img, 0, 0, $w, $h, $bg);
+            // 干扰线
+            for ($i = 0; $i < 4; $i++) {
+                $c = imagecolorallocate($img, random_int(160, 220), random_int(160, 220), random_int(160, 220));
+                imageline($img, random_int(0, $w), random_int(0, $h), random_int(0, $w), random_int(0, $h), $c);
+            }
+            // 字符(GD内置字库,无字体文件依赖,跨平台)
+            for ($i = 0; $i < 4; $i++) {
+                $c = imagecolorallocate($img, random_int(30, 90), random_int(30, 90), random_int(120, 180));
+                imagestring($img, 5, 12 + $i * 28, random_int(8, 20), $code[$i], $c);
+            }
+            // 噪点
+            for ($i = 0; $i < 120; $i++) {
+                $c = imagecolorallocate($img, random_int(120, 220), random_int(120, 220), random_int(120, 220));
+                imagesetpixel($img, random_int(0, $w - 1), random_int(0, $h - 1), $c);
+            }
+            header('Content-Type: image/png');
+            header('Cache-Control: no-store, no-cache, must-revalidate');
+            header('Pragma: no-cache');
+            imagepng($img);
+            imagedestroy($img);
+        } catch (Throwable $t) {
+            // GD异常可见化:输出错误占位图并落日志,而不是静默损坏的图片让用户永远"验证码错误"
+            error_log('[KunYing Captcha] GD生成失败: ' . $t->getMessage());
+            $img = imagecreatetruecolor(130, 42);
+            imagefilledrectangle($img, 0, 0, 129, 41, imagecolorallocate($img, 240, 240, 240));
+            imagestring($img, 4, 8, 14, 'GD ERROR', imagecolorallocate($img, 200, 40, 40));
+            header('Content-Type: image/png');
+            imagepng($img);
         }
-        // 字符
-        for ($i = 0; $i < 4; $i++) {
-            $c = imagecolorallocate($img, random_int(30, 90), random_int(30, 90), random_int(120, 180));
-            imagestring($img, 5, 12 + $i * 28, random_int(8, 20), $code[$i], $c);
-        }
-        // 噪点
-        for ($i = 0; $i < 120; $i++) {
-            $c = imagecolorallocate($img, random_int(120, 220), random_int(120, 220), random_int(120, 220));
-            imagesetpixel($img, random_int(0, $w - 1), random_int(0, $h - 1), $c);
-        }
-        header('Content-Type: image/png');
-        header('Cache-Control: no-store, no-cache, must-revalidate');
-        header('Pragma: no-cache');
-        imagepng($img);
-        imagedestroy($img);
         exit;
     }
 
