@@ -123,6 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 3) {
             'site_name' => '坤影影视',
             'site_template' => 'kylite',
             'site_mode' => 'cms',
+            'norm_algo' => '2',
             'cdn_mode' => '0',
             'member_enable' => '1',
             'show_api_notice' => '0',

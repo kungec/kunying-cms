@@ -60,6 +60,21 @@ if ((int)date('G') < 5 && (int)config('maint_last_day', '0') !== $today) {
                 if (time() - filemtime($pf) > 7 * 86400) { @unlink($pf); $pruned++; }
             }
         }
+        // 归一算法版本迁移:normalizeName升级后分批重算全库name_norm(每批5000防内存,一次性)
+        if ((string)config('norm_algo', '') !== '2') {
+            $last = 0; $migrated = 0;
+            while (true) {
+                $rows = Db::fetchAll("SELECT id, name FROM ky_vod WHERE id>? ORDER BY id ASC LIMIT 5000", [$last]);
+                if (!$rows) break;
+                foreach ($rows as $r) {
+                    Db::update('ky_vod', ['name_norm' => Collector::normalizeName((string)$r['name'])], 'id=?', [$r['id']]);
+                    $last = (int)$r['id'];
+                    $migrated++;
+                }
+            }
+            config_set('norm_algo', '2');
+            echo "name_norm归一迁移完成: {$migrated}行\n";
+        }
         config_set('maint_last_day', (string)$today);
         echo "每日维护完成(验证码/日志瘦身,缓存清理{$pruned})\n";
     } catch (Throwable $e) {

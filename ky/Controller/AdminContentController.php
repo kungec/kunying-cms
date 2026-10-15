@@ -489,7 +489,7 @@ class AdminContentController
             [$mFrom, $mUrl] = Collector::mergeSources((string)$keepVod['play_from'], (string)$keepVod['play_url'], (string)$m['play_from'], (string)$m['play_url']);
             $keepVod['play_from'] = $mFrom;
             $keepVod['play_url'] = $mUrl;
-            foreach (['ky_comment' => 'vod_id', 'ky_fav' => 'vod_id', 'ky_play_record' => 'vod_id'] as $tb => $col) {
+            foreach (['ky_comment' => 'vod_id', 'ky_fav' => 'vod_id', 'ky_play_record' => 'vod_id', 'ky_user_vod' => 'vod_id'] as $tb => $col) {
                 try { Db::query("UPDATE IGNORE {$tb} SET {$col}=? WHERE {$col}=?", [$keep, $mid]); } catch (Throwable $t) {}
             }
             Db::delete('ky_vod', 'id=?', [$mid]);

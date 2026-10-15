@@ -374,22 +374,83 @@ class Collector
     public static function normalizeName(string $n): string
     {
         $n = mb_strtolower(trim($n));
-        $n = str_replace(['　', ' '], '', $n);
+        $n = str_replace('　', ' ', $n);
+        // 罗马数字季标→阿拉伯(Ⅲ→3,先于分段,别名段与主名段的季标形态统一)
         $n = strtr($n, [
             'ⅰ' => '1', 'ⅱ' => '2', 'ⅲ' => '3', 'ⅳ' => '4', 'ⅴ' => '5',
-            'ⅵ' => '6', 'ⅶ' => '7', 'ⅷ' => '8', 'ⅸ' => '9', 'ⅹ' => '10',
+            'ⅵ' => '6', 'ⅶ' => '7', 'ⅷ' => '8', 'ⅸ' => '9', 'ⅹ' => '10', 'ⅺ' => '11', 'ⅻ' => '12',
         ]);
         if (function_exists('mb_convert_kana')) $n = mb_convert_kana($n, 'a', 'UTF-8');
-        $n = preg_replace('/第([0-9一二三四五六七八九十]+)季/u', '$1季', $n);
-        // 同季拆分标注剥除: "Part 2/Part2" 与名称内已有的季标(Ⅱ/第N季)重复
-        $n = preg_replace('/part[0-9]+/u', '', $n);
-        // 名称已含中文季数标注(第N季→N季)时,剥离重复的阿拉伯数字季标
-        // 例: "无职转生Ⅲ…第三季" 与 "无职转生…第三季" 归一为同一部
-        if (preg_match('/[0-9一二三四五六七八九十]+季/u', $n)) {
-            $n = preg_replace('/[0-9]+/u', '', $n);
+        // 繁体/日文字形→简体:别名段(如"無職転生Ⅲ")与主名段("无职转生Ⅲ")归一的前提
+        $n = strtr($n, self::simplifyMap());
+        // 分段前把"Part 2"与数字粘合,防\s+分段拆散后季数提取不到
+        $n = preg_replace('/part\s*([0-9]+)/iu', 'part$1', $n);
+        // 分段处理:资源站标题多为"主名+季标 别名"空格分隔,各段独立剥季标
+        $season = '';
+        $segs = [];
+        foreach (preg_split('/\s+/', trim($n)) as $seg) {
+            if ($seg === '') continue;
+            // "Part 2/part2"段:剥除并提取季数(允许段内空格)
+            if (preg_match('/part\s*([0-9]+)/iu', $seg, $pm)) {
+                if ($season === '') $season = $pm[1];
+                $seg = preg_replace('/part\s*[0-9]+/iu', '', $seg);
+            }
+            // "第X季/X季"(X含中文数字)
+            if (preg_match('/第([0-9一二三四五六七八九十]+)季/u', $seg, $m)) {
+                if ($season === '') $season = self::cnNum($m[1]);
+                $seg = preg_replace('/第[0-9一二三四五六七八九十]+季/u', '', $seg);
+            } elseif (preg_match('/([0-9]+)季/u', $seg, $m)) {
+                if ($season === '') $season = $m[1];
+                $seg = preg_replace('/[0-9]+季/u', '', $seg);
+            }
+            // 含汉字段的段尾1-2位数字(如"无职转生3")同样认作季标:"惊魂记2/三体3/龙珠Ⅱ"类
+            // 不剥年份(4位)与纯数字段(007/2012)
+            if (preg_match('/\p{Han}/u', $seg) && preg_match('/^(.*[^\d])([0-9]{1,2})$/u', $seg, $m)) {
+                if ($season === '') $season = $m[2];
+                $seg = $m[1];
+            }
+            $seg = trim($seg);
+            if ($seg !== '') $segs[] = $seg;
         }
-        $n = preg_replace('/[\p{Han}a-z0-9]/u', '', $n) === null ? $n : preg_replace('/[^\p{Han}a-z0-9]/u', '', $n);
-        return $n;
+        // 别名段去重:字符集相同的段只保留一个(繁简归一后"无职转生"重复段丢弃)
+        $seen = [];
+        $keep = [];
+        foreach ($segs as $seg) {
+            $chars = preg_split('//u', $seg, -1, PREG_SPLIT_NO_EMPTY);
+            sort($chars);
+            $sig = implode('', $chars);
+            if (isset($seen[$sig])) continue;
+            $seen[$sig] = 1;
+            $keep[] = $seg;
+        }
+        $n = implode('', $keep);
+        // 已识别季标时,主体残余阿拉伯数字视为重复季标剥除;无季标片名(2012/007)数字保留
+        if ($season !== '') $n = preg_replace('/[0-9]+/u', '', $n);
+        $n = preg_replace('/[^\p{Han}a-z0-9]/u', '', $n);
+        // 季数显式编码到尾部:不同季不误并,同季不同写法同norm
+        return $n . ($season !== '' ? '|s' . $season : '');
+    }
+
+    /** 中文数字→阿拉伯(季数范围一~十;十以上罕见,逐字映射足够) */
+    private static function cnNum(string $s): string
+    {
+        return strtr($s, ['一' => '1', '二' => '2', '三' => '3', '四' => '4', '五' => '5', '六' => '6', '七' => '7', '八' => '8', '九' => '9', '十' => '10']);
+    }
+
+    /** 常用繁体/日文字形→简体(归一辅助,覆盖影视名高频字;未命中字符原样保留) */
+    private static function simplifyMap(): array
+    {
+        static $map = null;
+        if ($map !== null) return $map;
+        $src = '無愛夢樂聖戰槍網靈無職愛衝夢樂聖戰槍網靈聲藝葉龍馬鳥魚鳳麗義兒億傳區醫萬與業東車見觀聽書畫時間會來國學體門開關長電雲飛為頭願顯驚麼們話語讀記誕謎護變讓貝財買賣質軍輕農陰陽隊難風飯館騎裡銀鐵錯鍵鎖鏡閃陸雙師帶幾廣強歡歲殺準滿漢營爺獎獸環發盤眾禮種積筆節簡紀約練總續腦臨艦華蕩處號衛裝親覺觸許詞試誠認論諾謝議貓費資賽贈軌軟輛遠遺選還邊鄉針鋼錄靜齊躍麵壓傭優傑侶僅僑冊凍則創勢區協卻廠曆標權歐畢測濟滅點燭獨獵貓現環畝當發疑礦碼禍種稱窮筆籌粵紅純約級純線駆転変増発広桜沢図気験従楽顔巻仮絵譲內';
+        $dst = '无爱梦乐圣战枪网灵无职爱冲梦乐圣战枪网灵声艺叶龙马鸟鱼凤丽义儿亿传区医万与业东车见观听书画时间会来国学体门开关长电云飞为头愿显惊么们话语读记诞谜护变让贝财买卖质军轻农阴阳队难风饭馆骑里银铁错键锁镜闪陆双师带几广强欢岁杀准满汉营爷奖兽环发盘众礼种积笔节简纪约练总续脑临舰华荡处号卫装亲觉触许词试诚认论诺谢议猫费资赛赠轨软辆远遗选还边乡针钢录静齐跃面压佣优杰侣仅侨册冻则创势区协却厂历标权欧毕测济灭点烛独猎猫现环亩当发疑矿码祸种称穷笔筹粤红纯约级纯线驱转变增发广樱泽图气验从乐颜卷假绘让内';
+        $map = [];
+        $sc = preg_split('//u', $src, -1, PREG_SPLIT_NO_EMPTY);
+        $dc = preg_split('//u', $dst, -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($sc as $i => $c) {
+            if (isset($dc[$i]) && $c !== $dc[$i]) $map[$c] = $dc[$i];
+        }
+        return $map;
     }
 
     /**
