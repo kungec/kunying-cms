@@ -40,9 +40,25 @@ class Db
 
     public static function query(string $sql, array $params = []): PDOStatement
     {
-        $stmt = self::pdo()->prepare($sql);
-        $stmt->execute($params);
-        return $stmt;
+        try {
+            $stmt = self::pdo()->prepare($sql);
+            $stmt->execute($params);
+            return $stmt;
+        } catch (PDOException $ex) {
+            // 长跑进程(采集/维护cron)中连接被服务端断开:重连一次并重试本条查询
+            // 仅对"gone away/连接类"错误重试,业务类SQL错误原样抛出
+            $code = (int)($ex->errorInfo[1] ?? 0);
+            $msg = $ex->getMessage();
+            $goneAway = strpos($msg, '2006 MySQL server has gone away') !== false
+                || strpos($msg, 'Lost connection to MySQL server') !== false
+                || strpos($msg, 'Error while sending') !== false
+                || $code === 2006 || $code === 2013;
+            if (!$goneAway || self::$pdo === null) throw $ex;
+            self::$pdo = null;
+            $stmt = self::pdo()->prepare($sql);
+            $stmt->execute($params);
+            return $stmt;
+        }
     }
 
     public static function fetchAll(string $sql, array $params = []): array

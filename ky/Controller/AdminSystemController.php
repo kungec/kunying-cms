@@ -60,9 +60,9 @@ class AdminSystemController
             if ($k === 'site_template' && $val === '') continue;
             // 站点域名只允许主机名形态,防止把路径/协议注入外链
             if ($k === 'site_domain') {
-                $val = trim(preg_replace('#^[a-z][a-z0-9+.-]*://#i', '', trim($val)), '/');
-                $val = preg_replace('#[/?#].*$#', '', $val);
-                if ($val !== '' && !preg_match('/^[a-z0-9.\-]{3,120}$/i', $val)) continue;
+                // 白名单直判(剥离式正则曾因#分隔符冲突误吞整个域名导致保存失败)
+                $val = trim((string)$val);
+                if ($val !== '' && !preg_match('/^[a-z0-9][a-z0-9.\-]{1,251}[a-z0-9]$/i', $val)) continue;
                 config_set('site_domain', $val);
                 continue;
             }
