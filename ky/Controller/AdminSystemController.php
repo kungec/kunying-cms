@@ -51,8 +51,10 @@ class AdminSystemController
         ];
         $sens = ['smtp_pass', 'geetest_key', 'turnstile_secret', 'codepay_key', 'epay_key', 'usdt_trongrid_key', 'wxpay_key', 'alipay_private_key', 'alipay_public_key', 'usdt_address'];
         foreach ($keys as $k) {
+            // 必须以"POST中不存在该键"为准:(string)null=''会让空值判断失效,
+            // 部分字段的保存请求会把其余约60项配置全部写成空串(2026-10-16事故根因)
+            if (!array_key_exists($k, $_POST)) continue;
             $val = (string)Request::post($k, null, 'raw');
-            if ($val === null) continue;
             // 敏感项留空则不覆盖
             if (in_array($k, $sens, true) && $val === '') continue;
             if ($k === 'smtp_port' && !ctype_digit($val)) continue;
