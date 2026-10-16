@@ -156,6 +156,10 @@ class Pay
         $addr = trim((string)config('usdt_address', ''));
         $expected = (float)($order['usdt_amount'] ?? 0);
         if ($addr === '' || $expected <= 0) return null;
+        // 30秒节流:轮询高频触发时缓存链上查询结果,保护TronGrid配额
+        $ck = 'usdtq_' . $order['order_no'];
+        $cached = cache_get($ck);
+        if (is_array($cached)) return $cached['tx'];
         $url = 'https://api.trongrid.io/v1/accounts/' . rawurlencode($addr) . '/transactions/trc20?'
             . http_build_query([
                 'limit' => 100,
@@ -179,10 +183,12 @@ class Pay
                 // 确认该txid未被其他订单占用(complete层的trade_no唯一索引兜底并发竞态)
                 $used = Db::fetchOne("SELECT COUNT(*) FROM ky_order WHERE trade_no=? AND order_no<>?", [(string)$tx['transaction_id'], $order['order_no']]);
                 if ((int)$used === 0) {
+                    cache_set($ck, ['tx' => (string)$tx['transaction_id']], 30);
                     return (string)$tx['transaction_id'];
                 }
             }
         }
+        cache_set($ck, ['tx' => null], 30);
         return null;
     }
 

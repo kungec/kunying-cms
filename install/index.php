@@ -88,6 +88,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 3) {
     try {
         $dbHost = trim((string)($_POST['db_host'] ?? '127.0.0.1'));
         $dbPort = (int)($_POST['db_port'] ?? 3306);
+        // db_host格式白名单:纯主机名/IP(含内网),阻断借安装页做端口探测的畸形目标
+        if (!preg_match('/^[a-zA-Z0-9\.\-_:]{1,253}$/', $dbHost) || preg_match('/[\/\?#@]/', $dbHost)) {
+            http_response_code(400);
+            exit(json_encode(['code' => 0, 'msg' => '数据库地址格式不合法']));
+        }
+        // 安装尝试限流:同IP 10分钟20次,防自动化抢装/爆破
+        $rlFile = sys_get_temp_dir() . '/ky_install_rl_' . md5($_SERVER['REMOTE_ADDR'] ?? '0');
+        $rl = is_file($rlFile) ? explode('|', (string)file_get_contents($rlFile)) : ['0', '0'];
+        $now = time();
+        $rl = ((int)$rl[0] < $now - 600) ? ['0', '0'] : $rl;
+        if ((int)$rl[1] >= 20 && $now - (int)$rl[0] < 600) {
+            http_response_code(429);
+            exit(json_encode(['code' => 0, 'msg' => '尝试过于频繁,请10分钟后再试']));
+        }
+        file_put_contents($rlFile, $now . '|' . ((int)$rl[1] + 1), LOCK_EX);
         $dbName = trim((string)($_POST['db_name'] ?? 'kunying'));
         $dbUser = trim((string)($_POST['db_user'] ?? 'root'));
         $dbPass = (string)($_POST['db_pass'] ?? '');
@@ -238,7 +253,7 @@ function install_schema(): array
     $t[] = "CREATE TABLE IF NOT EXISTS `ky_slide` (`id` int unsigned NOT NULL AUTO_INCREMENT, `name` varchar(120) NOT NULL, `pic` varchar(500) NOT NULL, `url` varchar(300) DEFAULT '', `pos` varchar(10) NOT NULL DEFAULT 'top', `sort` int NOT NULL DEFAULT 0, `status` tinyint NOT NULL DEFAULT 1, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     $t[] = "CREATE TABLE IF NOT EXISTS `ky_link` (`id` int unsigned NOT NULL AUTO_INCREMENT, `name` varchar(60) NOT NULL, `url` varchar(300) NOT NULL, `sort` int NOT NULL DEFAULT 0, `status` tinyint NOT NULL DEFAULT 1, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     $t[] = "CREATE TABLE IF NOT EXISTS `ky_goods` (`id` int unsigned NOT NULL AUTO_INCREMENT, `name` varchar(60) NOT NULL, `price` decimal(10,2) NOT NULL DEFAULT 0.00, `points` int NOT NULL DEFAULT 0, `days` int NOT NULL DEFAULT 0, `sort` int NOT NULL DEFAULT 0, `status` tinyint NOT NULL DEFAULT 1, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-    $t[] = "CREATE TABLE IF NOT EXISTS `ky_order` (`id` int unsigned NOT NULL AUTO_INCREMENT, `order_no` varchar(30) NOT NULL, `user_id` int unsigned NOT NULL, `goods_id` int unsigned NOT NULL DEFAULT 0, `type` varchar(10) NOT NULL DEFAULT 'points', `title` varchar(120) DEFAULT '', `amount` decimal(10,2) NOT NULL DEFAULT 0.00, `usdt_amount` decimal(12,2) DEFAULT NULL, `pay_type` varchar(20) DEFAULT '', `status` tinyint NOT NULL DEFAULT 0, `trade_no` varchar(64) DEFAULT NULL, `created` int unsigned DEFAULT 0, `paid_time` int unsigned DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `order_no` (`order_no`), KEY `user_id` (`user_id`), KEY `status` (`status`,`created`) , UNIQUE KEY `uniq_trade` (`trade_no`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $t[] = "CREATE TABLE IF NOT EXISTS `ky_order` (`id` int unsigned NOT NULL AUTO_INCREMENT, `order_no` varchar(30) NOT NULL, `user_id` int unsigned NOT NULL, `goods_id` int unsigned NOT NULL DEFAULT 0, `type` varchar(10) NOT NULL DEFAULT 'points', `title` varchar(120) DEFAULT '', `amount` decimal(10,2) NOT NULL DEFAULT 0.00, `usdt_amount` decimal(12,2) DEFAULT NULL, `pay_type` varchar(20) DEFAULT '', `g_days` int unsigned NOT NULL DEFAULT 0, `g_points` int unsigned NOT NULL DEFAULT 0, `status` tinyint NOT NULL DEFAULT 0, `trade_no` varchar(64) DEFAULT NULL, `created` int unsigned DEFAULT 0, `paid_time` int unsigned DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `order_no` (`order_no`), KEY `user_id` (`user_id`), KEY `status` (`status`,`created`) , UNIQUE KEY `uniq_trade` (`trade_no`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     $t[] = "CREATE TABLE IF NOT EXISTS `ky_comment` (`id` int unsigned NOT NULL AUTO_INCREMENT, `user_id` int unsigned NOT NULL, `vod_id` int unsigned NOT NULL, `content` varchar(500) NOT NULL, `status` tinyint NOT NULL DEFAULT 1, `created` int unsigned DEFAULT 0, PRIMARY KEY (`id`), KEY `vod_id` (`vod_id`), KEY `user_id` (`user_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     $t[] = "CREATE TABLE IF NOT EXISTS `ky_fav` (`id` int unsigned NOT NULL AUTO_INCREMENT, `user_id` int unsigned NOT NULL, `vod_id` int unsigned NOT NULL, `created` int unsigned DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `uv` (`user_id`,`vod_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     $t[] = "CREATE TABLE IF NOT EXISTS `ky_play_record` (`id` int unsigned NOT NULL AUTO_INCREMENT, `user_id` int unsigned NOT NULL, `vod_id` int unsigned NOT NULL, `episode` int NOT NULL DEFAULT 1, `position` int unsigned NOT NULL DEFAULT 0, `updated` int unsigned DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `uv` (`user_id`,`vod_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";

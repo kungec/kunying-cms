@@ -24,8 +24,13 @@ class Mailer
 
         $timeout = 15;
         $remote = ($secure === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
+        // 校验服务器证书:防中间人窃取SMTP凭据与邮件内容
+        $tlsCtx = stream_context_create(['ssl' => [
+            'verify_peer' => true, 'verify_peer_name' => true, 'allow_self_signed' => false,
+            'peer_name' => $host, 'SNI_enabled' => true,
+        ]]);
         $errno = 0; $errstr = '';
-        $fp = @stream_socket_client($remote, $errno, $errstr, $timeout);
+        $fp = @stream_socket_client($remote, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT, $tlsCtx);
         if (!$fp) return false;
         stream_set_timeout($fp, $timeout);
 

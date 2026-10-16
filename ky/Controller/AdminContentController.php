@@ -86,7 +86,8 @@ class AdminContentController
         } else {
             $data['addtime'] = time();
             $data['api_id'] = 0;
-            $data['api_vid'] = '';
+            // 手工影片占位唯一键(api_id,api_vid):固定空值会让第二条手工影片撞唯一索引
+            $data['api_vid'] = 'manual-' . date('Ymd') . '-' . rand_str(6);
             $id = Db::insert('ky_vod', $data);
             Admin::log('添加影片#' . $id);
         }
@@ -486,15 +487,24 @@ class AdminContentController
         foreach ($ids as $mid) {
             $m = Db::fetch("SELECT play_from, play_url FROM ky_vod WHERE id=?", [$mid]);
             if (!$m) continue;
-            [$mFrom, $mUrl] = Collector::mergeSources((string)$keepVod['play_from'], (string)$keepVod['play_url'], (string)$m['play_from'], (string)$m['play_url']);
-            $keepVod['play_from'] = $mFrom;
-            $keepVod['play_url'] = $mUrl;
-            foreach (['ky_comment' => 'vod_id', 'ky_fav' => 'vod_id', 'ky_play_record' => 'vod_id', 'ky_user_vod' => 'vod_id'] as $tb => $col) {
-                try { Db::query("UPDATE IGNORE {$tb} SET {$col}=? WHERE {$col}=?", [$keep, $mid]); } catch (Throwable $t) {}
+            // 事务化:任一步失败整体回滚,绝不出现"半合并后原片已删"的数据丢失
+            Db::begin();
+            try {
+                [$mFrom, $mUrl] = Collector::mergeSources((string)$keepVod['play_from'], (string)$keepVod['play_url'], (string)$m['play_from'], (string)$m['play_url']);
+                $keepVod['play_from'] = $mFrom;
+                $keepVod['play_url'] = $mUrl;
+                Db::update('ky_vod', ['play_from' => $mFrom, 'play_url' => $mUrl, 'updatetime' => time()], 'id=?', [$keep]);
+                foreach (['ky_comment' => 'vod_id', 'ky_fav' => 'vod_id', 'ky_play_record' => 'vod_id', 'ky_user_vod' => 'vod_id'] as $tb => $col) {
+                    Db::query("UPDATE IGNORE {$tb} SET {$col}=? WHERE {$col}=?", [$keep, $mid]);
+                }
+                Db::delete('ky_vod', 'id=?', [$mid]);
+                Db::commit();
+            } catch (Throwable $t) {
+                Db::rollback();
+                Admin::log('合并#' . $mid . '→#' . $keep . '失败已回滚: ' . $t->getMessage());
+                continue;
             }
-            Db::delete('ky_vod', 'id=?', [$mid]);
         }
-        Db::update('ky_vod', ['play_from' => $keepVod['play_from'], 'play_url' => $keepVod['play_url'], 'updatetime' => time()], 'id=?', [$keep]);
         page_cache_flush();
         Admin::log('合并重复影片:' . implode(',', $ids) . ' → #' . $keep);
         json_ok(null, '已合并 ' . count($ids) . ' 条重复影片到 #' . $keep);
@@ -531,6 +541,7 @@ class AdminContentController
      */
     public function speedsave()
     {
+        if (!Request::isPost()) json_error('非法请求');
         $v = (string)Request::post('speed', 'normal');
         if (!in_array($v, ['gentle', 'slow', 'normal', 'fast'], true)) $v = 'normal';
         config_set('collect_speed', $v);
@@ -562,6 +573,7 @@ class AdminContentController
 
     public function collectauto()
     {
+        if (!Request::isPost()) json_error('非法请求');
         @set_time_limit(300);
         $ret = Collector::runDue(true);
         Admin::log('手动执行定时采集');

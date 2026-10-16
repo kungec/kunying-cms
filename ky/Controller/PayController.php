@@ -32,6 +32,10 @@ class PayController
         if (!in_array($payType, $allow, true)) json_error('请选择支付方式');
         $goods = Db::fetch("SELECT * FROM ky_goods WHERE id=? AND status=1", [$goodsId]);
         if (!$goods) json_error('套餐不存在');
+        // 未支付订单堆积限制:防刷单膨胀订单表
+        if ((int)Db::fetchOne("SELECT COUNT(*) FROM ky_order WHERE user_id=? AND status=0 AND created>?", [$user['id'], time() - 86400]) >= 10) {
+            json_error('存在过多未支付订单,请先完成或稍后再试');
+        }
 
         $orderNo = order_no();
         $orderId = Db::insert('ky_order', [
@@ -41,6 +45,9 @@ class PayController
             'type' => $goods['days'] > 0 ? 'vip' : 'points',
             'title' => $goods['name'],
             'amount' => $goods['price'],
+            // 套餐权益快照:发货按快照,套餐后续修改/删除不影响已建订单
+            'g_days' => (int)$goods['days'],
+            'g_points' => (int)$goods['points'],
             'pay_type' => $payType,
             'status' => 0,
             'created' => time(),
@@ -133,26 +140,32 @@ class PayController
      */
     public static function complete(string $orderNo, string $tradeNo, ?float $money = null): bool
     {
-        $order = Db::fetch("SELECT * FROM ky_order WHERE order_no=? AND status=0", [$orderNo]);
+        // status=2(网关请求异常时本地取消)的订单,签名回调仍可补发货
+        $order = Db::fetch("SELECT * FROM ky_order WHERE order_no=? AND status IN (0,2)", [$orderNo]);
         if (!$order) return false;
         // 回调金额与订单金额不符即拒绝入账(防可改金额渠道绕过)
         if ($money !== null && abs($money - (float)$order['amount']) > 0.01) return false;
         Db::begin();
         try {
-            $n = Db::update('ky_order', ['status' => 1, 'trade_no' => mb_substr($tradeNo, 0, 60), 'paid_time' => time()], 'order_no=? AND status=0', [$orderNo]);
+            $n = Db::update('ky_order', ['status' => 1, 'trade_no' => mb_substr($tradeNo, 0, 60), 'paid_time' => time()], 'order_no=? AND status IN (0,2)', [$orderNo]);
             if ($n !== 1) throw new RuntimeException('订单状态已变更');
             $user = Db::fetch("SELECT * FROM ky_user WHERE id=? FOR UPDATE", [$order['user_id']]);
             if (!$user) throw new RuntimeException('用户不存在');
-            $goods = Db::fetch("SELECT * FROM ky_goods WHERE id=?", [$order['goods_id']]);
-            if ($goods) {
-                if ($goods['days'] > 0) {
-                    $base = max(time(), (int)$user['vip_expire']);
-                    Db::update('ky_user', ['vip_expire' => $base + $goods['days'] * 86400], 'id=?', [$user['id']]);
-                }
-                if ($goods['points'] > 0) {
-                    Db::update('ky_user', ['points' => $user['points'] + $goods['points']], 'id=?', [$user['id']]);
-                }
-            } else {
+            // 发货按订单快照(g_days/g_points),旧订单无快照时回退读商品
+            $days = (int)($order['g_days'] ?? 0);
+            $points = (int)($order['g_points'] ?? 0);
+            if ($days === 0 && $points === 0) {
+                $goods = Db::fetch("SELECT * FROM ky_goods WHERE id=?", [$order['goods_id']]);
+                if ($goods) { $days = (int)$goods['days']; $points = (int)$goods['points']; }
+            }
+            if ($days > 0) {
+                $base = max(time(), (int)$user['vip_expire']);
+                Db::update('ky_user', ['vip_expire' => $base + $days * 86400], 'id=?', [$user['id']]);
+            }
+            if ($points > 0) {
+                Db::update('ky_user', ['points' => $user['points'] + $points], 'id=?', [$user['id']]);
+            }
+            if ($days === 0 && $points === 0) {
                 // 商品在下单后被删:款已收,订单照常完成,但须留痕供人工补发
                 Admin::log('订单' . $orderNo . '对应的商品已删除,未自动发货,请人工处理');
             }

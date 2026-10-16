@@ -1,5 +1,6 @@
 <?php include __DIR__.'/_header.php'; $pageTitle='幻灯管理'; ?>
 <div class="card">
+  <p class="hint" style="margin:0 0 10px">说明:幻灯数据为预留配置,当前前台轮播直接使用影片数据;此配置对后续版本的主题幻灯位生效。</p>
   <button class="btn sm" onclick="showForm()">+ 添加幻灯</button>
   <div class="tb-wrap"><table class="tb" style="margin-top:12px">
     <tr><th>名称</th><th>图片</th><th>链接</th><th>显示位置</th><th>排序</th><th>状态</th><th>操作</th></tr>

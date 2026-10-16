@@ -114,6 +114,7 @@ class AdminUserController
      */
     public function unlock()
     {
+        if (!Request::isPost()) json_error('非法请求');
         Db::delete('ky_login_fail', 'ban_until>?', [time()]);
         Admin::log('解除全部登录锁定');
         json_ok(null, '已解除所有锁定');
@@ -217,6 +218,7 @@ class AdminUserController
      */
     public function commentclean()
     {
+        if (!Request::isPost()) json_error('非法请求');
         $mode = (int)Request::post('mode', 0, 'i');
         if ($mode === 1) {
             $n = (int)Db::fetchOne("SELECT COUNT(*) FROM ky_comment");

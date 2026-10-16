@@ -21,6 +21,7 @@ class AdminSystemController
     public function settingsave()
     {
         if (!Request::isPost()) json_error('非法请求');
+        $oldTemplate = (string)config('site_template', ''); // 先取旧值:循环内config_set会覆盖,授权比对必须用旧值
         // 白名单键
         $keys = [
             'site_name', 'site_keywords', 'site_description', 'site_icp', 'site_template', 'site_mode',
@@ -70,7 +71,7 @@ class AdminSystemController
         }
         // 付费主题切换校验:需专业版授权
         $newTpl = strtolower(basename((string)Request::post('site_template', '')));
-        if (in_array($newTpl, ['kunpro', 'iqiyi'], true) && (string)config('site_template', '') !== $newTpl) {
+        if (in_array($newTpl, ['kunpro', 'iqiyi'], true) && $oldTemplate !== $newTpl) {
             if (!License::check($newTpl)) {
                 json_error('「' . $newTpl . '」为付费主题,需开通专业版会员(99元)使用。请前往授权站购买专业版获取激活码,在 市场→激活码激活 中完成绑定');
             }
@@ -339,6 +340,9 @@ class AdminSystemController
 
     public function updateapply()
     {
+        // 写操作强制POST+CSRF:防管理员被诱导点链接触发在线更新(GET不经过构造器CSRF)
+        if (!Request::isPost()) json_error('非法请求');
+        Security::csrfCheck();
         @set_time_limit(600);
         [$ok, $msg] = Updater::apply();
         Admin::log('执行在线更新:' . ($ok ? '成功' : '失败') . ' ' . $msg);

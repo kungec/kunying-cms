@@ -32,9 +32,13 @@ class Updater
         $version = (string)($res['data']['version'] ?? '');
         if ($url === '') return [false, '更新包地址无效'];
 
+        $sha = strtolower(trim($sha));
+        if ($sha === '' || !preg_match('/^[0-9a-f]{64}$/', $sha)) return [false, '更新服务未返回包校验和,已中止(安全策略)'];
         $tmpZip = KY_PATH . '/data/cache/update_' . preg_replace('/[^0-9a-z\.]/', '', $version) . '.zip';
-        if (!Http::download($url, $tmpZip)) return [false, '更新包下载失败'];
-        if ($sha !== '' && hash_file('sha256', $tmpZip) !== $sha) {
+        set_time_limit(0);
+        if (!Http::download($url, $tmpZip, 300)) return [false, '更新包下载失败'];
+        if (filesize($tmpZip) > 300 * 1048576) { @unlink($tmpZip); return [false, '更新包超过300MB限制']; }
+        if (!hash_equals(hash_file('sha256', $tmpZip), $sha)) {
             @unlink($tmpZip);
             return [false, '更新包校验失败,已中止'];
         }
@@ -57,7 +61,7 @@ class Updater
         if ($totalSize > 300 * 1048576) { $zip->close(); return [false, '更新包解压后超限']; }
         $tmpDir = KY_PATH . '/data/cache/update_' . rand_str(6);
         if (!mkdir($tmpDir, 0755, true)) { $zip->close(); return [false, '创建临时目录失败']; }
-        $zip->extractTo($tmpDir);
+        if (!$zip->extractTo($tmpDir)) { $zip->close(); self::rrmdir($tmpDir); @unlink($tmpZip); return [false, '更新包解压失败,已中止']; }
         $zip->close();
 
         // 根目录可能是包名一层
@@ -84,7 +88,11 @@ class Updater
                 if (!is_dir($bd)) mkdir($bd, 0755, true);
                 @copy($target, $bd . '/' . basename($rel));
             }
-            if (@copy((string)$file, $target)) $copied++;
+            if (!@copy((string)$file, $target)) {
+                // 复制失败即中止:保持旧文件为主(被覆盖的文件已备份),不带病写新版本号
+                return [false, '写入 ' . $rel . ' 失败(权限?),已中止;本次已覆盖文件可从 data/cache/backup_* 恢复'];
+            }
+            $copied++;
         }
 
         // 运行升级脚本(可选)
@@ -96,8 +104,8 @@ class Updater
             $upgradeLog .= ob_get_clean();
         }
 
-        config_set('sys_version', $version);
         Addon::rrmdir($tmpDir);
+        config_set('sys_version', $version);
         @unlink($tmpZip);
         // 历次升级备份只保留最近3份,防data/cache累积
         $bks = glob(KY_PATH . '/data/cache/backup_*') ?: [];

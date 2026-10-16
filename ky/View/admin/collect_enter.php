@@ -39,9 +39,11 @@
   <div class="row" style="margin-top:14px;max-width:860px">
     <div class="fi"><label>采集范围</label><select id="e_hours"><option value="0">全量(按页采集)</option><option value="24">仅最近24小时更新</option><option value="12">仅最近12小时</option><option value="6">仅最近6小时</option></select></div>
     <div class="fi"><label>起始页</label><input type="number" id="e_page" value="1" min="1"></div>
+    <div class="fi"><label>采集速度</label><select id="e_speed"><option value="gentle">温和(2.6秒/页)</option><option value="slow">慢速(1.6秒/页)</option><option value="normal" selected>标准(0.9秒/页)</option><option value="fast">快速(0.35秒/页)</option></select></div>
     <div class="fi" style="align-self:flex-end"><button class="btn" id="e_go" onclick="startCollect()">▶ 开始采集入库</button><button class="btn plain" id="e_stop" style="display:none" onclick="running=true">⏹ 停止</button></div>
   </div>
-  <div id="progWrap" style="display:none;margin-top:12px">
+  <div id="e_log" style="margin:10px 0;padding:8px 12px;background:#f7f8fa;border-radius:8px;font-size:13px;color:#555;white-space:pre-wrap">就绪</div>
+<div id="progWrap" style="display:none;margin-top:12px">
     <div style="height:10px;background:#eef0f5;border-radius:6px;overflow:hidden"><div id="progBar" style="height:100%;width:0;background:linear-gradient(90deg,#e5322d,#ff7a45);border-radius:6px;transition:width .4s"></div></div>
   </div>
   <div id="statCards" style="display:none;gap:12px;margin-top:12px;flex-wrap:wrap">

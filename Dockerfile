@@ -3,7 +3,7 @@ FROM php:8.2-fpm-alpine
 
 # 安装nginx与PHP扩展(curl/mbstring官方镜像已内置;zip供插件/升级包解压)
 RUN apk add --no-cache nginx zip unzip curl bash libzip-dev \
-    && docker-php-ext-install pdo_mysql gd opcache pcntl zip 2>/dev/null || true
+    && docker-php-ext-install pdo_mysql gd opcache pcntl zip
 
 # gd扩展依赖
 RUN apk add --no-cache libpng-dev libjpeg-turbo-dev freetype-dev \

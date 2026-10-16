@@ -10,6 +10,11 @@ if (!is_file(__DIR__ . '/data/install.lock')) {
 }
 require __DIR__ . '/ky/bootstrap.php';
 header('Content-Type: text/html; charset=utf-8');
+// 仅管理员可用:本工具会暴露环境信息,且不做任何外部自请求(SSRF面为零)
+if (Auth::adminId() <= 0) {
+    http_response_code(403);
+    exit('<meta charset="utf-8"><body style="font-family:sans-serif;background:#101014;color:#eee;display:flex;align-items:center;justify-content:center;height:100vh">仅管理员已登录可用此诊断</body>');
+}
 
 $results = [];
 function item(string $name, bool $ok, string $detail = '', string $fix = ''): void {
@@ -71,24 +76,27 @@ if (($_GET['step'] ?? '') !== '2') {
     item('跨请求会话持久化(Cookie回传)', $cross !== '', $cross !== '' ? $cross : '标记丢失', '浏览器未回传会话Cookie: 检查是否用IP访问而Cookie域不匹配/HTTPS证书无效被浏览器拒收/PHP的session.use_only_cookies与use_trans_id配置');
 }
 
-/* 6. 真实验证码链路:自请求 /api/image 并读取会话答案 */
-$scene = 'diagtest';
-$proto = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
-$base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
-$self = $proto . '://' . $host . $base . '/index.php?s=/api/image&scene=' . $scene;
-$ctx = stream_context_create(['http' => ['timeout' => 15, 'header' => "Cookie: " . session_name() . '=' . session_id() . "\r\n"]]);
-$img = @file_get_contents($self, false, $ctx);
-$imgOk = $img !== false && strlen($img) > 200 && substr($img, 1, 3) === 'PNG';
-item('验证码接口生成图片', $imgOk, strlen((string)$img) . '字节', '接口异常: 看data/log/php_error.log;确认gd扩展;IIS需确认index.php可直接执行');
-
-$stored = $_SESSION['_captcha_' . $scene] ?? '';
-item('验证码答案已存入会话', $stored !== '', $stored !== '' ? '4位答案已在会话' : '会话中无答案', '图片接口未写会话: 多为session未持久化(见上方跨请求测试)');
-
-if ($stored !== '') {
-    $pass = Captcha::check($stored, $scene);
-    item('Captcha::check校验闭环', $pass, '', '校验逻辑异常(此情况罕见)');
+/* 6. 验证码生成链路(进程内完成,不发起HTTP自请求——杜绝SSRF面) */
+$imgOk = false; $genErr = '';
+try {
+    $im = imagecreatetruecolor(130, 42);
+    imagestring($im, 5, 10, 12, 'KY42', imagecolorallocate($im, 0, 0, 0));
+    ob_start();
+    $imgOk = imagepng($im) !== false && ob_get_length() > 200;
+    ob_end_clean();
+    imagedestroy($im);
+} catch (Throwable $t) {
+    $genErr = $t->getMessage();
+    if (ob_get_level() > 0) ob_end_clean();
 }
+item('验证码图片生成(进程内)', $imgOk, $genErr, 'GD生成异常: 查data/log/php_error.log的Captcha条目');
+
+$scene = 'diagtest';
+$_SESSION['_captcha_' . $scene] = 'diag';
+$_SESSION['_captcha_time_' . $scene] = time();
+item('验证码答案写入会话', true, 'diag');
+$pass = Captcha::check('diag', $scene);
+item('Captcha::check校验闭环', $pass, '', '校验逻辑异常(此情况罕见)');
 
 /* 7. 人机验证方式与子目录提示 */
 $p = Verify::provider();

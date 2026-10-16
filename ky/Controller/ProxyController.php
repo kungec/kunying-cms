@@ -106,8 +106,14 @@ class ProxyController
                     $pp = parse_url((string)curl_getinfo($ch, CURLINFO_EFFECTIVE_URL));
                     $origin = ($pp['scheme'] ?? 'https') . '://' . ($pp['host'] ?? '') . (isset($pp['port']) ? ':' . $pp['port'] : '');
                     $l = trim(substr($t, 9));
-                    $loc = preg_match('#^https?://#i', $l) ? $l
-                        : ((strpos($l, '/') === 0 ? $origin : $origin . rtrim($pp['path'] ?? '/', '/') . '/') . $l);
+                    if (preg_match('#^https?://#i', $l)) {
+                        $loc = $l;
+                    } else {
+                        // RFC 3986:相对地址解析到所在目录
+                        $path = $pp['path'] ?? '/';
+                        $dir = rtrim(substr($path, 0, (int)strrpos($path, '/') + 1), '/');
+                        $loc = (strpos($l, '/') === 0 ? $origin : $origin . $dir . '/') . $l;
+                    }
                 }
                 return strlen($line);
             });

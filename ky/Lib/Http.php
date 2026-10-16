@@ -51,6 +51,13 @@ class Http
             $opts[CURLOPT_HTTPHEADER] = $headers;
         }
         curl_setopt_array($ch, $opts);
+        // 响应大小上限20MB:超大远程响应读入内存会拖垮FPM
+        $len = 0;
+        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use (&$len) {
+            $len += strlen($chunk);
+            if ($len > 20 * 1048576) return -1;
+            return strlen($chunk);
+        });
         $body = curl_exec($ch);
         $err = curl_errno($ch);
         curl_close($ch);
@@ -113,7 +120,9 @@ class Http
                     $origin = ($pp['scheme'] ?? 'https') . '://' . ($pp['host'] ?? '') . (isset($pp['port']) ? ':' . $pp['port'] : '');
                     if (stripos($loc, 'http') !== 0) {
                         $path = $pp['path'] ?? '/';
-                        $loc = (strpos($loc, '/') === 0) ? $origin . $loc : $origin . rtrim($path, '/') . '/' . ltrim($loc, '/');
+                        // 相对地址按RFC 3986解析到"所在目录"(去文件名),而非拼到原路径尾部
+                        $dir = rtrim(substr($path, 0, (int)strrpos($path, '/') + 1), '/');
+                        $loc = (strpos($loc, '/') === 0) ? $origin . $loc : $origin . $dir . '/' . ltrim($loc, '/');
                     }
                     $url = $loc;
                     continue;

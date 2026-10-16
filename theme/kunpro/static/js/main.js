@@ -1,3 +1,5 @@
+/* 全局转义:搜索联想等模板拼接使用 */
+function esc(s){ return String(s||"").replace(/[<>&"]/g,""); }
 /* 坤影CMS 前台交互 */
 (function(){
   'use strict';

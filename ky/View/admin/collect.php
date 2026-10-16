@@ -239,7 +239,7 @@ async function runPage(){
   var j;try{j=await api('/admin.php?s=/content/collectrun',d)}catch(e){j={code:0,msg:'网络异常或处理超时'}}
   if(j.code===1){
     rRetry=0;rSkip=0;
-    rAdd+=(+j.data.added||0);rUpd+=(+j.data.updated||0);rUpd+=(+j.data.updated||0);
+    rAdd+=(+j.data.added||0);rUpd+=(+j.data.updated||0);
     var pc=Math.max(1,+j.data.pagecount||1);
     if(page>pc){
       bcPage.textContent=pc;bcCount.textContent=pc;
@@ -270,7 +270,7 @@ async function runPage(){
         :'<span style="background:#eef0f5;color:#9aa0ad;font-size:11px;padding:1px 8px;border-radius:5px">跳过</span>';
       var picTag=it.pic_local?'<span title="封面已下载到本站" style="margin-left:6px">📥</span>':'';
       html+='<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 10px">'
-        +'<img src="'+it.pic+'" onerror="this.style.visibility=\'hidden\'" style="width:30px;height:40px;object-fit:cover;border-radius:4px;background:#eef0f5">'
+        +'<img src="'+esc(it.pic)+'" onerror="this.style.visibility=\'hidden\'" style="width:30px;height:40px;object-fit:cover;border-radius:4px;background:#eef0f5">'
         +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">'+esc(it.name)+'</span>'
         +'<span style="font-size:12px;color:var(--sub)">'+esc(it.remarks)+'</span>'+picTag+tag+'</div>';
     });
