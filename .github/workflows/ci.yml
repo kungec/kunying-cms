@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: docker-compose配置校验
-        run: docker compose -f docker-compose.yml config -q
+        run: MYSQL_ROOT_PASSWORD=ci-placeholder docker compose -f docker-compose.yml config -q
 
   structure:
     name: 关键文件存在性检查
