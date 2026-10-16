@@ -31,7 +31,7 @@ class Collector
         $params = ['ac' => 'videolist', 'pg' => max(1, $page)];
         if ($typeId > 0) $params['t'] = $typeId;
         if ($hours > 0) $params['h'] = $hours;
-        $data = Http::getJson($url . '?' . http_build_query($params), 30);
+        $data = Http::getJson($url . '?' . http_build_query($params), 12);
         if (!is_array($data) || (int)($data['code'] ?? 0) !== 1) {
             // 带上HTTP状态与Host,运维一眼可辨"上游挂了"还是"参数/格式问题"
             $code = 0;
@@ -239,7 +239,7 @@ class Collector
         $api = Db::fetch("SELECT * FROM ky_collect_api WHERE id=?", [$apiId]);
         if (!$api) return 0;
         $url = rtrim($api['api_url'], '?&/');
-        $data = Http::getJson($url . '?' . http_build_query(['ac' => 'detail', 'ids' => $apiVid]), 30);
+        $data = Http::getJson($url . '?' . http_build_query(['ac' => 'detail', 'ids' => $apiVid]), 12);
         if (!is_array($data) || empty($data['list'][0])) return 0;
         $r = self::upsertVod($apiId, $data['list'][0]);
         self::flushPendingPics();
@@ -282,7 +282,7 @@ class Collector
         if ($playUrl === '') {
             usleep(self::speedDelayUs());
             $apiUrl = Db::fetchOne("SELECT api_url FROM ky_collect_api WHERE id=?", [$apiId]);
-            $d = Http::getJson(rtrim((string)$apiUrl, '?&/') . '?' . http_build_query(['ac' => 'detail', 'ids' => $apiVid]), 30);
+            $d = Http::getJson(rtrim((string)$apiUrl, '?&/') . '?' . http_build_query(['ac' => 'detail', 'ids' => $apiVid]), 12);
             if (is_array($d) && !empty($d['list'][0])) {
                 $playFrom = mb_substr(trim((string)($d['list'][0]['vod_play_from'] ?? $playFrom)), 0, 200);
                 $playUrl = (string)($d['list'][0]['vod_play_url'] ?? '');
@@ -613,7 +613,7 @@ class Collector
      */
     public static function fetchApiTypes(string $apiUrl): array
     {
-        $data = Http::getJson(rtrim($apiUrl, '?&/') . '?' . http_build_query(['ac' => 'videolist', 'pg' => 1]), 30);
+        $data = Http::getJson(rtrim($apiUrl, '?&/') . '?' . http_build_query(['ac' => 'videolist', 'pg' => 1]), 12);
         $types = [];
         if (is_array($data)) {
             foreach (($data['class'] ?? []) as $cls) {

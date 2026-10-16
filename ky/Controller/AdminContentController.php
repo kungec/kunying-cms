@@ -636,7 +636,8 @@ class AdminContentController
                 if (is_file($cand) && is_executable($cand) && strpos($cand, 'php-fpm') === false) { $cli = $cand; break; }
             }
             if ($cli === '') { cache_set($ck, ['done' => 1, 'error' => '未找到PHP CLI'], 1800); exit; }
-            $inner = $cli . ' ' . escapeshellarg(KY_PATH . '/ky/cron/collect.php')
+            // timeout 900:病态卡死的worker由系统15分钟强杀,前端重试只补剩余(按条目去重)
+            $inner = 'timeout 900 ' . $cli . ' ' . escapeshellarg(KY_PATH . '/ky/cron/collect.php')
                    . ' --worker --shards=' . escapeshellarg($apiId . ':' . $page . ':' . $typeId . ':' . $hours)
                    . ' > ' . escapeshellarg($outFile) . ' 2>&1';
             proc_close(proc_open('sh -c ' . escapeshellarg($inner . ' &'), [], $pipes));
