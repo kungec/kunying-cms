@@ -108,13 +108,14 @@ foreach ($lastResult as $r) {
     <button class="btn sm" onclick="showApi()">+ 添加接口</button>
   </div>
   <div class="tb-wrap"><table class="tb" style="margin-top:12px">
-    <tr><th>ID</th><th>名称</th><th>接口地址</th><th>备注</th><th>状态</th><th>操作</th></tr>
+    <tr><th>ID</th><th>名称</th><th>接口地址</th><th>备注</th><th>接口健康</th><th>状态</th><th>操作</th></tr>
     <?php foreach ($apis as $a): ?>
     <tr>
       <td><?= (int)$a['id'] ?></td>
       <td><b><?= e($a['name']) ?></b></td>
       <td style="max-width:340px;word-break:break-all;font-size:12px"><a href="/admin.php?s=/content/collectenter&id=<?= (int)$a['id'] ?>" style="color:var(--blue)" title="点击进入接口,指定资源采集"><?= e($a['api_url']) ?></a></td>
       <td style="font-size:12px"><?= e($a['remark']) ?></td>
+      <td><span class="tag gr" id="health<?= (int)$a['id'] ?>" style="cursor:pointer" title="点击重新检测" onclick="checkHealth(<?= (int)$a['id'] ?>)">检测中…</span></td>
       <td><span class="tag <?= $a['status'] ? 'g' : 'gr' ?>"><?= $a['status'] ? '启用' : '停用' ?></span></td>
       <td>
         <a class="btn sm" href="/admin.php?s=/content/collectenter&id=<?= (int)$a['id'] ?>" style="text-decoration:none">进入采集</a>
@@ -217,6 +218,25 @@ function startRun(id,name){
   runBox.scrollIntoView({behavior:'smooth'});
 }
 function esc(s){ return String(s||'').replace(/[<>&"]/g,''); }
+function checkHealth(id){
+  var el=document.getElementById('health'+id);
+  if(!el)return;
+  el.className='tag gr';el.textContent='检测中…';
+  var d=new FormData();d.append('id',id);
+  api('/admin.php?s=/content/collecthealth',d).then(function(j){
+    if(!el.isConnected)return;
+    if(j.code===1&&j.data.ok===1){
+      el.className='tag g';el.textContent='✅ 正常('+j.data.ms+'ms,'+j.data.pagecount+'页)';
+      el.title='点击重新检测';
+    }else{
+      el.className='tag r';el.textContent='❌ '+(j.data&&j.data.msg?j.data.msg:'检测失败');
+      el.title='接口挂了,采集会失败;可稍后重测或先停用该接口';
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('[id^=health]').forEach(function(el){checkHealth(parseInt(el.id.replace('health',''),10)||0)});
+});
 async function saveSpeed(v){
   var d=new FormData();d.append('speed',v);
   var j=await api('/admin.php?s=/content/speedsave',d);

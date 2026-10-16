@@ -396,7 +396,15 @@ class AdminContentController
         $params = ['ac' => 'videolist', 'pg' => $page];
         if ($typeId > 0) $params['t'] = $typeId;
         $data = Http::getJson($url . '?' . http_build_query($params), 20);
-        if (!is_array($data) || (int)($data['code'] ?? 0) !== 1) json_error('资源站接口响应异常,请稍后重试');
+        if (!is_array($data) || (int)($data['code'] ?? 0) !== 1) {
+            $tmp = curl_init($url . '?' . http_build_query($params));
+            curl_setopt_array($tmp, [CURLOPT_NOBODY => true, CURLOPT_TIMEOUT => 8, CURLOPT_CONNECTTIMEOUT => 5]);
+            curl_exec($tmp);
+            $http = (int)curl_getinfo($tmp, CURLINFO_HTTP_CODE);
+            curl_close($tmp);
+            json_error($http >= 500 ? '该资源站接口挂了(HTTP ' . ($http ?: '无响应') . '),请稍后再试或换其他资源源'
+                : ($http === 0 ? '无法连接该资源站,请检查接口地址' : '资源站接口响应异常(HTTP ' . $http . ')'));
+        }
         $list = [];
         foreach (($data['list'] ?? []) as $it) {
             $list[] = [
@@ -663,6 +671,31 @@ class AdminContentController
             }
         }
         json_ok(['done' => 0, 'rid' => $rid]);
+    }
+
+    /** 接口健康检测:ac=list探测,返回HTTP状态/耗时/页数(供接口列表红绿标) */
+    public function collecthealth()
+    {
+        if (!Request::isPost()) json_error('非法请求');
+        $id = Request::post('id', 0, 'i');
+        $api = Db::fetch("SELECT * FROM ky_collect_api WHERE id=?", [$id]);
+        if (!$api) json_error('接口不存在');
+        $url = rtrim((string)$api['api_url'], '?&/') . '?ac=list';
+        $t0 = microtime(true);
+        $data = Http::getJson($url, 12);
+        $ms = (int)round((microtime(true) - $t0) * 1000);
+        if (is_array($data) && (int)($data['code'] ?? 0) === 1) {
+            json_ok(['ok' => 1, 'ms' => $ms, 'pagecount' => (int)($data['pagecount'] ?? 0)]);
+        }
+        // 探测HTTP状态,分类给直观提示
+        $tmp = curl_init($url);
+        curl_setopt_array($tmp, [CURLOPT_NOBODY => true, CURLOPT_TIMEOUT => 8, CURLOPT_CONNECTTIMEOUT => 5]);
+        curl_exec($tmp);
+        $http = (int)curl_getinfo($tmp, CURLINFO_HTTP_CODE);
+        curl_close($tmp);
+        $msg = $http >= 500 ? '接口挂了(HTTP ' . ($http ?: '无响应') . '),上游资源站故障'
+            : ($http === 0 ? '无法连接该接口地址' : '接口响应异常(HTTP ' . $http . ')');
+        json_ok(['ok' => 0, 'ms' => $ms, 'msg' => $msg]);
     }
 
     public function collecttypes()
