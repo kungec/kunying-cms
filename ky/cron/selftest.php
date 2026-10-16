@@ -63,6 +63,15 @@ foreach (['kunpro', 'iqiyi'] as $theme) {
 }
 check('付费主题stub密钥完整性', $stubTotal > 0 && empty($stubBad), $stubBad ? '解密失败:' . implode(',', array_slice($stubBad, 0, 3)) : "{$stubTotal}个stub全部可解密");
 
+/* ---------- 出站HTTP闭环(授权/市场/极验/USDT查询都依赖它) ---------- */
+$apiBase = class_exists('License') ? License::apiBase() : '';
+if ($apiBase !== '') {
+    $pong = Http::request($apiBase . '/', 'GET', null, 8);
+    check('出站HTTP响应体完整(非true/null)', is_string($pong) && strlen($pong) > 0, is_string($pong) ? '正常' : '响应体丢失——WRITEFUNCTION类实现缺陷会导致授权/极验/USDT全断');
+} else {
+    echo "[INFO] 未配置授权地址,跳过出站HTTP检测\n";
+}
+
 /* ---------- 授权配置 ---------- */
 $licToken = trim((string)config('lic_token', ''));
 check('授权令牌已配置(lic_token)', $licToken !== '', $licToken !== '' ? '长度' . strlen($licToken) : '未配置,付费主题授权校验将失败');

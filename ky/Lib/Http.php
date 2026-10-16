@@ -51,14 +51,16 @@ class Http
             $opts[CURLOPT_HTTPHEADER] = $headers;
         }
         curl_setopt_array($ch, $opts);
-        // 响应大小上限20MB:超大远程响应读入内存会拖垮FPM
+        // 响应大小上限20MB(WRITEFUNCTION设立て后RETURNTRANSFER失效,须在回调里自行累积)
         $len = 0;
-        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use (&$len) {
+        $body = '';
+        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use (&$len, &$body) {
             $len += strlen($chunk);
             if ($len > 20 * 1048576) return -1;
+            $body .= $chunk;
             return strlen($chunk);
         });
-        $body = curl_exec($ch);
+        curl_exec($ch);
         $err = curl_errno($ch);
         curl_close($ch);
         if ($err) return false;
