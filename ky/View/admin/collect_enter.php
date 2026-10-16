@@ -142,7 +142,7 @@ async function startCollect(){
   // 异步模式:collectrun立即返回,轮询取结果(浏览器不再被长请求卡住)
   if (j.code === 1 && j.data && j.data.started) {
     var poll = 0, pj = null;
-    while (poll++ < 90) {
+    while (poll++ < 120) {
       await new Promise(function(r){ setTimeout(r, 5000); });
       if (stopFlag) break;
       try { pj = await api('/admin.php?s=/content/collectrunresult', (function(){ var q=new FormData(); q.append('rid', rid); return q; })()); } catch (e) { pj = null; }
