@@ -20,11 +20,14 @@ $threads = max(1, min(8, (int)($opts['threads'] ?? 1)));
 // ── 子进程模式:按分片列表采集并输出JSON结果行 ──
 if (isset($opts['worker'])) {
     foreach (explode(',', (string)($opts['shards'] ?? '')) as $pair) {
+        // 分片格式 api:page[:type_id[:hours]](后两段为后台采集携带的筛选,缺省0)
         $seg = array_map('intval', explode(':', trim($pair)));
         if (count($seg) < 2 || $seg[0] < 1 || $seg[1] < 1) continue;
+        $typeId = $seg[2] ?? 0;
+        $hours = $seg[3] ?? 0;
         try {
-            $r = Collector::collectPage($seg[0], $seg[1]);
-            echo json_encode(['ok' => 1, 'api' => $seg[0], 'page' => $seg[1], 'added' => $r['added'], 'updated' => $r['updated']], JSON_UNESCAPED_UNICODE), "\n";
+            $r = Collector::collectPage($seg[0], $seg[1], $typeId, $hours);
+            echo json_encode(['ok' => 1, 'api' => $seg[0], 'page' => $seg[1], 'added' => $r['added'], 'updated' => $r['updated'], 'pagecount' => $r['pagecount'] ?? 1, 'items' => $r['items'] ?? []], JSON_UNESCAPED_UNICODE), "\n";
         } catch (Throwable $t) {
             echo json_encode(['ok' => 0, 'api' => $seg[0], 'page' => $seg[1], 'error' => $t->getMessage()], JSON_UNESCAPED_UNICODE), "\n";
         }
@@ -56,6 +59,10 @@ if ((int)date('G') < 5 && (int)config('maint_last_day', '0') !== $today) {
         // 通用文件缓存GC:散落md5.php条目只在被读取时清过期,无人读的永生——每日全量清一次
         // (文件头40字节内即expire字段,限读160字节;expire=0的永久条目不动)
         $now = time(); $cgc = 0;
+        // 采集后台任务结果文件(超1小时的一次性产物)
+        foreach (glob(KY_PATH . '/data/cache/crun_*.json') ?: [] as $cf) {
+            if (time() - filemtime($cf) > 3600) { @unlink($cf); $pruned++; }
+        }
         foreach (glob(KY_PATH . '/data/cache/*.php') ?: [] as $cf) {
             $head = @file_get_contents($cf, false, null, 0, 160);
             if ($head !== false && preg_match('/s:6:"expire";i:(\d+)/', $head, $cm)) {

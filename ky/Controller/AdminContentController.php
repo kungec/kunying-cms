@@ -602,22 +602,36 @@ class AdminContentController
         $typeId = Request::post('type_id', 0, 'i');
         $hours = Request::post('hours', 0, 'i');
         $rid = preg_replace('/[^a-z0-9]/i', '', (string)Request::post('rid', ''));
-        // FPM下立即响应+断开后后台采集:整页含封面可达数分钟,同步跑会被Web服务器超时切断(浏览器表现为卡死)
-        // fastcgi_finish_request不存在(Windows IIS等)时回退内联同步,结果直接随响应返回
-        if ($rid !== '' && function_exists('fastcgi_finish_request')) {
+        // 整页采集(含封面下载)可达数分钟,同步跑会被Web服务器超时切断(浏览器表现为卡死)。
+        // 后台模式:立即响应,由CLI子进程采集——CLI进程不受FPM请求终止限制,Windows走内联回退
+        if ($rid !== '') {
             $ck = 'crun_' . $rid;
-            cache_set($ck, ['done' => 0], 900);
+            cache_set($ck, ['done' => 0], 1800);
             json_ok(['started' => 1, 'rid' => $rid]);
             if (function_exists('session_write_close')) session_write_close();
-            fastcgi_finish_request();
-            try {
-                $ret = Collector::collectPage($apiId, $page, $typeId, $hours);
-                $ret['pic_local_mode'] = config('collect_img_local', '0') == '1';
-                Admin::log("采集:接口#{$apiId} 第{$page}页 新增{$ret['added']} 更新{$ret['updated']}");
-                cache_set($ck, ['done' => 1] + $ret, 900);
-            } catch (Throwable $t) {
-                cache_set($ck, ['done' => 1, 'error' => $t->getMessage()], 900);
+            if (PHP_OS_FAMILY === 'Windows') {
+                // Windows: proc_open无统一的脱离式后台语法,回退内联(结果写缓存供轮询,表现一致)
+                try {
+                    $ret = Collector::collectPage($apiId, $page, $typeId, $hours);
+                    $ret['pic_local_mode'] = config('collect_img_local', '0') == '1';
+                    $ret['done'] = 1;
+                    cache_set($ck, $ret, 1800);
+                } catch (Throwable $t) {
+                    cache_set($ck, ['done' => 1, 'error' => $t->getMessage()], 1800);
+                }
+                exit;
             }
+            $outFile = KY_PATH . '/data/cache/crun_' . $rid . '.json';
+            // CLI二进制探测:FPM上下文里PHP_BINARY是php-fpm自身,用它启动会把采集脚本当配置文件直接退出
+            $cli = '';
+            foreach ([PHP_BINDIR . '/php', '/www/server/php/82/bin/php', '/usr/bin/php', PHP_BINARY] as $cand) {
+                if (is_file($cand) && is_executable($cand) && strpos($cand, 'php-fpm') === false) { $cli = $cand; break; }
+            }
+            if ($cli === '') { cache_set($ck, ['done' => 1, 'error' => '未找到PHP CLI'], 1800); exit; }
+            $inner = $cli . ' ' . escapeshellarg(KY_PATH . '/ky/cron/collect.php')
+                   . ' --worker --shards=' . escapeshellarg($apiId . ':' . $page . ':' . $typeId . ':' . $hours)
+                   . ' > ' . escapeshellarg($outFile) . ' 2>&1';
+            proc_close(proc_open('sh -c ' . escapeshellarg($inner . ' &'), [], $pipes));
             exit;
         }
         try {
@@ -630,14 +644,25 @@ class AdminContentController
         }
     }
 
-    /** 采集结果轮询:collectrun后台模式下按rid取结果 */
+    /** 采集结果轮询:后台模式按rid读取CLI子进程写出的结果文件 */
     public function collectrunresult()
     {
         $rid = preg_replace('/[^a-z0-9]/i', '', (string)Request::post('rid', ''));
         if ($rid === '') json_error('参数不完整');
-        $r = cache_get('crun_' . $rid);
-        if (!is_array($r)) json_error('结果不存在或已过期', 404);
-        json_ok($r);
+        // 兼容缓存键模式(fastcgi变体遗留)
+        $cached = cache_get('crun_' . $rid);
+        if (is_array($cached) && !empty($cached['done'])) { $cached['rid'] = $rid; json_ok($cached); }
+        $f = KY_PATH . '/data/cache/crun_' . $rid . '.json';
+        if (is_file($f)) {
+            $j = json_decode((string)file_get_contents($f), true);
+            if (is_array($j) && !empty($j['ok'])) {
+                $j['pic_local_mode'] = config('collect_img_local', '0') == '1';
+                $j['done'] = 1;
+                @unlink($f);
+                json_ok($j);
+            }
+        }
+        json_ok(['done' => 0, 'rid' => $rid]);
     }
 
     public function collecttypes()
