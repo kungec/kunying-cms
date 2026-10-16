@@ -80,7 +80,8 @@ async function loadClasses(){
 
 function pickClass(input){
   selClass = +input.value || 0;
-  document.getElementById('curCls').value = input.getAttribute('data-n') || '全部资源';
+  var curEl = document.getElementById('curCls');
+  if (curEl) curEl.value = input.getAttribute('data-n') || '全部资源';
   loadPreview(1);
 }
 
@@ -134,7 +135,24 @@ async function startCollect(){
   bcPage.textContent = page;
   var d0 = new FormData(); d0.append('id', apiId);
   var j0 = await api('/admin.php?s=/content/collectclasses', d0).catch(function(){return null});
+  e_log.textContent = '▶ 正在采集第' + page + '页(整页含封面下载,最长可能需要几分钟,请勿关闭页面)…';
+  var rid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  d.append('rid', rid);
   var j; try { j = await api('/admin.php?s=/content/collectrun', d); } catch (e) { j = { code: 0, msg: '网络异常或处理超时' }; }
+  // 异步模式:collectrun立即返回,轮询取结果(浏览器不再被长请求卡住)
+  if (j.code === 1 && j.data && j.data.started) {
+    var poll = 0, pj = null;
+    while (poll++ < 90) {
+      await new Promise(function(r){ setTimeout(r, 5000); });
+      if (stopFlag) break;
+      try { pj = await api('/admin.php?s=/content/collectrunresult', (function(){ var q=new FormData(); q.append('rid', rid); return q; })()); } catch (e) { pj = null; }
+      if (pj && pj.code === 1 && pj.data && pj.data.done) { j = pj; break; }
+      e_log.textContent = '⏳ 第' + page + '页后台采集中(已' + Math.round(poll * 5) + '秒)…';
+    }
+    if (!(pj && pj.code === 1 && pj.data && pj.data.done)) {
+      j = { code: 0, msg: '后台采集超时,将重试本页(已入库条目自动跳过)' };
+    }
+  }
   if (j.code === 1) {
     eRetry = 0; eSkip = 0;
     taskAdd += (+j.data.added || 0); taskUpd += (+j.data.updated || 0);
@@ -189,10 +207,10 @@ async function startCollect(){
     }
   } else {
     eRetry++;
-    if (eRetry <= 3) {
+    if (eRetry <= 6) {
       running = false;
-      e_log.textContent = '✗ 第' + page + '页失败,自动重试' + eRetry + '/3…(' + j.msg + ')';
-      setTimeout(startCollect, 3000 * eRetry); return;
+      e_log.textContent = '✗ 第' + page + '页超时/失败,自动重试' + eRetry + '/6(已入库的条目会跳过,只补剩余)…(' + j.msg + ')';
+      setTimeout(startCollect, 5000 * eRetry); return;
     }
     eSkip++;
     if (eSkip >= 10) {

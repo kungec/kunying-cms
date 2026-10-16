@@ -596,11 +596,30 @@ class AdminContentController
      */
     public function collectrun()
     {
-        @set_time_limit(600);
+        @set_time_limit(0);
         $apiId = Request::post('api_id', 0, 'i');
         $page = max(1, Request::post('page', 1, 'i'));
         $typeId = Request::post('type_id', 0, 'i');
         $hours = Request::post('hours', 0, 'i');
+        $rid = preg_replace('/[^a-z0-9]/i', '', (string)Request::post('rid', ''));
+        // FPM下立即响应+断开后后台采集:整页含封面可达数分钟,同步跑会被Web服务器超时切断(浏览器表现为卡死)
+        // fastcgi_finish_request不存在(Windows IIS等)时回退内联同步,结果直接随响应返回
+        if ($rid !== '' && function_exists('fastcgi_finish_request')) {
+            $ck = 'crun_' . $rid;
+            cache_set($ck, ['done' => 0], 900);
+            json_ok(['started' => 1, 'rid' => $rid]);
+            if (function_exists('session_write_close')) session_write_close();
+            fastcgi_finish_request();
+            try {
+                $ret = Collector::collectPage($apiId, $page, $typeId, $hours);
+                $ret['pic_local_mode'] = config('collect_img_local', '0') == '1';
+                Admin::log("采集:接口#{$apiId} 第{$page}页 新增{$ret['added']} 更新{$ret['updated']}");
+                cache_set($ck, ['done' => 1] + $ret, 900);
+            } catch (Throwable $t) {
+                cache_set($ck, ['done' => 1, 'error' => $t->getMessage()], 900);
+            }
+            exit;
+        }
         try {
             $ret = Collector::collectPage($apiId, $page, $typeId, $hours);
             Admin::log("采集:接口#{$apiId} 第{$page}页 新增{$ret['added']} 更新{$ret['updated']}");
@@ -609,6 +628,16 @@ class AdminContentController
         } catch (Throwable $t) {
             json_error($t->getMessage());
         }
+    }
+
+    /** 采集结果轮询:collectrun后台模式下按rid取结果 */
+    public function collectrunresult()
+    {
+        $rid = preg_replace('/[^a-z0-9]/i', '', (string)Request::post('rid', ''));
+        if ($rid === '') json_error('参数不完整');
+        $r = cache_get('crun_' . $rid);
+        if (!is_array($r)) json_error('结果不存在或已过期', 404);
+        json_ok($r);
     }
 
     public function collecttypes()
