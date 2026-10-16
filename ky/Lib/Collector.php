@@ -33,7 +33,17 @@ class Collector
         if ($hours > 0) $params['h'] = $hours;
         $data = Http::getJson($url . '?' . http_build_query($params), 30);
         if (!is_array($data) || (int)($data['code'] ?? 0) !== 1) {
-            throw new RuntimeException('资源站接口响应异常');
+            // 带上HTTP状态与Host,运维一眼可辨"上游挂了"还是"参数/格式问题"
+            $code = 0;
+            $tmp = curl_init($url . '?' . http_build_query($params));
+            curl_setopt_array($tmp, [CURLOPT_NOBODY => true, CURLOPT_TIMEOUT => 8, CURLOPT_CONNECTTIMEOUT => 5]);
+            curl_exec($tmp);
+            $code = (int)curl_getinfo($tmp, CURLINFO_HTTP_CODE);
+            curl_close($tmp);
+            $hint = $code >= 500 ? '资源站暂不可用(HTTP ' . ($code ?: '无响应') . '),请稍后再试'
+                  : ($code === 0 ? '资源站连接失败,请检查该接口地址是否有效'
+                  : '资源站接口响应异常(HTTP ' . $code . ')');
+            throw new RuntimeException($hint);
         }
         self::$pendingPics = [];
         $list = $data['list'] ?? [];
