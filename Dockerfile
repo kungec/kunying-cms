@@ -21,4 +21,4 @@ RUN mkdir -p data/cache data/upload data/license data/backup theme addon upload/
     && chmod +x docker/entrypoint.sh
 
 EXPOSE 80
-CMD ["/docker/entrypoint.sh"]
+CMD ["/var/www/html/docker/entrypoint.sh"]
