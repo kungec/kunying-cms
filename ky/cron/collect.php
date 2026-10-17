@@ -124,6 +124,11 @@ if (isset($opts['full'])) {
     $pairs = [];
     foreach ($apis as $a) for ($p = 1; $p <= $pages; $p++) $pairs[] = $a['id'] . ':' . $p;
     $chunks = array_chunk($pairs, (int)ceil(count($pairs) / $threads)) ?: [];
+    // 全局单实例锁:上一轮采集未结束时本轮直接跳过,防进程堆积拖垮CPU
+    if ((int)Db::fetchOne("SELECT GET_LOCK('ky_cron_global', 0)") !== 1) {
+        echo '[' . date('Y-m-d H:i:s') . "] 上一轮采集仍在运行,本轮跳过\n";
+        exit(0);
+    }
     echo '[' . date('Y-m-d H:i:s') . "] 采集任务: " . count($apis) . " 个接口 × {$pages} 页 = " . count($pairs) . " 分片,{$threads} 进程并行\n";
     $t0 = microtime(true);
     $sum = ['added' => 0, 'updated' => 0, 'errors' => 0];
@@ -165,6 +170,11 @@ if (isset($opts['full'])) {
 }
 
 echo '[' . date('Y-m-d H:i:s') . "] 定时采集开始\n";
+// 全局单实例锁:上一轮(含全量)未结束时本轮跳过,防进程堆积
+if ((int)Db::fetchOne("SELECT GET_LOCK('ky_cron_global', 0)") !== 1) {
+    echo "[" . date('Y-m-d H:i:s') . "] 上一轮采集仍在运行,本轮增量跳过\n";
+    exit(0);
+}
 $ret = Collector::runDue(true);
 $added = 0;
 foreach ($ret as $r) {
